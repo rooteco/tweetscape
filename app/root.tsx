@@ -38,7 +38,6 @@ export default function App() {
       <body className='w-full px-4 xl:px-0 max-w-screen-lg mx-auto my-4'>
         <header className='py-4 border-b-2 border-black whitespace-no-wrap'>
           <h1 className='font-serif font-semibold text-6xl'>Tweetscape</h1>
-          <h2 className='font-serif text-xl text-primary-600 italic'>The Supercharged Twitter Feed</h2>
         </header>
         <Outlet />
         <ScrollRestoration />
