@@ -15,7 +15,7 @@ It also shows you the conversation around each link; you get to see the best lin
 
 ### Low level
 
-Tweetscape is a full-stack React application built with Remix and React Router.
+Tweetscape is a full-stack React application built with [Remix](https://remix.run) and React Router.
 
 Every 24 hours, when a user visits [`tweetscape.com`](https://tweetscape.com), we:
 1. Fetch the top influencers from [`hive.one`](https://docs.hive.one/core-resources/top-influencers): `GET https://api.hive.one/v1/influencers/top`
