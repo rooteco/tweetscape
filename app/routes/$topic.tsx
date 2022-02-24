@@ -73,7 +73,7 @@ export const loader: LoaderFunction = async ({ params }) => {
           'Luna Foundation Guard raises $1 billion to form bitcoin reserve for UST stablecoin',
         description:
           'The Luna Foundation Guard (LFG) has raised $1 billion through an over-the-counter sale of LUNA.',
-        shares: Array(23)
+        shares: Array(21)
           .fill(null)
           .map(() => pic()),
         date: 'Feb 22 • 05:02 PM',
@@ -101,6 +101,75 @@ export const loader: LoaderFunction = async ({ params }) => {
           .fill(null)
           .map(() => pic()),
         date: '12h ago',
+      },
+      {
+        url: 'https://blog.obol.tech/announcing-the-proto-community/',
+        domain: 'blog.obol.tech',
+        title: 'Proto Community Launch',
+        description:
+          'Obol Proto Community Today we are honored to launch the Obol Proto Community, an onramp to organize, educate, and incentivize community members contributing to DVT and the Obol Ecosystem.   The Proto Community will fuse the different subcommunities of Obol and offer community members the opportunity to participate in the development',
+        shares: Array(3)
+          .fill(null)
+          .map(() => pic()),
+        date: '20h ago',
+      },
+      {
+        url: 'https://review.mirror.xyz/IRnxxEaQVblaA5OjGpJ3T9XlvqbydzCiDfCYg54jLOo',
+        domain: 'review.mirror.xyz',
+        title: 'Lens Protocol 🌿',
+        description:
+          'Lens is a decentralized social graph protocol created by the AAVE team. The purpose of the protocol is to empower creators to own the links in the social graph that connects them with their community. Lens allows accounts to create and follow profiles, publish and collect posts, and much more, focusing on the economics of social interactions.',
+        shares: Array(4)
+          .fill(null)
+          .map(() => pic()),
+        date: '20h ago',
+      },
+      {
+        url: 'https://www.theblockcrypto.com/linked/135292/eth-market-faces-500-million-liquidation-if-price-drops-below-2100?utm_source=twitter&utm_medium=social',
+        domain: 'theblockcrypto.com',
+        title:
+          'ETH market faces $500 million liquidation if price drops below $2,100',
+        description:
+          '$500 million in ETH is in danger of liquidation if a Maker vault holder fails to top their vaults before the price ETH falls below $2,100.',
+        shares: Array(2)
+          .fill(null)
+          .map(() => pic()),
+        date: '3h ago',
+      },
+      {
+        url: 'https://aika.market/',
+        domain: 'aika.market',
+        title: 'Non Fungible Time',
+        description:
+          'Mint your time as NFTs on the Polygon network. Sell your time to interested parties. Purchase other people’s time.',
+        shares: Array(3)
+          .fill(null)
+          .map(() => pic()),
+        date: 'Feb 23 • 05:59 PM',
+      },
+      {
+        url: 'https://markets.businessinsider.com/news/currencies/ftx-blockchain-crypto-bitcoin-ethereum-tom-brady-nft-metaverse-fashion-2022-2?utmSource=twitter&utmContent=referral&utmTerm=topbar&referrer=twitter',
+        domain: 'markets.businessinsider.com',
+        title:
+          'FTX takes aim at the $300 billion luxury goods market and hires a beauty entrepreneur to head the push',
+        description:
+          'Crypto exchange FTX has hired Lauren Remington Platt to work on partnerships with luxury and fashion brands.',
+        shares: Array(3)
+          .fill(null)
+          .map(() => pic()),
+        date: 'Feb 23 • 07:13 PM',
+      },
+      {
+        url: 'https://www.theblockcrypto.com/post/135286/china-crypto-jail-people-if-funds-raised-public',
+        domain: 'theblockcrypto.com',
+        title:
+          'China can now jail people if funds raised via crypto from public',
+        description:
+          'China can now issue sentences if funds are raised via crypto from the public as the country’s Supreme Court has amended Criminal Law.',
+        shares: Array(3)
+          .fill(null)
+          .map(() => pic()),
+        date: '6h ago',
       },
     ],
     { headers: { 'Set-Cookie': await topic.serialize(params.topic) } }
@@ -139,11 +208,11 @@ export default function Index() {
             <p className='text-sm'>{link.description}</p>
             <div className='text-sm text-stone-600 lowercase flex items-center mt-1.5'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-2.5'>
-                {link.shares.map(({ id, src }) => (
+                {link.shares.map((picture) => (
                   <img
-                    className='inline-block h-6 w-6 rounded-full border-2 border-white -mr-2'
-                    key={id}
-                    src={src}
+                    className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full border-2 border-white -mr-2'
+                    key={picture.id}
+                    src={picture.src}
                     alt=''
                   />
                 ))}
