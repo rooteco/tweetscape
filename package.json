@@ -13,10 +13,11 @@
     "build:remix": "cross-env NODE_ENV=production remix build",
     "build:css": "tailwindcss -m -i ./styles/app.css -o app/styles/app.css",
     "build": "yarn build:css && yarn build:remix",
+    "dev:build": "cross-env NODE_ENV=development remix build",
     "dev:remix": "cross-env NODE_ENV=development remix watch",
     "dev:css": "tailwindcss -w -i ./styles/app.css -o app/styles/app.css",
     "dev:miniflare": "cross-env NODE_ENV=development miniflare ./build/index.js --watch",
-    "dev": "cross-env NODE_ENV=development remix build && run-p dev:*",
+    "dev": "yarn dev:build && concurrently yarn:dev:remix yarn:dev:css yarn:dev:miniflare",
     "start": "cross-env NODE_ENV=production miniflare ./build/index.js",
     "deploy": "yarn build && yarn wrangler publish"
   },
@@ -34,9 +35,9 @@
     "@types/react": "^17.0.24",
     "@types/react-dom": "^17.0.9",
     "autoprefixer": "^10.4.2",
+    "concurrently": "^7.0.0",
     "cross-env": "^7.0.3",
     "miniflare": "^2.1.0",
-    "npm-run-all": "^4.1.5",
     "postcss": "^8.4.6",
     "tailwindcss": "^3.0.23",
     "typescript": "^4.5.5"
