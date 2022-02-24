@@ -14,6 +14,8 @@ interface Link {
 
 export const loader: LoaderFunction = async ({ params }) => {
   invariant(params.topic, 'expected params.topic');
+  if (!['eth', 'btc', 'nfts', 'tesla'].includes(params.topic))
+    throw new Response('Not Found', { status: 404 });
   return json([
     {
       url: 'https://www.cbsnews.com/news/ukraine-russia-invasion-economic-impact-united-states',
