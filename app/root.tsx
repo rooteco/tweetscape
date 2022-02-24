@@ -1,12 +1,15 @@
 import {
+  Link,
   Links,
   LiveReload,
   Meta,
   Outlet,
   Scripts,
-  ScrollRestoration
+  ScrollRestoration,
+  useLocation
 } from 'remix';
 import type { LinksFunction, MetaFunction } from 'remix';
+import cn from 'classnames';
 
 import styles from '~/styles/app.css';
 
@@ -25,6 +28,7 @@ export const meta: MetaFunction = () => {
 };
 
 export default function App() {
+  const { pathname } = useLocation();
   return (
     <html lang='en'>
       <head>
@@ -34,8 +38,14 @@ export default function App() {
         <Links />
       </head>
       <body className='w-full px-4 xl:px-0 max-w-screen-lg mx-auto my-4'>
-        <header className='py-4 border-b-2 border-black whitespace-no-wrap'>
+        <header className='py-4 border-b-2 border-black whitespace-no-wrap flex justify-between items-end'>
           <h1 className='font-serif font-semibold text-6xl'>Tweetscape</h1>
+          <nav className='font-serif font-semibold text-lg'>
+            <Link className={cn({ 'underline': pathname === '/eth' })} to='/eth'>ethereum</Link>{' · '}
+            <Link className={cn({ 'underline': pathname === '/btc' })} to='/btc'>bitcoin</Link>{' · '}
+            <Link className={cn({ 'underline': pathname === '/nfts' })} to='/nfts'>non-fungible tokens</Link>{' · '}
+            <Link className={cn({ 'underline': pathname === '/tesla' })} to='/tesla'>tesla</Link>
+          </nav>
         </header>
         <Outlet />
         <ScrollRestoration />

@@ -60,7 +60,8 @@ export default function Index() {
               </span>
             </div>
             <div className='text-sm'>
-              <span className='hover:underline cursor-pointer'>{link.shares} shares</span> | <span>{link.date}</span>
+              <span className='hover:underline cursor-pointer'>{link.shares} shares</span>{' · '}
+              <span>{link.date}</span>
             </div>
           </li>
         ))}
