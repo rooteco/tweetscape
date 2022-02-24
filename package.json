@@ -1,8 +1,11 @@
 {
-  "name": "remix-app-template",
+  "name": "tweetscape",
   "private": true,
-  "description": "",
-  "license": "",
+  "version": "0.0.0",
+  "author": "Nicholas Chiang <tweetscape@nicholaschiang.com>",
+  "homepage": "https://tweetscape.com",
+  "description": "The Supercharged Twitter Feed",
+  "license": "AGPL-3.0",
   "sideEffects": false,
   "scripts": {
     "build:remix": "cross-env NODE_ENV=production remix build",

@@ -4401,27 +4401,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"remix-app-template@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "remix-app-template@workspace:."
-  dependencies:
-    "@remix-run/dev": ^1.2.2
-    "@remix-run/react": ^1.2.2
-    "@remix-run/serve": ^1.2.2
-    "@types/react": ^17.0.24
-    "@types/react-dom": ^17.0.9
-    autoprefixer: ^10.4.2
-    concurrently: ^7.0.0
-    cross-env: ^7.0.3
-    postcss: ^8.4.6
-    react: ^17.0.2
-    react-dom: ^17.0.2
-    remix: ^1.2.2
-    tailwindcss: ^3.0.23
-    typescript: ^4.5.5
-  languageName: unknown
-  linkType: soft
-
 "remix@npm:^1.2.2":
   version: 1.2.2
   resolution: "remix@npm:1.2.2"
@@ -5063,6 +5042,27 @@ __metadata:
   checksum: dbe628ef87f66691d5d2959b3e41b9ca0045c3ee3c7c7b906cc1e328b39f199bb1ad9e671c39025bd56122ac57dfbf7385a94843b1cc07c60a4db74795829acd
   languageName: node
   linkType: hard
+
+"tweetscape@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "tweetscape@workspace:."
+  dependencies:
+    "@remix-run/dev": ^1.2.2
+    "@remix-run/react": ^1.2.2
+    "@remix-run/serve": ^1.2.2
+    "@types/react": ^17.0.24
+    "@types/react-dom": ^17.0.9
+    autoprefixer: ^10.4.2
+    concurrently: ^7.0.0
+    cross-env: ^7.0.3
+    postcss: ^8.4.6
+    react: ^17.0.2
+    react-dom: ^17.0.2
+    remix: ^1.2.2
+    tailwindcss: ^3.0.23
+    typescript: ^4.5.5
+  languageName: unknown
+  linkType: soft
 
 "type-fest@npm:^0.13.1":
   version: 0.13.1
