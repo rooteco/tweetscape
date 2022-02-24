@@ -1,5 +1,9 @@
 import { redirect } from 'remix';
+import type { LoaderFunction } from 'remix';
 
-export async function loader() {
-  return redirect('/eth');
+import { topic } from '~/cookies.server';
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const cookie = await topic.parse(request.headers.get('cookie'));
+  return redirect(`/${cookie || 'eth'}`);
 }

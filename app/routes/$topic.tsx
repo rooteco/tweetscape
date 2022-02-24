@@ -1,4 +1,8 @@
-import { useLoaderData } from 'remix';
+import { json, useLoaderData } from 'remix';
+import type { LoaderFunction } from 'remix';
+import invariant from 'tiny-invariant';
+
+import { topic } from '~/cookies.server';
 
 interface Link {
   url: string;
@@ -8,8 +12,9 @@ interface Link {
   date: string;
 }
 
-export async function loader(): Promise<Link[]> {
-  return [
+export const loader: LoaderFunction = async ({ params }) => {
+  invariant(params.topic, 'expected params.topic');
+  return json([
     {
       url: 'https://www.cbsnews.com/news/ukraine-russia-invasion-economic-impact-united-states',
       domain: 'cbsnews.com',
@@ -38,8 +43,8 @@ export async function loader(): Promise<Link[]> {
       shares: 4,
       date: '12h',
     },
-  ];
-}
+  ], { headers: { 'Set-Cookie': await topic.serialize(params.topic) } });
+};
 
 export default function Index() {
   const links = useLoaderData<Link[]>();
