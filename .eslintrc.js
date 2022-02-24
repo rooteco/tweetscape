@@ -53,6 +53,11 @@ module.exports = {
     // @see {@link https://eslint.org/docs/rules/no-multiple-empty-lines}
     'no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 0 }],
 
+    // Remix encourages throwing response literals in loader functions.
+    // @see {@link https://remix.run/docs/en/v1/guides/not-found#how-to-send-a-404}
+    // @see {@link https://typescript-eslint.io/rules/no-throw-literal}
+    '@typescript-eslint/no-throw-literal': 'warn',
+
     // Disallow unused variables (variables that are declared and not used
     // anywhere in our code).
     // @see {@link https://eslint.org/docs/rules/no-unused-vars}
@@ -140,6 +145,11 @@ module.exports = {
         allowSeparatedGroups: true,
       },
     ],
+
+    // Remix requires specific named exports for route files (e.g. loader).
+    // @see {@link https://remix.run/docs/en/v1/api/conventions#loader}
+    // @see {@link https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/prefer-default-export.md}
+    'import/prefer-default-export': 'warn',
 
     // Split imports by type. This adds a newline between each import group
     // (e.g. built-ins, externals, internals). Those import groups are then

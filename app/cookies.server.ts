@@ -1,6 +1,6 @@
 import { createCookie } from 'remix';
 
-declare var COOKIE_SECRET: string;
+declare const COOKIE_SECRET: string;
 export const topic = createCookie('topic', {
   path: '/',
   sameSite: 'lax',
