@@ -23,6 +23,13 @@ export const links: LinksFunction = () => [
   },
   {
     rel: 'preload',
+    href: '/fonts/serif-latin-400.woff2',
+    as: 'font',
+    type: 'font/woff2',
+    crossOrigin: 'anonymous',
+  },
+  {
+    rel: 'preload',
     href: '/fonts/serif-latin-600.woff2',
     as: 'font',
     type: 'font/woff2',
