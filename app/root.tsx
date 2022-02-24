@@ -11,7 +11,15 @@ import type { LinksFunction, MetaFunction } from 'remix';
 import styles from '~/styles/app.css';
 
 export const links: LinksFunction = () => {
-  return [{ rel: 'stylesheet', href: styles }];
+  return [
+    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
+    { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&display=swap' },
+    { rel: 'preconnect', href: 'https://api.fontshare.com' },
+    { rel: 'preconnect', href: 'https://cdn.fontshare.com', crossOrigin: 'anonymous' },
+    { rel: 'stylesheet', href: 'https://api.fontshare.com/css?f[]=synonym@1&display=swap' },
+    { rel: 'stylesheet', href: styles },
+  ];
 };
 
 export const meta: MetaFunction = () => {
@@ -27,7 +35,11 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className='w-full px-4 xl:px-0 max-w-screen-lg mx-auto my-4'>
+        <header className='py-4 border-b-2 border-black whitespace-no-wrap'>
+          <h1 className='font-serif font-semibold text-6xl'>Tweetscape</h1>
+          <h2 className='font-serif text-xl text-primary-600 italic'>The Supercharged Twitter Feed</h2>
+        </header>
         <Outlet />
         <ScrollRestoration />
         <Scripts />
