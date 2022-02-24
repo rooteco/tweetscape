@@ -5,10 +5,7 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'promise'],
   parserOptions: {
-    project: [
-      path.resolve(__dirname, 'tsconfig.json'),
-      path.resolve(__dirname, 'cypress/tsconfig.json'),
-    ],
+    project: [path.resolve(__dirname, 'tsconfig.json')],
   },
   extends: [
     'airbnb',
@@ -17,7 +14,6 @@ module.exports = {
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'plugin:@next/next/recommended',
     'plugin:promise/recommended',
     'prettier',
   ],

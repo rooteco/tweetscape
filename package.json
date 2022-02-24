@@ -19,7 +19,9 @@
     "dev:miniflare": "cross-env NODE_ENV=development miniflare ./build/index.js --watch",
     "dev": "yarn dev:build && concurrently yarn:dev:remix yarn:dev:css yarn:dev:miniflare",
     "start": "cross-env NODE_ENV=production miniflare ./build/index.js",
-    "deploy": "yarn build && yarn wrangler publish"
+    "deploy": "yarn build && yarn wrangler publish",
+    "lint": "eslint --ext .js,.ts,.jsx,.tsx app",
+    "style": "pretty-quick"
   },
   "dependencies": {
     "@remix-run/cloudflare-workers": "^1.2.2",
