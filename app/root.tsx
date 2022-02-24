@@ -23,7 +23,7 @@ export const links: LinksFunction = () => {
 };
 
 export const meta: MetaFunction = () => {
-  return { title: 'New Remix App' };
+  return { title: 'Tweetscape: The Supercharged Twitter Feed' };
 };
 
 export default function App() {
