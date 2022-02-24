@@ -39,7 +39,7 @@ export default function App() {
       </head>
       <body className='w-full px-4 xl:px-0 max-w-screen-xl mx-auto my-4'>
         <header className='py-4 mb-6 border-b-2 border-black whitespace-no-wrap flex justify-between items-end'>
-          <h1 className='font-serif font-semibold text-6xl'>Tweetscape</h1>
+          <h1 className='font-serif font-semibold text-6xl'>tweetscape</h1>
           <nav className='font-serif font-semibold text-lg'>
             <Link className={cn({ 'underline': pathname === '/eth' })} to='/eth'>ethereum</Link>{' · '}
             <Link className={cn({ 'underline': pathname === '/btc' })} to='/btc'>bitcoin</Link>{' · '}
