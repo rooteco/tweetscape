@@ -12,6 +12,8 @@ import styles from '~/styles/app.css';
 
 export const links: LinksFunction = () => {
   return [
+    { rel: 'preload', href: '/fonts/sans.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
+    { rel: 'preload', href: '/fonts/serif-latin-600.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
     { rel: 'stylesheet', href: '/fonts/serif.css' },
     { rel: 'stylesheet', href: '/fonts/sans.css' },
     { rel: 'stylesheet', href: styles },
