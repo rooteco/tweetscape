@@ -75,7 +75,7 @@ export default function App() {
           </nav>
         </header>
         <Outlet />
-        <footer className='py-4 mt-8 border-t-2 border-black whitespace-no-wrap flex justify-end items-end'>
+        <footer className='py-4 mt-10 border-t-2 border-black whitespace-no-wrap flex justify-end items-end'>
           <p className='font-serif text-sm text-center md:text-right'>
             all content copyright{' '}
             <a
