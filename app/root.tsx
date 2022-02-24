@@ -37,8 +37,8 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className='w-full px-4 xl:px-0 max-w-screen-lg mx-auto my-4'>
-        <header className='py-4 border-b-2 border-black whitespace-no-wrap flex justify-between items-end'>
+      <body className='w-full px-4 xl:px-0 max-w-screen-xl mx-auto my-4'>
+        <header className='py-4 mb-6 border-b-2 border-black whitespace-no-wrap flex justify-between items-end'>
           <h1 className='font-serif font-semibold text-6xl'>Tweetscape</h1>
           <nav className='font-serif font-semibold text-lg'>
             <Link className={cn({ 'underline': pathname === '/eth' })} to='/eth'>ethereum</Link>{' · '}
@@ -48,6 +48,12 @@ export default function App() {
           </nav>
         </header>
         <Outlet />
+        <footer className='py-4 mt-8 border-t-2 border-black whitespace-no-wrap flex justify-end items-end'>
+          <p className='font-serif text-sm text-center md:text-right'>
+            all content copyright <a className='underline' href='https://roote.co' target='_blank' rel='noopener noreferrer'>roote</a> © 2022 · all rights reserved<br />
+            read more about <a className='underline' href='https://www.roote.co/tweetscape/vision' target='_blank' rel='noopener noreferrer'>our vision</a> and <a className='underline' href='https://github.com/nicholaschiang/tweetscape#how-it-works' target='_blank' rel='noopener noreferrer'>how it works</a> · <a className='underline' href='https://github.com/nicholaschiang/tweetscape' target='_blank' rel='noopener noreferrer'>github</a>
+          </p>
+        </footer>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

@@ -94,7 +94,7 @@ export default function Index() {
   const links = useLoaderData<Link[]>();
   return (
     <main>
-      <ol className='list-decimal text-sm ml-4 mr-4 mt-6'>
+      <ol className='list-decimal text-sm ml-4 mr-4'>
         {links.map((link) => (
           <li key={link.url} className='my-1'>
             <div>
