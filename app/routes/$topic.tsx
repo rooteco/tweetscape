@@ -4,14 +4,9 @@ import invariant from 'tiny-invariant';
 
 import { topic } from '~/cookies.server';
 
-interface User {
-  name: { title: string; first: string; last: string };
-  email: string;
-  login: { uuid: string; username: string };
-  phone: string;
-  cell: string;
-  id: { name: string; value: string };
-  picture: { large: string; medium: string; thumbnail: string };
+interface Pic {
+  id: string;
+  src: string;
 }
 
 interface Link {
@@ -19,9 +14,10 @@ interface Link {
   domain: string;
   title: string;
   description: string;
-  shares: User[];
+  shares: Pic[];
   date: string;
 }
+
 // Return a random integer between min and max (inclusive).
 function random(min: number, max: number) {
   return min + Math.floor(Math.random() * (max - min + 1));
@@ -44,12 +40,19 @@ function sample<T>(obj: T[], num: number): T[] {
   return sampl.slice(0, n);
 }
 
+let id = 0;
+function pic() {
+  const src = `/pics/${
+    sample(['brendon', 'jasmine', 'rauchg', 'rhys', 'ryan', 'vanessa'], 1)[0]
+  }.jpg`;
+  id += 1;
+  return { id, src };
+}
+
 export const loader: LoaderFunction = async ({ params }) => {
   invariant(params.topic, 'expected params.topic');
   if (!['eth', 'btc', 'nfts', 'tesla'].includes(params.topic))
     throw new Response('Not Found', { status: 404 });
-  const res = await fetch('https://randomuser.me/api?results=100');
-  const { results: users } = (await res.json()) as { results: User[] };
   return json(
     [
       {
@@ -58,8 +61,10 @@ export const loader: LoaderFunction = async ({ params }) => {
         title: 'How the Ukraine crisis is already hitting Americans’ wallets',
         description:
           'With higher gas prices, inflation and supply-chain shocks, the conflict in Europe is spilling over into the U.S. economy.',
-        shares: sample(users, 25),
-        date: 'Feb 23 · 05:54 AM',
+        shares: Array(25)
+          .fill(null)
+          .map(() => pic()),
+        date: 'Feb 23 • 05:54 AM',
       },
       {
         url: 'https://www.theblockcrypto.com/post/134871/luna-founation-guard-token-sale',
@@ -68,8 +73,10 @@ export const loader: LoaderFunction = async ({ params }) => {
           'Luna Foundation Guard raises $1 billion to form bitcoin reserve for UST stablecoin',
         description:
           'The Luna Foundation Guard (LFG) has raised $1 billion through an over-the-counter sale of LUNA.',
-        shares: sample(users, 23),
-        date: 'Feb 22 · 05:02 PM',
+        shares: Array(23)
+          .fill(null)
+          .map(() => pic()),
+        date: 'Feb 22 • 05:02 PM',
       },
       {
         url: 'https://news.bloomberglaw.com/securities-law/sec-accredited-investor-definition-tweak-faces-equity-concerns',
@@ -78,7 +85,9 @@ export const loader: LoaderFunction = async ({ params }) => {
           'SEC ‘Accredited Investor’ Definition Tweak Faces Equity Concerns',
         description:
           'The SEC’s plan to reconsider who is eligible to invest in startups’ privately-held share offerings is stirring questions about equity and diversity.',
-        shares: sample(users, 16),
+        shares: Array(16)
+          .fill(null)
+          .map(() => pic()),
         date: '9h ago',
       },
       {
@@ -88,7 +97,9 @@ export const loader: LoaderFunction = async ({ params }) => {
           'Exklusiv: SPD, Grüne und Linke wollen Bitcoin in Europa verbieten',
         description:
           'Das EU-Parlament spricht sich für ein Dienstleistungsverbot mit Bitcoin aus – auf Anraten von SPD, Grünen und Linken.',
-        shares: sample(users, 13),
+        shares: Array(13)
+          .fill(null)
+          .map(() => pic()),
         date: '12h ago',
       },
     ],
@@ -125,25 +136,14 @@ export default function Index() {
                 )
               </span>
             </div>
-            <div className='text-sm lowercase flex items-center mt-0.5'>
+            <p className='text-sm'>{link.description}</p>
+            <div className='text-sm text-stone-600 lowercase flex items-center mt-1.5'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-2.5'>
-                {link.shares.map((user) => (
+                {link.shares.map(({ id, src }) => (
                   <img
                     className='inline-block h-6 w-6 rounded-full border-2 border-white -mr-2'
-                    key={user.id.value}
-                    src={`/pics/${
-                      sample(
-                        [
-                          'brendon',
-                          'jasmine',
-                          'rauchg',
-                          'rhys',
-                          'ryan',
-                          'vanessa',
-                        ],
-                        1
-                      )[0]
-                    }.jpg`}
+                    key={id}
+                    src={src}
                     alt=''
                   />
                 ))}
@@ -151,7 +151,7 @@ export default function Index() {
               <span className='ml-1 hover:underline cursor-pointer'>
                 {link.shares.length} Tweets
               </span>
-              <span className='mx-1'>·</span>
+              <span className='mx-1'>•</span>
               <span>{link.date}</span>
             </div>
           </li>
