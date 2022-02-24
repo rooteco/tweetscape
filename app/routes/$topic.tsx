@@ -45,6 +45,48 @@ export const loader: LoaderFunction = async ({ params }) => {
       shares: 4,
       date: '12h',
     },
+    {
+      url: 'https://www.cbsnews.com/news/ukraine-russia-invasion-economic-impact-united-states',
+      domain: 'cbsnews.com',
+      title: 'How the Ukraine crisis is already hitting Americans’ wallets',
+      shares: 3,
+      date: '13h',
+    }, 
+    {
+      url: 'https://www.theblockcrypto.com/post/134871/luna-founation-guard-token-sale',
+      domain: 'theblockcrypto.com',
+      title: 'Luna Foundation Guard raises $1 billion to form bitcoin reserve for UST stablecoin',
+      shares: 9,
+      date: '14h',
+    },
+    {
+      url: 'https://news.bloomberglaw.com/securities-law/sec-accredited-investor-definition-tweak-faces-equity-concerns',
+      domain: 'news.bloomberglaw.com',
+      title: 'SEC ‘Accredited Investor’ Definition Tweak Faces Equity Concerns',
+      shares: 8,
+      date: '15h',
+    },
+    {
+      url: 'https://www.btc-echo.de/news/bitcoin-spd-gruene-und-linke-fordern-verbot-in-der-eu-135678/',
+      domain: 'btc-echo.de',
+      title: 'Exklusiv: SPD, Grüne und Linke wollen Bitcoin in Europa verbieten',
+      shares: 4,
+      date: '16h',
+    },
+    {
+      url: 'https://www.cbsnews.com/news/ukraine-russia-invasion-economic-impact-united-states',
+      domain: 'cbsnews.com',
+      title: 'How the Ukraine crisis is already hitting Americans’ wallets',
+      shares: 7,
+      date: '18h',
+    }, 
+    {
+      url: 'https://www.theblockcrypto.com/post/134871/luna-founation-guard-token-sale',
+      domain: 'theblockcrypto.com',
+      title: 'Luna Foundation Guard raises $1 billion to form bitcoin reserve for UST stablecoin',
+      shares: 3,
+      date: '24h',
+    },
   ], { headers: { 'Set-Cookie': await topic.serialize(params.topic) } });
 };
 
