@@ -18,7 +18,10 @@ It also shows you the conversation around each link; you get to see the best lin
 Tweetscape is a full-stack React application built with [Remix](https://remix.run) and React Router.
 
 Every 24 hours, when a user visits [`tweetscape.com`](https://tweetscape.com), we:
-1. Fetch the top influencers from [`hive.one`](https://docs.hive.one/core-resources/top-influencers): `GET https://api.hive.one/v1/influencers/top`
+1. Fetch the top influencers from [`hive.one`](https://docs.hive.one/core-resources/top-influencers) (using an [`ETag`](https://docs.hive.one/using-etags) to de-dupe requests): 
+
+`GET https://api.hive.one/v1/influencers/top`
+
 2. Fetch the top 50 links that were most abundantly (and most recently) shared by those influencers on Twitter:
 3. Server-side render that list of links (and their corresponding conversations) to send to the client—you.
 
