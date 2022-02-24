@@ -12,12 +12,8 @@ import styles from '~/styles/app.css';
 
 export const links: LinksFunction = () => {
   return [
-    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-    { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&display=swap' },
-    { rel: 'preconnect', href: 'https://api.fontshare.com' },
-    { rel: 'preconnect', href: 'https://cdn.fontshare.com', crossOrigin: 'anonymous' },
-    { rel: 'stylesheet', href: 'https://api.fontshare.com/css?f[]=synonym@1&display=swap' },
+    { rel: 'stylesheet', href: '/fonts/serif.css' },
+    { rel: 'stylesheet', href: '/fonts/sans.css' },
     { rel: 'stylesheet', href: styles },
   ];
 };
