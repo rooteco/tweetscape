@@ -1,4 +1,4 @@
-name = "remix-cloudflare-workers"
+name = "tweetscape"
 type = "javascript"
 
 zone_id = ""

@@ -7,6 +7,7 @@
   "description": "The Supercharged Twitter Feed",
   "license": "AGPL-3.0",
   "sideEffects": false,
+  "main": "build/index.js",
   "scripts": {
     "postinstall": "remix setup cloudflare-workers",
     "build:remix": "cross-env NODE_ENV=production remix build",
@@ -17,7 +18,7 @@
     "dev:miniflare": "cross-env NODE_ENV=development miniflare ./build/index.js --watch",
     "dev": "cross-env NODE_ENV=development remix build && run-p dev:*",
     "start": "cross-env NODE_ENV=production miniflare ./build/index.js",
-    "deploy": "yarn build && wrangler publish"
+    "deploy": "yarn build && yarn wrangler publish"
   },
   "dependencies": {
     "@remix-run/cloudflare-workers": "^1.2.2",
