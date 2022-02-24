@@ -2,6 +2,7 @@
 
 Tweetscape surfaces the best "insider" information—and the conversation around it—as shared by the smartest people in a given topic (e.g. ETH, BTC, NFTs, or Tesla) on Twitter.
 Tweetscape curates article links shared by the most reputable accounts on Twitter for a number of topics (e.g. ETH, BTC, NFTs, or Tesla).
+Learn more [here](https://www.roote.co/tweetscape).
 
 ## How it works
 
