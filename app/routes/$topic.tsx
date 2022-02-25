@@ -1,12 +1,39 @@
 import { json, useLoaderData } from 'remix';
 import type { LoaderFunction } from 'remix';
+import type { Status as Tweet } from 'twitter-d';
 import invariant from 'tiny-invariant';
 
+import log from '~/log';
 import { topic } from '~/cookies.server';
 
-interface Pic {
+interface SocialAccount {
+  created_at: string;
+  followers_count: string;
+  following_count: string;
   id: string;
-  src: string;
+  name: string;
+  personal: boolean;
+  profile_image_url: string;
+  screen_name: string;
+  tweets_count: string;
+  updated_at: string;
+}
+
+interface Influencer {
+  attention_score: number;
+  attention_score_change_week: number;
+  cluster_id: string;
+  created_at: string;
+  id: string;
+  identity: {
+    clusters: unknown[];
+    id: string;
+    social_accounts: { social_account: SocialAccount }[];
+  };
+  insider_score: number;
+  personal_rank: string;
+  rank: string;
+  social_account: { social_account: SocialAccount };
 }
 
 interface Link {
@@ -14,8 +41,8 @@ interface Link {
   domain: string;
   title: string;
   description: string;
-  shares: Pic[];
-  date: string;
+  shares: Share[];
+  date: Date;
 }
 
 // Return a random integer between min and max (inclusive).
@@ -49,10 +76,113 @@ function pic() {
   return { id, src };
 }
 
+declare const HIVE_TOKEN: string;
+declare const TWITTER_TOKEN: string;
 export const loader: LoaderFunction = async ({ params }) => {
   invariant(params.topic, 'expected params.topic');
   if (!['eth', 'btc', 'nfts', 'tesla'].includes(params.topic))
     throw new Response('Not Found', { status: 404 });
+  log.info('Fetching influencers...');
+  const hive = await fetch(
+    `https://api.borg.id/influence/clusters/Tesla/influencers?page=0&sort_by=score&sort_direction=desc&influence_type=all`,
+    {
+      headers: { authorization: `Token ${HIVE_TOKEN}` },
+    }
+  );
+  const { influencers } = (await hive.json()) as { influencers: Influencer[] };
+  log.debug(`Influencer: ${JSON.stringify(influencers[0], null, 2)}`);
+  log.info('Fetching tweets...');
+  // I'm limited to 512 characters in my Twitter search query and thus can't
+  // filter by all 100 of the top ranked influencers from Hive. Instead, I just
+  // search for tweets made by the top 25 influencers in the last 7 days.
+  const query = `tesla has:links (${influencers
+    .slice(0, 25)
+    .map((i) => `from:${i.social_account.social_account.screen_name}`)
+    .join(' OR ')})`;
+  // TODO: Decide whether or not to sort by recency or relevancy.
+  const twitter = await fetch(
+    `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(
+      query
+    )}&tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&expansions=referenced_tweets.id,referenced_tweets.id.author_id&max_results=100`,
+    {
+      headers: { authorization: `Bearer ${TWITTER_TOKEN}` },
+    }
+  );
+  const data = await twitter.json();
+  log.debug(`Data: ${JSON.stringify(data, null, 2)}`);
+  log.debug(`Tweet: ${JSON.stringify(data.data[0], null, 2)}`);
+  log.info(`Fetched ${data.data.length} tweets.`);
+  // Only look at tweets that link to articles and content outside of Twitter.
+  // TODO: Also add the attention scores of every referenced tweet. Ideally, we
+  // want the sum of every single time the link has been shared on Twitter. This
+  // is, however, beyond the scope of what Tweetscape would be capable of, so we
+  // do the next best thing:
+  // - Start with the author's attention score.
+  // - Add the attention scores of the authors of the quoted or retweeted tweet.
+  const links: { url: object; score: number; tweets: object[] } = [];
+  data.data
+    .filter((t) =>
+      t.entities.urls?.some(
+        (l) => l && l.expanded_url && !/twitter.com/.test(l.expanded_url)
+      )
+    )
+    .forEach((t: Tweet) => {
+      // TODO: Perhaps remove the assumption that each tweet only has one link.
+      const url = t.entities.urls.filter(
+        (l) => l && l.expanded_url && !/twitter.com/.test(l.expanded_url)
+      )[0];
+      const author = influencers.find(
+        (i) => i.social_account.social_account.id === t.author_id
+      );
+
+      //log.debug(`Tweet (https://twitter.com/${author.social_account.social_account.screen_name}/status/${t.id}): ${t.text}`);
+      //log.debug(`Author (https://hive.one/p/${author.social_account.social_account.screen_name}): ${author.social_account.social_account.name} (@${author.social_account.social_account.screen_name}) (Rank: ${author.rank}) (Insider Score: ${author.insider_score.toFixed(2)}) (Attention Score: ${author.attention_score.toFixed(2)}) (Weekly Change: ${author.attention_score_change_week.toFixed(2)})`);
+      //log.debug(`Links: ${JSON.stringify(t.entities.urls.filter((l) => l && l.expanded_url && !/twitter.com/.test(l.expanded_url)), null, 2)}`);
+
+      //log.debug(`Tweet: ${JSON.stringify(t, null, 2)}`);
+      const link = links.find((t) => t.url.url === url.url) ?? {
+        url,
+        tweets: [{ ...t, author }],
+      };
+      t.referenced_tweets?.forEach((rt) => {
+        log.debug(`Referenced tweet: ${JSON.stringify(rt, null, 2)}`);
+        if (rt === 'replied_to')
+          return log.debug(
+            `Skipping reply to tweet: ${JSON.stringify(rt, null, 2)}`
+          );
+        if (link.tweets.some((tt) => rt.id === tt.id))
+          return log.debug(
+            `Skipping already counted tweet: ${JSON.stringify(rt, null, 2)}`
+          );
+        // TODO: Recursively add referenced tweets (unless already counted).
+        const rtt = data.data.find((tt) => rt.id === tt.id);
+        if (!rtt)
+          return log.warn(
+            `Missing referenced tweet: ${JSON.stringify(rt, null, 2)}`
+          );
+        const rta = influencers.find(
+          (i) => i.social_account.social_account.id === rtt.author_id
+        );
+        if (!rta)
+          return log.warn(
+            `Missing referenced tweet author: ${JSON.stringify(rtt, null, 2)}`
+          );
+        log.debug(
+          `Adding referenced parent tweet score (${rta.social_account.social_account.screen_name}): ${rta.attention_score}`
+        );
+        link.tweets.push({ ...rtt, author: rta });
+      });
+      if (!links.includes(link)) links.push(link);
+    });
+
+  // Sort links descendingly by attention score sum.
+  const ranked = links
+    .map((l) => ({
+      ...l,
+      score: l.tweets.reduce((s, c) => s + c.author.attention_score, 0),
+    }))
+    .sort((a, b) => b.score - a.score);
+  //log.debug(`Links: ${JSON.stringify(ranked, null, 2)}`);
   return json(
     [
       {
