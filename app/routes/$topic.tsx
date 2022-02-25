@@ -185,7 +185,7 @@ export default function Index() {
           <li key={link.url} className='my-4'>
             <div className='ml-2'>
               <a
-                className='font-serif font-semibold visited:text-gray-400 hover:underline text-base'
+                className='font-serif font-semibold hover:underline text-base'
                 href={link.url}
                 target='_blank'
                 rel='noopener noreferrer'
@@ -195,7 +195,7 @@ export default function Index() {
               <span className='text-sm'>
                 (
                 <a
-                  className='hover:underline visited:text-gray-400'
+                  className='hover:underline'
                   href={`https://${link.domain}`}
                   target='_blank'
                   rel='noopener noreferrer'
@@ -206,7 +206,7 @@ export default function Index() {
               </span>
             </div>
             <p className='text-sm ml-2'>{link.description}</p>
-            <div className='text-sm text-gray-500 lowercase flex items-center mt-1.5 ml-2'>
+            <div className='text-sm text-stone-600 lowercase flex items-center mt-1.5 ml-2'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-2.5'>
                 {link.shares.map((picture) => (
                   <img
