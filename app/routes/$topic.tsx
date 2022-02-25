@@ -180,10 +180,10 @@ export default function Index() {
   const links = useLoaderData<Link[]>();
   return (
     <main>
-      <ol className='list-decimal text-sm ml-4 mr-4'>
+      <ol className='list-decimal text-sm ml-7 mr-4'>
         {links.map((link) => (
           <li key={link.url} className='my-4'>
-            <div>
+            <div className='ml-2'>
               <a
                 className='font-serif font-semibold hover:underline text-base'
                 href={link.url}
@@ -205,8 +205,8 @@ export default function Index() {
                 )
               </span>
             </div>
-            <p className='text-sm'>{link.description}</p>
-            <div className='text-sm text-stone-600 lowercase flex items-center mt-1.5'>
+            <p className='text-sm ml-2'>{link.description}</p>
+            <div className='text-sm text-stone-600 lowercase flex items-center mt-1.5 ml-2'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-2.5'>
                 {link.shares.map((picture) => (
                   <img
