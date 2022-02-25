@@ -180,7 +180,7 @@ export default function Index() {
   const links = useLoaderData<Link[]>();
   return (
     <main>
-      <ol className='list-decimal text-sm ml-7 mr-4'>
+      <ol className='list-decimal text-sm ml-6 mr-4'>
         {links.map((link) => (
           <li key={link.url} className='my-4'>
             <div className='ml-2'>
