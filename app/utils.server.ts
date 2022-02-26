@@ -1,3 +1,5 @@
+export { decode } from 'html-entities';
+
 export enum LogLevel {
   Trace,
   Debug,
@@ -31,6 +33,6 @@ export class Logger {
 }
 
 declare const ENV: 'development' | 'production' | 'test';
-export default new Logger(
+export const log = new Logger(
   ENV === 'development' ? LogLevel.Debug : LogLevel.Info
 );

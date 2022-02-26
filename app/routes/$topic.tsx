@@ -2,7 +2,7 @@ import { json, useLoaderData } from 'remix';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
-import log from '~/log';
+import { decode, log } from '~/utils.server';
 import { topic } from '~/cookies.server';
 
 interface Entity {
@@ -285,57 +285,38 @@ export const loader: LoaderFunction = async ({ params }) => {
     ranked.map(async (l) => {
       const url = l.url.expanded_url;
       const res = await fetch(url);
-      const html = await res.text();
-      // TODO: Use CloudFlare's HTMLRewriter to do this HTML parsing.
-      let descriptionMatches =
-        /<meta\b([^>]*\bcontent=(['"])(.*)\2)?[^>]*\bproperty=["]og:description["]([^>]*\bcontent=(['"])(.*)\2)?\s*\/?[>]/.exec(
-          html
-        );
-      if (!descriptionMatches) log.warn(`No og:description matches: ${url}`);
-      descriptionMatches =
-        /<meta\b([^>]*\bcontent=(['"])(.*)\2)?[^>]*\bname=["]description["]([^>]*\bcontent=(['"])(.*)\2)?\s*\/?[>]/.exec(
-          html
-        );
-      if (!descriptionMatches) log.warn(`No description matches: ${url}`);
-      const [
-        descriptionHTML,
-        contentBeforeHTML,
-        contentBeforeQuoteMark,
-        contentBeforeText,
-        contentAfterHTML,
-        contentAfterQuoteMark,
-        contentAfterText,
-      ] = descriptionMatches ?? [];
-      const ogTitleMatches =
-        /<meta\b([^>]*\bcontent=(['"])(.*)\2)?[^>]*\bproperty=["]og:title["]([^>]*\bcontent=(['"])(.*)\2)?\s*\/?[>]/.exec(
-          html
-        );
-      if (!ogTitleMatches) log.warn(`No og:title matches: ${url}`);
-      const [
-        ogTitleHTML,
-        titleBeforeHTML,
-        titleBeforeQuoteMark,
-        titleBeforeText,
-        titleAfterHTML,
-        titleAfterQuoteMark,
-        titleAfterText,
-      ] = ogTitleMatches ?? [];
-      const titleMatches = /<title>[\n\r\s]*(.*)[\n\r\s]*<\/title>/.exec(html);
-      if (!titleMatches) log.warn(`No title matches: ${url}`);
-      const [titleHTML, titleText] = titleMatches ?? [];
+      let title = '';
+      let description = '';
+      await new HTMLRewriter()
+        .on('meta', {
+          element(el) {
+            const content = el.getAttribute('content');
+            if (content && el.getAttribute('property') === 'og:description')
+              description = content;
+            if (content && el.getAttribute('name') === 'description')
+              description = content;
+            if (content && el.getAttribute('property') === 'og:title')
+              title = content;
+          },
+        })
+        .on('title', {
+          text(txt) {
+            title += txt.text;
+          },
+        })
+        .transform(res)
+        .text();
       return {
         url,
-        domain: new URL(url).hostname.replace(/^www\./, ''),
-        title:
-          titleBeforeText || titleAfterText || titleText || l.url.display_url,
-        description:
-          contentBeforeText ||
-          contentAfterText ||
-          'no appropriate description meta tag found in article html; perhaps they did something weird like put their tag names in ALL CAPS 🤷.',
         tweets: l.tweets,
+        title: decode(title || l.url.display_url),
+        description:
+          decode(description) ||
+          'no appropriate description meta tag found in article html; perhaps they did something weird like put their tag names in ALL CAPS 🤷.',
         // TODO: Perhaps show the most recent share or the first share or the date
         // the article or content link was actually published (use metascraper).
         date: l.tweets[0].created_at,
+        domain: new URL(url).hostname.replace(/^www\./, ''),
       };
     })
   );
