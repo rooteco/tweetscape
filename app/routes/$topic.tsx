@@ -1,10 +1,80 @@
 import { json, useLoaderData } from 'remix';
 import type { LoaderFunction } from 'remix';
-import type { Status as Tweet } from 'twitter-d';
 import invariant from 'tiny-invariant';
 
 import log from '~/log';
 import { topic } from '~/cookies.server';
+
+interface Entity {
+  start: number;
+  end: number;
+}
+
+interface URL extends Entity {
+  url: string;
+  expanded_url: string;
+  display_url: string;
+  images?: { url: string; width: number; height: number }[];
+  status?: number;
+  title?: string;
+  description?: string;
+  unwound_url?: string;
+}
+
+interface Tag extends Entity {
+  tag: string;
+}
+
+interface Mention extends Entity {
+  username: string;
+  id: string;
+}
+
+interface Annotation extends Entity {
+  probability: number;
+  type: 'Organization' | 'Place' | 'Person' | 'Product';
+  normalized_text: string;
+}
+
+interface TweetRef {
+  type: 'quoted' | 'retweeted' | 'replied_to';
+  id: string;
+}
+
+interface Tweet {
+  author_id: string;
+  text: string;
+  referenced_tweets: TweetRef[];
+  id: string;
+  public_metrics: {
+    retweet_count: number;
+    reply_count: number;
+    like_count: number;
+    quote_count: number;
+  };
+  entities: {
+    urls: URL[];
+    mentions: Mention[];
+    annotations: Annotation[];
+    hashtags: Tag[];
+    cashtags: Tag[];
+  };
+  created_at: string;
+}
+
+interface TwitterSearch {
+  data: Tweet[];
+  includes: {
+    users: { id: string; name: string; username: string }[];
+    tweets: Tweet[];
+  };
+  meta: {
+    newest_id: string;
+    oldest_id: string;
+    result_count: number;
+    next_token: string;
+  };
+}
 
 interface SocialAccount {
   created_at: string;
@@ -37,12 +107,17 @@ interface Influencer {
 }
 
 interface Link {
+  url: URL;
+  tweets: (Tweet & { author: Influencer })[];
+}
+
+interface Article {
   url: string;
   domain: string;
   title: string;
   description: string;
-  shares: Share[];
-  date: Date;
+  tweets: (Tweet & { author: Influencer })[];
+  date: string;
 }
 
 // Return a random integer between min and max (inclusive).
@@ -108,10 +183,8 @@ export const loader: LoaderFunction = async ({ params }) => {
       headers: { authorization: `Bearer ${TWITTER_TOKEN}` },
     }
   );
-  const data = await twitter.json();
-  log.debug(`Data: ${JSON.stringify(data, null, 2)}`);
-  log.debug(`Tweet: ${JSON.stringify(data.data[0], null, 2)}`);
-  log.info(`Fetched ${data.data.length} tweets.`);
+  const search = (await twitter.json()) as TwitterSearch;
+  log.info(`Fetched ${search.data.length} tweets.`);
   // Only look at tweets that link to articles and content outside of Twitter.
   // TODO: Also add the attention scores of every referenced tweet. Ideally, we
   // want the sum of every single time the link has been shared on Twitter. This
@@ -119,8 +192,8 @@ export const loader: LoaderFunction = async ({ params }) => {
   // do the next best thing:
   // - Start with the author's attention score.
   // - Add the attention scores of the authors of the quoted or retweeted tweet.
-  const links: { url: object; score: number; tweets: object[] } = [];
-  data.data
+  const links: Link[] = [];
+  search.data
     .filter((t) =>
       t.entities.urls?.some(
         (l) => l && l.expanded_url && !/twitter.com/.test(l.expanded_url)
@@ -134,19 +207,42 @@ export const loader: LoaderFunction = async ({ params }) => {
       const author = influencers.find(
         (i) => i.social_account.social_account.id === t.author_id
       );
+      invariant(author, `expected tweeter (${t.author_id}) to be influencer`);
 
-      //log.debug(`Tweet (https://twitter.com/${author.social_account.social_account.screen_name}/status/${t.id}): ${t.text}`);
-      //log.debug(`Author (https://hive.one/p/${author.social_account.social_account.screen_name}): ${author.social_account.social_account.name} (@${author.social_account.social_account.screen_name}) (Rank: ${author.rank}) (Insider Score: ${author.insider_score.toFixed(2)}) (Attention Score: ${author.attention_score.toFixed(2)}) (Weekly Change: ${author.attention_score_change_week.toFixed(2)})`);
-      //log.debug(`Links: ${JSON.stringify(t.entities.urls.filter((l) => l && l.expanded_url && !/twitter.com/.test(l.expanded_url)), null, 2)}`);
+      log.debug(
+        `Tweet (https://twitter.com/${author.social_account.social_account.screen_name}/status/${t.id}): ${t.text}`
+      );
+      log.debug(
+        `Author (https://hive.one/p/${
+          author.social_account.social_account.screen_name
+        }): ${author.social_account.social_account.name} (@${
+          author.social_account.social_account.screen_name
+        }) (Rank: ${
+          author.rank
+        }) (Insider Score: ${author.insider_score.toFixed(
+          2
+        )}) (Attention Score: ${author.attention_score.toFixed(
+          2
+        )}) (Weekly Change: ${author.attention_score_change_week.toFixed(2)})`
+      );
+      log.debug(
+        `Links: ${JSON.stringify(
+          t.entities.urls.filter(
+            (l) => l && l.expanded_url && !/twitter.com/.test(l.expanded_url)
+          ),
+          null,
+          2
+        )}`
+      );
 
-      //log.debug(`Tweet: ${JSON.stringify(t, null, 2)}`);
-      const link = links.find((t) => t.url.url === url.url) ?? {
+      log.debug(`Tweet: ${JSON.stringify(t, null, 2)}`);
+      const link = links.find((l) => l.url.url === url.url) ?? {
         url,
         tweets: [{ ...t, author }],
       };
       t.referenced_tweets?.forEach((rt) => {
         log.debug(`Referenced tweet: ${JSON.stringify(rt, null, 2)}`);
-        if (rt === 'replied_to')
+        if (rt.type === 'replied_to')
           return log.debug(
             `Skipping reply to tweet: ${JSON.stringify(rt, null, 2)}`
           );
@@ -155,7 +251,9 @@ export const loader: LoaderFunction = async ({ params }) => {
             `Skipping already counted tweet: ${JSON.stringify(rt, null, 2)}`
           );
         // TODO: Recursively add referenced tweets (unless already counted).
-        const rtt = data.data.find((tt) => rt.id === tt.id);
+        const rtt = [...search.data, ...search.includes.tweets].find(
+          (tt) => rt.id === tt.id
+        );
         if (!rtt)
           return log.warn(
             `Missing referenced tweet: ${JSON.stringify(rt, null, 2)}`
@@ -182,22 +280,18 @@ export const loader: LoaderFunction = async ({ params }) => {
       score: l.tweets.reduce((s, c) => s + c.author.attention_score, 0),
     }))
     .sort((a, b) => b.score - a.score);
-  log.debug(`Links: ${JSON.stringify(ranked, null, 2)}`);
-  log.debug(`Links: ${ranked.length}`);
 
-  const articles = await Promise.all(
+  const articles: Article[] = await Promise.all(
     ranked.map(async (l) => {
       const url = l.url.expanded_url;
       const res = await fetch(url);
       const html = await res.text();
-      //log.debug(`HTML (${url}): ${html}`);
       // TODO: Use CloudFlare's HTMLRewriter to do this HTML parsing.
       let descriptionMatches =
         /<meta\b([^>]*\bcontent=(['"])(.*)\2)?[^>]*\bproperty=["]og:description["]([^>]*\bcontent=(['"])(.*)\2)?\s*\/?[>]/.exec(
           html
         );
-      if (!descriptionMatches)
-        log.warn(`No og:description matches: ${url}: ${html}`);
+      if (!descriptionMatches) log.warn(`No og:description matches: ${url}`);
       descriptionMatches =
         /<meta\b([^>]*\bcontent=(['"])(.*)\2)?[^>]*\bname=["]description["]([^>]*\bcontent=(['"])(.*)\2)?\s*\/?[>]/.exec(
           html
@@ -234,7 +328,10 @@ export const loader: LoaderFunction = async ({ params }) => {
         domain: new URL(url).hostname.replace(/^www\./, ''),
         title:
           titleBeforeText || titleAfterText || titleText || l.url.display_url,
-        description: contentBeforeText || contentAfterText || '',
+        description:
+          contentBeforeText ||
+          contentAfterText ||
+          'no appropriate description meta tag found in article html; perhaps they did something weird like put their tag names in ALL CAPS 🤷.',
         tweets: l.tweets,
         // TODO: Perhaps show the most recent share or the first share or the date
         // the article or content link was actually published (use metascraper).
@@ -242,9 +339,11 @@ export const loader: LoaderFunction = async ({ params }) => {
       };
     })
   );
-  //log.debug(`Articles: ${JSON.stringify(articles, null, 2)}`);
+  log.debug(`Articles: ${JSON.stringify(articles, null, 2)}`);
 
-  //return json(articles, { headers: { 'Set-Cookie': await topic.serialize(params.topic) } });
+  return json(articles, {
+    headers: { 'Set-Cookie': await topic.serialize(params.topic) },
+  });
   return json(
     [
       {
@@ -369,59 +468,59 @@ export const loader: LoaderFunction = async ({ params }) => {
 };
 
 export default function Index() {
-  const links = useLoaderData<Link[]>();
+  const articles = useLoaderData<Article[]>();
   return (
     <main>
       <ol className='list-decimal text-sm ml-6 mr-4'>
-        {links.map((link) => (
-          <li key={link.url} className='my-4'>
+        {articles.map((article) => (
+          <li key={article.url} className='my-4'>
             <div className='ml-2'>
               <a
                 className='font-serif font-semibold hover:underline text-base'
-                href={link.url}
+                href={article.url}
                 target='_blank'
                 rel='noopener noreferrer'
               >
-                {link.title}
+                {article.title}
               </a>{' '}
               <span className='text-sm'>
                 (
                 <a
                   className='hover:underline'
-                  href={`https://${link.domain}`}
+                  href={`https://${article.domain}`}
                   target='_blank'
                   rel='noopener noreferrer'
                 >
-                  {link.domain}
+                  {article.domain}
                 </a>
                 )
               </span>
             </div>
-            <p className='text-sm ml-2'>{link.description}</p>
+            <p className='text-sm ml-2'>{article.description}</p>
             <div className='text-sm text-stone-600 lowercase flex items-center mt-1.5 ml-2'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-2.5'>
-                {link.shares.map((picture) => (
+                {article.tweets.map((tweet) => (
                   <img
                     className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full border-2 border-white -mr-2'
-                    key={picture.id}
-                    src={picture.src}
+                    key={tweet.id}
+                    src={pic().src}
                     alt=''
                   />
                 ))}
               </span>
               <span className='ml-1 hover:underline cursor-pointer'>
-                {link.shares.length} Tweets
+                {article.tweets.length} Tweets
               </span>
               <span className='mx-1'>•</span>
               <span>
-                {new Date(link.date).toLocaleString(undefined, {
+                {new Date(article.date).toLocaleString(undefined, {
                   month: 'short',
                   day: 'numeric',
                 })}
               </span>
               <span className='mx-1'>•</span>
               <span>
-                {new Date(link.date).toLocaleString(undefined, {
+                {new Date(article.date).toLocaleString(undefined, {
                   hour: 'numeric',
                   minute: 'numeric',
                 })}

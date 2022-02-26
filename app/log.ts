@@ -30,6 +30,7 @@ export class Logger {
   }
 }
 
+declare const ENV: 'development' | 'production' | 'test';
 export default new Logger(
-  process.env.NODE_ENV === 'development' ? LogLevel.Debug : LogLevel.Info
+  ENV === 'development' ? LogLevel.Debug : LogLevel.Info
 );
