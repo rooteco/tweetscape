@@ -333,20 +333,34 @@ export default function Index() {
             <div className='text-sm text-stone-600 lowercase flex items-center mt-1.5 ml-2'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
                 {article.tweets.map((tweet) => (
-                  <img
-                    className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full border-2 border-white -mr-2 first:mr-0'
-                    src={`/img/${encodeURIComponent(
-                      tweet.author.social_account.social_account
-                        .profile_image_url
-                    )}`}
+                  <a
+                    className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full border-2 border-white -mr-2 first:mr-0 overflow-hidden'
+                    href={`https://twitter.com/${tweet.author.social_account.social_account.screen_name}/status/${tweet.id}`}
+                    rel='noopener noreferrer'
+                    target='_blank'
                     key={tweet.id}
-                    alt=''
-                  />
+                  >
+                    <img
+                      src={`/img/${encodeURIComponent(
+                        tweet.author.social_account.social_account
+                          .profile_image_url
+                      )}`}
+                      alt=''
+                    />
+                  </a>
                 ))}
               </span>
-              <span className='ml-1 hover:underline cursor-pointer'>
-                {article.tweets.length} Tweets
-              </span>
+              <a
+                className='ml-1 hover:underline cursor-pointer'
+                href={`https://twitter.com/search?q=${encodeURIComponent(
+                  article.url
+                )}`}
+                rel='noopener noreferrer'
+                target='_blank'
+              >
+                {article.tweets.length} insider
+                {article.tweets.length > 1 && 's'} tweeted
+              </a>
               <span className='mx-1'>•</span>
               <span>
                 {new Date(article.date).toLocaleString(undefined, {
