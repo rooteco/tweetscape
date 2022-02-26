@@ -149,7 +149,7 @@ module.exports = {
     // Remix requires specific named exports for route files (e.g. loader).
     // @see {@link https://remix.run/docs/en/v1/api/conventions#loader}
     // @see {@link https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/prefer-default-export.md}
-    'import/prefer-default-export': 'warn',
+    'import/prefer-default-export': 'off',
 
     // Split imports by type. This adds a newline between each import group
     // (e.g. built-ins, externals, internals). Those import groups are then
