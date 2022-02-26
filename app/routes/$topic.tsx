@@ -182,7 +182,69 @@ export const loader: LoaderFunction = async ({ params }) => {
       score: l.tweets.reduce((s, c) => s + c.author.attention_score, 0),
     }))
     .sort((a, b) => b.score - a.score);
-  //log.debug(`Links: ${JSON.stringify(ranked, null, 2)}`);
+  log.debug(`Links: ${JSON.stringify(ranked, null, 2)}`);
+  log.debug(`Links: ${ranked.length}`);
+
+  const articles = await Promise.all(
+    ranked.map(async (l) => {
+      const url = l.url.expanded_url;
+      const res = await fetch(url);
+      const html = await res.text();
+      //log.debug(`HTML (${url}): ${html}`);
+      // TODO: Use CloudFlare's HTMLRewriter to do this HTML parsing.
+      let descriptionMatches =
+        /<meta\b([^>]*\bcontent=(['"])(.*)\2)?[^>]*\bproperty=["]og:description["]([^>]*\bcontent=(['"])(.*)\2)?\s*\/?[>]/.exec(
+          html
+        );
+      if (!descriptionMatches)
+        log.warn(`No og:description matches: ${url}: ${html}`);
+      descriptionMatches =
+        /<meta\b([^>]*\bcontent=(['"])(.*)\2)?[^>]*\bname=["]description["]([^>]*\bcontent=(['"])(.*)\2)?\s*\/?[>]/.exec(
+          html
+        );
+      if (!descriptionMatches) log.warn(`No description matches: ${url}`);
+      const [
+        descriptionHTML,
+        contentBeforeHTML,
+        contentBeforeQuoteMark,
+        contentBeforeText,
+        contentAfterHTML,
+        contentAfterQuoteMark,
+        contentAfterText,
+      ] = descriptionMatches ?? [];
+      const ogTitleMatches =
+        /<meta\b([^>]*\bcontent=(['"])(.*)\2)?[^>]*\bproperty=["]og:title["]([^>]*\bcontent=(['"])(.*)\2)?\s*\/?[>]/.exec(
+          html
+        );
+      if (!ogTitleMatches) log.warn(`No og:title matches: ${url}`);
+      const [
+        ogTitleHTML,
+        titleBeforeHTML,
+        titleBeforeQuoteMark,
+        titleBeforeText,
+        titleAfterHTML,
+        titleAfterQuoteMark,
+        titleAfterText,
+      ] = ogTitleMatches ?? [];
+      const titleMatches = /<title>[\n\r\s]*(.*)[\n\r\s]*<\/title>/.exec(html);
+      if (!titleMatches) log.warn(`No title matches: ${url}`);
+      const [titleHTML, titleText] = titleMatches ?? [];
+      return {
+        url,
+        domain: new URL(url).hostname.replace(/^www\./, ''),
+        title:
+          titleBeforeText || titleAfterText || titleText || l.url.display_url,
+        description: contentBeforeText || contentAfterText || '',
+        tweets: l.tweets,
+        // TODO: Perhaps show the most recent share or the first share or the date
+        // the article or content link was actually published (use metascraper).
+        date: l.tweets[0].created_at,
+      };
+    })
+  );
+  //log.debug(`Articles: ${JSON.stringify(articles, null, 2)}`);
+
+  //return json(articles, { headers: { 'Set-Cookie': await topic.serialize(params.topic) } });
   return json(
     [
       {
@@ -351,7 +413,19 @@ export default function Index() {
                 {link.shares.length} Tweets
               </span>
               <span className='mx-1'>•</span>
-              <span>{link.date}</span>
+              <span>
+                {new Date(link.date).toLocaleString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </span>
+              <span className='mx-1'>•</span>
+              <span>
+                {new Date(link.date).toLocaleString(undefined, {
+                  hour: 'numeric',
+                  minute: 'numeric',
+                })}
+              </span>
             </div>
           </li>
         ))}
