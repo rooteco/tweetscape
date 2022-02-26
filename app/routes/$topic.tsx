@@ -165,7 +165,6 @@ export const loader: LoaderFunction = async ({ params }) => {
     }
   );
   const { influencers } = (await hive.json()) as { influencers: Influencer[] };
-  log.debug(`Influencer: ${JSON.stringify(influencers[0], null, 2)}`);
   log.info('Fetching tweets...');
   // I'm limited to 512 characters in my Twitter search query and thus can't
   // filter by all 100 of the top ranked influencers from Hive. Instead, I just
@@ -193,83 +192,88 @@ export const loader: LoaderFunction = async ({ params }) => {
   // - Start with the author's attention score.
   // - Add the attention scores of the authors of the quoted or retweeted tweet.
   const links: Link[] = [];
+  const isArticleURL = (l?: URL) =>
+    l && l.expanded_url && !/twitter.com/.test(l.expanded_url);
   search.data
-    .filter((t) =>
-      t.entities.urls?.some(
-        (l) => l && l.expanded_url && !/twitter.com/.test(l.expanded_url)
-      )
-    )
+    .filter((t) => t.entities.urls?.some(isArticleURL))
     .forEach((t: Tweet) => {
-      // TODO: Perhaps remove the assumption that each tweet only has one link.
-      const url = t.entities.urls.filter(
-        (l) => l && l.expanded_url && !/twitter.com/.test(l.expanded_url)
-      )[0];
+      const url = t.entities.urls.filter(isArticleURL)[0];
       const author = influencers.find(
         (i) => i.social_account.social_account.id === t.author_id
       );
       invariant(author, `expected tweeter (${t.author_id}) to be influencer`);
 
+      const link = links.find(
+        (l) => l.url.expanded_url === url.expanded_url
+      ) ?? { url, tweets: [] };
+
+      log.debug('============================================================');
       log.debug(
-        `Tweet (https://twitter.com/${author.social_account.social_account.screen_name}/status/${t.id}): ${t.text}`
-      );
-      log.debug(
-        `Author (https://hive.one/p/${
+        `Author: ${
+          author.social_account.social_account.id
+        } | https://hive.one/p/${
           author.social_account.social_account.screen_name
-        }): ${author.social_account.social_account.name} (@${
+        } | ${author.social_account.social_account.name} | @${
           author.social_account.social_account.screen_name
-        }) (Rank: ${
+        } | Rank: ${
           author.rank
-        }) (Insider Score: ${author.insider_score.toFixed(
+        } | Insider Score: ${author.insider_score.toFixed(
           2
-        )}) (Attention Score: ${author.attention_score.toFixed(
+        )} | Attention Score: ${author.attention_score.toFixed(
           2
-        )}) (Weekly Change: ${author.attention_score_change_week.toFixed(2)})`
+        )} | Weekly Change: ${author.attention_score_change_week.toFixed(2)}`
       );
       log.debug(
-        `Links: ${JSON.stringify(
-          t.entities.urls.filter(
-            (l) => l && l.expanded_url && !/twitter.com/.test(l.expanded_url)
-          ),
-          null,
-          2
-        )}`
+        `Link: ${link.url.expanded_url} | ${link.tweets.length} tweets`
+      );
+      log.debug(
+        `Tweet: https://twitter.com/` +
+          `${author.social_account.social_account.screen_name}/status/${t.id}` +
+          `\n\n${t.text}\n`
       );
 
-      log.debug(`Tweet: ${JSON.stringify(t, null, 2)}`);
-      const link = links.find((l) => l.url.url === url.url) ?? {
-        url,
-        tweets: [{ ...t, author }],
-      };
-      t.referenced_tweets?.forEach((rt) => {
-        log.debug(`Referenced tweet: ${JSON.stringify(rt, null, 2)}`);
-        if (rt.type === 'replied_to')
-          return log.debug(
-            `Skipping reply to tweet: ${JSON.stringify(rt, null, 2)}`
-          );
-        if (link.tweets.some((tt) => rt.id === tt.id))
-          return log.debug(
-            `Skipping already counted tweet: ${JSON.stringify(rt, null, 2)}`
-          );
-        // TODO: Recursively add referenced tweets (unless already counted).
-        const rtt = [...search.data, ...search.includes.tweets].find(
-          (tt) => rt.id === tt.id
+      function count(rt: Omit<TweetRef, 'type'> & Partial<TweetRef>) {
+        if (rt.type === 'replied_to') {
+          log.debug(`Skipping replied_to tweet (${rt.id})`);
+          return;
+        }
+        if (link.tweets.some((tt) => rt.id === tt.id)) {
+          log.debug(`Skipping already counted tweet (${rt.id})`);
+          return;
+        }
+        const tweets = [...search.data, ...search.includes.tweets];
+        const tweet = tweets.find((tt) => rt.id === tt.id);
+        if (!tweet) {
+          log.warn(`Missing ${rt.type ?? 'original'} tweet (${rt.id})`);
+          return;
+        }
+        tweet.referenced_tweets?.forEach(count);
+        if (link.tweets.some((tt) => tt.author_id === tweet.author_id)) {
+          log.debug(`Skipping already counted author (${tweet.author_id})`);
+          return;
+        }
+        const a = influencers.find(
+          (i) => i.social_account.social_account.id === tweet.author_id
         );
-        if (!rtt)
-          return log.warn(
-            `Missing referenced tweet: ${JSON.stringify(rt, null, 2)}`
-          );
-        const rta = influencers.find(
-          (i) => i.social_account.social_account.id === rtt.author_id
-        );
-        if (!rta)
-          return log.warn(
-            `Missing referenced tweet author: ${JSON.stringify(rtt, null, 2)}`
-          );
+        if (!a) {
+          log.warn(`Missing ${rt.type ?? 'original'} tweet (${rt.id}) author`);
+          return;
+        }
         log.debug(
-          `Adding referenced parent tweet score (${rta.social_account.social_account.screen_name}): ${rta.attention_score}`
+          `Adding ${rt.type ?? 'original'} tweet (${rt.id}) author (https://` +
+            `hive.one/p/${a.social_account.social_account.screen_name}) score` +
+            `(${a.attention_score.toFixed(2)}) to link (${
+              link.url.expanded_url
+            })`
         );
-        link.tweets.push({ ...rtt, author: rta });
-      });
+        link.tweets.push({ ...tweet, author: a });
+        log.debug(
+          `${link.tweets.length} tweets for link (${link.url.expanded_url})`
+        );
+      }
+
+      count(t);
+
       if (!links.includes(link)) links.push(link);
     });
 
@@ -312,7 +316,8 @@ export const loader: LoaderFunction = async ({ params }) => {
         title: decode(title || l.url.display_url),
         description:
           decode(description) ||
-          'no appropriate description meta tag found in article html; perhaps they did something weird like put their tag names in ALL CAPS 🤷.',
+          'no appropriate description meta tag found in article html; perhaps' +
+            'they did something weird like put their tag names in ALL CAPS 🤷.',
         // TODO: Perhaps show the most recent share or the first share or the date
         // the article or content link was actually published (use metascraper).
         date: l.tweets[0].created_at,
@@ -320,132 +325,10 @@ export const loader: LoaderFunction = async ({ params }) => {
       };
     })
   );
-  log.debug(`Articles: ${JSON.stringify(articles, null, 2)}`);
 
   return json(articles, {
     headers: { 'Set-Cookie': await topic.serialize(params.topic) },
   });
-  return json(
-    [
-      {
-        url: 'https://www.cbsnews.com/news/ukraine-russia-invasion-economic-impact-united-states',
-        domain: 'cbsnews.com',
-        title: 'How the Ukraine crisis is already hitting Americans’ wallets',
-        description:
-          'With higher gas prices, inflation and supply-chain shocks, the conflict in Europe is spilling over into the U.S. economy.',
-        shares: Array(25)
-          .fill(null)
-          .map(() => pic()),
-        date: 'Feb 23 • 05:54 AM',
-      },
-      {
-        url: 'https://www.theblockcrypto.com/post/134871/luna-founation-guard-token-sale',
-        domain: 'theblockcrypto.com',
-        title:
-          'Luna Foundation Guard raises $1 billion to form bitcoin reserve for UST stablecoin',
-        description:
-          'The Luna Foundation Guard (LFG) has raised $1 billion through an over-the-counter sale of LUNA.',
-        shares: Array(21)
-          .fill(null)
-          .map(() => pic()),
-        date: 'Feb 22 • 05:02 PM',
-      },
-      {
-        url: 'https://news.bloomberglaw.com/securities-law/sec-accredited-investor-definition-tweak-faces-equity-concerns',
-        domain: 'news.bloomberglaw.com',
-        title:
-          'SEC ‘Accredited Investor’ Definition Tweak Faces Equity Concerns',
-        description:
-          'The SEC’s plan to reconsider who is eligible to invest in startups’ privately-held share offerings is stirring questions about equity and diversity.',
-        shares: Array(16)
-          .fill(null)
-          .map(() => pic()),
-        date: '9h ago',
-      },
-      {
-        url: 'https://www.btc-echo.de/news/bitcoin-spd-gruene-und-linke-fordern-verbot-in-der-eu-135678/',
-        domain: 'btc-echo.de',
-        title:
-          'Exklusiv: SPD, Grüne und Linke wollen Bitcoin in Europa verbieten',
-        description:
-          'Das EU-Parlament spricht sich für ein Dienstleistungsverbot mit Bitcoin aus – auf Anraten von SPD, Grünen und Linken.',
-        shares: Array(13)
-          .fill(null)
-          .map(() => pic()),
-        date: '12h ago',
-      },
-      {
-        url: 'https://blog.obol.tech/announcing-the-proto-community/',
-        domain: 'blog.obol.tech',
-        title: 'Proto Community Launch',
-        description:
-          'Obol Proto Community Today we are honored to launch the Obol Proto Community, an onramp to organize, educate, and incentivize community members contributing to DVT and the Obol Ecosystem.   The Proto Community will fuse the different subcommunities of Obol and offer community members the opportunity to participate in the development',
-        shares: Array(3)
-          .fill(null)
-          .map(() => pic()),
-        date: '20h ago',
-      },
-      {
-        url: 'https://review.mirror.xyz/IRnxxEaQVblaA5OjGpJ3T9XlvqbydzCiDfCYg54jLOo',
-        domain: 'review.mirror.xyz',
-        title: 'Lens Protocol 🌿',
-        description:
-          'Lens is a decentralized social graph protocol created by the AAVE team. The purpose of the protocol is to empower creators to own the links in the social graph that connects them with their community. Lens allows accounts to create and follow profiles, publish and collect posts, and much more, focusing on the economics of social interactions.',
-        shares: Array(4)
-          .fill(null)
-          .map(() => pic()),
-        date: '20h ago',
-      },
-      {
-        url: 'https://www.theblockcrypto.com/linked/135292/eth-market-faces-500-million-liquidation-if-price-drops-below-2100?utm_source=twitter&utm_medium=social',
-        domain: 'theblockcrypto.com',
-        title:
-          'ETH market faces $500 million liquidation if price drops below $2,100',
-        description:
-          '$500 million in ETH is in danger of liquidation if a Maker vault holder fails to top their vaults before the price ETH falls below $2,100.',
-        shares: Array(2)
-          .fill(null)
-          .map(() => pic()),
-        date: '3h ago',
-      },
-      {
-        url: 'https://aika.market/',
-        domain: 'aika.market',
-        title: 'Non Fungible Time',
-        description:
-          'Mint your time as NFTs on the Polygon network. Sell your time to interested parties. Purchase other people’s time.',
-        shares: Array(3)
-          .fill(null)
-          .map(() => pic()),
-        date: 'Feb 23 • 05:59 PM',
-      },
-      {
-        url: 'https://markets.businessinsider.com/news/currencies/ftx-blockchain-crypto-bitcoin-ethereum-tom-brady-nft-metaverse-fashion-2022-2?utmSource=twitter&utmContent=referral&utmTerm=topbar&referrer=twitter',
-        domain: 'markets.businessinsider.com',
-        title:
-          'FTX takes aim at the $300 billion luxury goods market and hires a beauty entrepreneur to head the push',
-        description:
-          'Crypto exchange FTX has hired Lauren Remington Platt to work on partnerships with luxury and fashion brands.',
-        shares: Array(3)
-          .fill(null)
-          .map(() => pic()),
-        date: 'Feb 23 • 07:13 PM',
-      },
-      {
-        url: 'https://www.theblockcrypto.com/post/135286/china-crypto-jail-people-if-funds-raised-public',
-        domain: 'theblockcrypto.com',
-        title:
-          'China can now jail people if funds raised via crypto from public',
-        description:
-          'China can now issue sentences if funds are raised via crypto from the public as the country’s Supreme Court has amended Criminal Law.',
-        shares: Array(3)
-          .fill(null)
-          .map(() => pic()),
-        date: '6h ago',
-      },
-    ],
-    { headers: { 'Set-Cookie': await topic.serialize(params.topic) } }
-  );
 };
 
 export default function Index() {
