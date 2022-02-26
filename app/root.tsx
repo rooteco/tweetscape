@@ -66,10 +66,7 @@ export default function App() {
               bitcoin
             </Link>
             {' · '}
-            <Link
-              className={cn({ underline: pathname === '/nfts' })}
-              to='/nfts'
-            >
+            <Link className={cn({ underline: pathname === '/nft' })} to='/nft'>
               non-fungible tokens
             </Link>
             {' · '}

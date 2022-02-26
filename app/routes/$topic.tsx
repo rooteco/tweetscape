@@ -120,15 +120,27 @@ interface Article {
   date: string;
 }
 
+type Topic = 'eth' | 'btc' | 'nft' | 'tesla';
+function isTopic(t: unknown): t is Topic {
+  return typeof t === 'string' && ['eth', 'btc', 'nft', 'tesla'].includes(t);
+}
+
+const CLUSTERS: Record<Topic, string> = {
+  eth: 'Ethereum',
+  btc: 'Bitcoin',
+  nft: 'NFT',
+  tesla: 'Tesla',
+};
+
 declare const HIVE_TOKEN: string;
 declare const TWITTER_TOKEN: string;
 export const loader: LoaderFunction = async ({ params }) => {
-  invariant(params.topic, 'expected params.topic');
-  if (!['eth', 'btc', 'nfts', 'tesla'].includes(params.topic))
-    return new Response('Not Found', { status: 404 });
+  invariant(isTopic(params.topic), 'expected valid params.topic');
   log.info('Fetching influencers...');
   const hive = await fetch(
-    `https://api.borg.id/influence/clusters/Tesla/influencers?page=0&sort_by=score&sort_direction=desc&influence_type=all`,
+    `https://api.borg.id/influence/clusters/${
+      CLUSTERS[params.topic]
+    }/influencers?page=0&sort_by=score&sort_direction=desc&influence_type=all`,
     {
       headers: { authorization: `Token ${HIVE_TOKEN}` },
     }
@@ -138,7 +150,7 @@ export const loader: LoaderFunction = async ({ params }) => {
   // I'm limited to 512 characters in my Twitter search query and thus can't
   // filter by all 100 of the top ranked influencers from Hive. Instead, I just
   // search for tweets made by the top 25 influencers in the last 7 days.
-  const query = `tesla has:links (${influencers
+  const query = `${params.topic} has:links (${influencers
     .slice(0, 25)
     .map((i) => `from:${i.social_account.social_account.screen_name}`)
     .join(' OR ')})`;
