@@ -143,7 +143,15 @@ export const loader: LoaderFunction = async ({ params }) => {
     }/influencers?page=0&sort_by=score&sort_direction=desc&influence_type=all`,
     {
       headers: { authorization: `Token ${HIVE_TOKEN}` },
+      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
     }
+  );
+  log.debug(
+    `Headers: ${JSON.stringify(
+      Object.fromEntries(hive.headers.entries()),
+      null,
+      2
+    )}`
   );
   const { influencers } = (await hive.json()) as { influencers: Influencer[] };
   log.info('Fetching tweets...');
@@ -161,7 +169,15 @@ export const loader: LoaderFunction = async ({ params }) => {
     )}&tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&expansions=referenced_tweets.id,referenced_tweets.id.author_id&max_results=100`,
     {
       headers: { authorization: `Bearer ${TWITTER_TOKEN}` },
+      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
     }
+  );
+  log.debug(
+    `Headers: ${JSON.stringify(
+      Object.fromEntries(twitter.headers.entries()),
+      null,
+      2
+    )}`
   );
   const search = (await twitter.json()) as TwitterSearch;
   log.info(`Fetched ${search.data.length} tweets.`);
@@ -269,7 +285,9 @@ export const loader: LoaderFunction = async ({ params }) => {
   const articles: Article[] = await Promise.all(
     ranked.map(async (l) => {
       const url = l.url.expanded_url;
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
+      });
       let title = '';
       let description = '';
       await new HTMLRewriter()
