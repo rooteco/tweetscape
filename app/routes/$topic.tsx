@@ -120,43 +120,12 @@ interface Article {
   date: string;
 }
 
-// Return a random integer between min and max (inclusive).
-function random(min: number, max: number) {
-  return min + Math.floor(Math.random() * (max - min + 1));
-}
-
-// Sample **n** random values from a collection using the modern version of the
-// [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
-// If **n** is not specified, returns a single random element.
-// The internal `guard` argument allows it to work with `map`.
-function sample<T>(obj: T[], num: number): T[] {
-  const sampl = Array.from(obj);
-  const n = Math.max(Math.min(num, sampl.length), 0);
-  const last = sampl.length - 1;
-  for (let index = 0; index < n; index += 1) {
-    const rand = random(index, last);
-    const temp = sampl[index];
-    sampl[index] = sampl[rand];
-    sampl[rand] = temp;
-  }
-  return sampl.slice(0, n);
-}
-
-let id = 0;
-function pic() {
-  const src = `/pics/${
-    sample(['brendon', 'jasmine', 'rauchg', 'rhys', 'ryan', 'vanessa'], 1)[0]
-  }.jpg`;
-  id += 1;
-  return { id, src };
-}
-
 declare const HIVE_TOKEN: string;
 declare const TWITTER_TOKEN: string;
 export const loader: LoaderFunction = async ({ params }) => {
   invariant(params.topic, 'expected params.topic');
   if (!['eth', 'btc', 'nfts', 'tesla'].includes(params.topic))
-    throw new Response('Not Found', { status: 404 });
+    return new Response('Not Found', { status: 404 });
   log.info('Fetching influencers...');
   const hive = await fetch(
     `https://api.borg.id/influence/clusters/Tesla/influencers?page=0&sort_by=score&sort_direction=desc&influence_type=all`,
@@ -362,12 +331,15 @@ export default function Index() {
             </div>
             <p className='text-sm ml-2'>{article.description}</p>
             <div className='text-sm text-stone-600 lowercase flex items-center mt-1.5 ml-2'>
-              <span className='flex flex-row-reverse justify-end -ml-[2px] mr-2.5'>
+              <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
                 {article.tweets.map((tweet) => (
                   <img
-                    className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full border-2 border-white -mr-2'
+                    className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full border-2 border-white -mr-2 first:mr-0'
+                    src={`/img/${encodeURIComponent(
+                      tweet.author.social_account.social_account
+                        .profile_image_url
+                    )}`}
                     key={tweet.id}
-                    src={pic().src}
                     alt=''
                   />
                 ))}
