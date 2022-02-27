@@ -32,7 +32,10 @@ export class Logger {
   }
 }
 
-declare const ENV: 'development' | 'production' | 'test';
 export const log = new Logger(
   ENV === 'development' ? LogLevel.Debug : LogLevel.Info
 );
+
+export function caps(str: string): string {
+  return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
+}

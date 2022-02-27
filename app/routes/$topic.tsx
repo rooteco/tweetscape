@@ -2,7 +2,7 @@ import { json, useLoaderData } from 'remix';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
-import { decode, log } from '~/utils.server';
+import { caps, decode, log } from '~/utils.server';
 import { topic } from '~/cookies.server';
 
 interface Entity {
@@ -63,16 +63,16 @@ interface Tweet {
 }
 
 interface TwitterSearch {
-  data: Tweet[];
-  includes: {
-    users: { id: string; name: string; username: string }[];
-    tweets: Tweet[];
+  data?: Tweet[];
+  includes?: {
+    users?: { id: string; name: string; username: string }[];
+    tweets?: Tweet[];
   };
   meta: {
-    newest_id: string;
-    oldest_id: string;
+    newest_id?: string;
+    oldest_id?: string;
     result_count: number;
-    next_token: string;
+    next_token?: string;
   };
 }
 
@@ -120,27 +120,13 @@ interface Article {
   date: string;
 }
 
-type Topic = 'eth' | 'btc' | 'nft' | 'tesla';
-function isTopic(t: unknown): t is Topic {
-  return typeof t === 'string' && ['eth', 'btc', 'nft', 'tesla'].includes(t);
-}
-
-const CLUSTERS: Record<Topic, string> = {
-  eth: 'Ethereum',
-  btc: 'Bitcoin',
-  nft: 'NFT',
-  tesla: 'Tesla',
-};
-
-declare const HIVE_TOKEN: string;
-declare const TWITTER_TOKEN: string;
 export const loader: LoaderFunction = async ({ params }) => {
-  invariant(isTopic(params.topic), 'expected valid params.topic');
+  invariant(params.topic, 'expected params.topic');
   log.info('Fetching influencers...');
   const hive = await fetch(
-    `https://api.borg.id/influence/clusters/${
-      CLUSTERS[params.topic]
-    }/influencers?page=0&sort_by=score&sort_direction=desc&influence_type=all`,
+    `https://api.borg.id/influence/clusters/${caps(
+      params.topic
+    )}/influencers?page=0&sort_by=score&sort_direction=desc&influence_type=all`,
     {
       headers: { authorization: `Token ${HIVE_TOKEN}` },
       cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
@@ -158,10 +144,15 @@ export const loader: LoaderFunction = async ({ params }) => {
   // I'm limited to 512 characters in my Twitter search query and thus can't
   // filter by all 100 of the top ranked influencers from Hive. Instead, I just
   // search for tweets made by the top 25 influencers in the last 7 days.
-  const query = `${params.topic} has:links (${influencers
-    .slice(0, 25)
-    .map((i) => `from:${i.social_account.social_account.screen_name}`)
-    .join(' OR ')})`;
+  let query = `${params.topic} has:links (`;
+  influencers.forEach((i, idx) => {
+    let filter = `from:${i.social_account.social_account.screen_name}`;
+    if (idx > 0) filter = ` OR ${filter}`;
+    if (query.length + filter.length >= 512) return;
+    query += filter;
+  });
+  query += ')';
+  log.debug(`Query (${query.length}): ${query}`);
   // TODO: Decide whether or not to sort by recency or relevancy.
   const twitter = await fetch(
     `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(
@@ -180,7 +171,7 @@ export const loader: LoaderFunction = async ({ params }) => {
     )}`
   );
   const search = (await twitter.json()) as TwitterSearch;
-  log.info(`Fetched ${search.data.length} tweets.`);
+  log.info(`Fetched ${search.meta.result_count} tweets.`);
   // Only look at tweets that link to articles and content outside of Twitter.
   // TODO: Also add the attention scores of every referenced tweet. Ideally, we
   // want the sum of every single time the link has been shared on Twitter. This
@@ -192,7 +183,7 @@ export const loader: LoaderFunction = async ({ params }) => {
   const isArticleURL = (l?: URL) =>
     l && l.expanded_url && !/twitter.com/.test(l.expanded_url);
   search.data
-    .filter((t) => t.entities.urls?.some(isArticleURL))
+    ?.filter((t) => t.entities.urls?.some(isArticleURL))
     .forEach((t: Tweet) => {
       const url = t.entities.urls.filter(isArticleURL)[0];
       const author = influencers.find(
@@ -238,7 +229,10 @@ export const loader: LoaderFunction = async ({ params }) => {
           log.debug(`Skipping already counted tweet (${rt.id})`);
           return;
         }
-        const tweets = [...search.data, ...search.includes.tweets];
+        const tweets = [
+          ...(search.data ?? []),
+          ...(search.includes?.tweets ?? []),
+        ];
         const tweet = tweets.find((tt) => rt.id === tt.id);
         if (!tweet) {
           log.warn(`Missing ${rt.type ?? 'original'} tweet (${rt.id})`);
@@ -282,46 +276,68 @@ export const loader: LoaderFunction = async ({ params }) => {
     }))
     .sort((a, b) => b.score - a.score);
 
+  log.info(`Fetching metadata for ${ranked.length} links...`);
   const articles: Article[] = await Promise.all(
     ranked.map(async (l) => {
       const url = l.url.expanded_url;
-      const res = await fetch(url, {
-        cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
-      });
-      let title = '';
-      let description = '';
-      await new HTMLRewriter()
-        .on('meta', {
-          element(el) {
-            const content = el.getAttribute('content');
-            if (content && el.getAttribute('property') === 'og:description')
-              description = content;
-            if (content && el.getAttribute('name') === 'description')
-              description = content;
-            if (content && el.getAttribute('property') === 'og:title')
-              title = content;
-          },
-        })
-        .on('title', {
-          text(txt) {
-            title += txt.text;
-          },
-        })
-        .transform(res)
-        .text();
-      return {
-        url,
-        tweets: l.tweets,
-        title: decode(title || l.url.display_url),
-        description:
-          decode(description) ||
-          'no appropriate description meta tag found in article html; perhaps' +
-            'they did something weird like put their tag names in ALL CAPS 🤷.',
-        // TODO: Perhaps show the most recent share or the first share or the date
-        // the article or content link was actually published (use metascraper).
-        date: l.tweets[0].created_at,
-        domain: new URL(url).hostname.replace(/^www\./, ''),
-      };
+      log.debug(`Fetching metadata for link (${url})...`);
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(url, {
+          signal: controller.signal,
+          cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
+        });
+        clearTimeout(timeoutId);
+        let title = '';
+        let description = '';
+        await new HTMLRewriter()
+          .on('meta', {
+            element(el) {
+              const content = el.getAttribute('content');
+              if (content && el.getAttribute('property') === 'og:description')
+                description = content;
+              if (content && el.getAttribute('name') === 'description')
+                description = content;
+              if (content && el.getAttribute('property') === 'og:title')
+                title = content;
+            },
+          })
+          .on('title', {
+            text(txt) {
+              title += txt.text;
+            },
+          })
+          .transform(res)
+          .text();
+        return {
+          url,
+          tweets: l.tweets,
+          title: decode(title || l.url.display_url),
+          description:
+            decode(description) ||
+            'No appropriate description meta tag found in article html; perhaps' +
+              ' they did something weird like put their tag names in all caps 🤷.',
+          // TODO: Perhaps show the most recent share or the first share or the date
+          // the article or content link was actually published (use metascraper).
+          date: l.tweets[0].created_at,
+          domain: new URL(url).hostname.replace(/^www\./, ''),
+        };
+      } catch (e) {
+        log.error(`Error fetching metadata for link (${url}): ${e.message}`);
+        return {
+          url,
+          tweets: l.tweets,
+          title: decode(l.url.display_url),
+          description:
+            'No appropriate description meta tag found in article html; perhaps' +
+            ' they did something weird like put their tag names in all caps 🤷.',
+          // TODO: Perhaps show the most recent share or the first share or the date
+          // the article or content link was actually published (use metascraper).
+          date: l.tweets[0].created_at,
+          domain: new URL(url).hostname.replace(/^www\./, ''),
+        };
+      }
     })
   );
 
@@ -335,6 +351,11 @@ export default function Index() {
   return (
     <main>
       <ol className='list-decimal text-sm ml-6 mr-4'>
+        {!articles.length && (
+          <div className='font-serif -ml-2 border rounded text-stone-600 border-stone-400 border-dashed text-lg text-center p-6 my-12 flex items-center justify-center min-h-[85vh]'>
+            no articles to show
+          </div>
+        )}
         {articles.map((article) => (
           <li key={article.url} className='my-4'>
             <div className='ml-2'>
@@ -364,7 +385,7 @@ export default function Index() {
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
                 {article.tweets.map((tweet) => (
                   <a
-                    className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full border-2 border-white -mr-2 first:mr-0 overflow-hidden'
+                    className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-white border-2 border-stone-200 -mr-2 first:mr-0 overflow-hidden'
                     href={`https://twitter.com/${tweet.author.social_account.social_account.screen_name}/status/${tweet.id}`}
                     rel='noopener noreferrer'
                     target='_blank'

@@ -6,11 +6,13 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
   useLocation,
 } from 'remix';
-import type { LinksFunction, MetaFunction } from 'remix';
+import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import cn from 'classnames';
 
+import { log } from '~/utils.server';
 import styles from '~/styles/app.css';
 
 export const links: LinksFunction = () => [
@@ -44,7 +46,36 @@ export const meta: MetaFunction = () => ({
   title: 'Tweetscape: The Supercharged Twitter Feed',
 });
 
+interface Cluster {
+  active: boolean;
+  created_at: string;
+  id: string;
+  name: string;
+  updated_at: string;
+}
+
+interface Topic {
+  id: string;
+  name: string;
+}
+
+export const loader: LoaderFunction = async () => {
+  log.info('Fetching clusters...');
+  const hive = await fetch('https://api.borg.id/influence/clusters', {
+    headers: { authorization: `Token ${HIVE_TOKEN}` },
+    cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
+  });
+  const { clusters } = (await hive.json()) as { clusters: Cluster[] };
+  const topics: Topic[] = clusters.map((c) => ({
+    id: c.name.toLowerCase().split(' ').join('-'),
+    name: c.name,
+  }));
+  log.debug(`Topics: ${topics.map((t) => `${t.name} (${t.id})`).join(', ')}`);
+  return topics;
+};
+
 export default function App() {
+  const topics = useLoaderData<Topic[]>();
   const { pathname } = useLocation();
   return (
     <html lang='en'>
@@ -58,24 +89,25 @@ export default function App() {
         <header className='py-4 mb-6 border-b-2 border-black whitespace-no-wrap flex justify-between items-end'>
           <h1 className='font-serif font-semibold text-6xl'>tweetscape</h1>
           <nav className='font-serif font-semibold text-lg'>
-            <Link className={cn({ underline: pathname === '/eth' })} to='/eth'>
-              ethereum
-            </Link>
-            {' · '}
-            <Link className={cn({ underline: pathname === '/btc' })} to='/btc'>
-              bitcoin
-            </Link>
-            {' · '}
-            <Link className={cn({ underline: pathname === '/nft' })} to='/nft'>
-              non-fungible tokens
-            </Link>
-            {' · '}
-            <Link
-              className={cn({ underline: pathname === '/tesla' })}
-              to='/tesla'
-            >
-              tesla
-            </Link>
+            {topics
+              .map(({ name, id }) => (
+                <Link
+                  key={id}
+                  className={cn('lowercase', {
+                    underline: pathname === `/${id}`,
+                  })}
+                  to={`/${id}`}
+                >
+                  {name}
+                </Link>
+              ))
+              .reduce((a, b) => (
+                <>
+                  {a}
+                  {' · '}
+                  {b}
+                </>
+              ))}
           </nav>
         </header>
         <Outlet />
