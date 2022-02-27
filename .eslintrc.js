@@ -8,6 +8,7 @@ module.exports = {
     project: [path.resolve(__dirname, 'tsconfig.json')],
   },
   extends: [
+    '@remix-run/eslint-config',
     'airbnb',
     'airbnb-typescript',
     'airbnb/hooks',
