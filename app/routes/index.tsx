@@ -5,5 +5,5 @@ import { topic } from '~/cookies.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const cookie = (await topic.parse(request.headers.get('cookie'))) as string;
-  return redirect(`/${cookie || 'eth'}`);
+  return redirect(`/${cookie || 'tesla'}`);
 };
