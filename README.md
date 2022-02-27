@@ -11,14 +11,15 @@ Learn more [here](https://www.roote.co/tweetscape).
 Tweetscape uses [`hive.one`](https://hive.one) to determine who are the most reputable (i.e. the "smartest") people in a specific field (e.g. who are the experts in ETH, BTC, NFTs, or Tesla) on Twitter; [`hive.one`](https://hive.one) acts as [a reputation layer for the internet](https://borgcollective.notion.site/About-15b9db2c1f414cf998c5abc58b715176), determining who you can trust through [a weighted graph of who follows who](https://borgcollective.notion.site/FAQ-5434e4695d60456cb481acb98bb88b18) (e.g. a reputable user following another user raises that other user's "attention score" by more than if some random Joe follows them).
 
 Tweetscape then uses Twitter's API and that list of "smartest" people to get links to the articles most abundantly (and most recently) shared by the "smartest" people on Twitter for a given topic (e.g. ETH, BTC, NFTs, or Tesla).
-It also shows you the conversation around each link; you get to see the best links *and* what the smartest people are saying about them.
+It also shows you the conversation around each link; you get to see the best links _and_ what the smartest people are saying about them.
 
 ### Low level
 
 Tweetscape is a full-stack React application built with [Remix](https://remix.run) and React Router.
 
-Every 24 hours, when a user visits [`tweetscape.com`](https://tweetscape.com), we:
-1. Fetch the top influencers from [`hive.one`](https://docs.hive.one/core-resources/top-influencers) (using an [`ETag`](https://docs.hive.one/using-etags) to de-dupe requests): 
+Every 24 hours, when a user visits [`tweetscape.co`](https://tweetscape.co), we:
+
+1. Fetch the top influencers from [`hive.one`](https://docs.hive.one/core-resources/top-influencers) (using an [`ETag`](https://docs.hive.one/using-etags) to de-dupe requests):
 
 `GET https://api.hive.one/v1/influencers/top`
 

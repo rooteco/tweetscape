@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "author": "Nicholas Chiang <tweetscape@nicholaschiang.com>",
-  "homepage": "https://tweetscape.com",
+  "homepage": "https://tweetscape.co",
   "description": "The Supercharged Twitter Feed",
   "license": "AGPL-3.0",
   "sideEffects": false,
