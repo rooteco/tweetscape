@@ -6,6 +6,25 @@ import type { Article, Influencer, Tweet, TweetRef, URL } from '~/types.server';
 import { caps, decode, log } from '~/utils.server';
 import { topic } from '~/cookies.server';
 
+async function fetchFromCache(
+  url: string,
+  init?: RequestInit
+): Promise<Response> {
+  const cacheKey = new Request(new URL(url).toString(), init);
+  const cache = caches.default;
+  let res = await cache.match(cacheKey);
+  if (!res) {
+    log.debug(`Cache miss for: ${url}`);
+    res = await fetch(cacheKey);
+    res = new Response(res.body, res);
+    res.headers.append('Cache-Control', `s-maxage=${24 * 60 * 60}`);
+    await cache.put(cacheKey, res.clone());
+  } else {
+    log.debug(`Cache hit for: ${url}`);
+  }
+  return res;
+}
+
 interface Link {
   url: URL;
   tweets: (Tweet & { author: Influencer })[];
@@ -43,21 +62,19 @@ async function getInfluencers(topic: string, n = 0): Promise<HiveData> {
   // Hive returns results in batches of 50; currently, no way to change this.
   // @see https://www.notion.so/API-Docs-69fe2f3d624843fcb0b44658b135161b
   const page = Math.floor(n / 50);
-  const res = await fetch(
+  const res = await fetchFromCache(
     `https://api.borg.id/influence/clusters/${caps(topic)}/influencers?` +
       `page=${page}&sort_by=score&sort_direction=desc&influence_type=all`,
-    {
-      headers: { authorization: `Token ${HIVE_TOKEN}` },
-      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
-    }
+    { headers: { authorization: `Token ${HIVE_TOKEN}` } }
   );
   const headers = Object.fromEntries(res.headers.entries());
   log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
   const data = (await res.json()) as HiveData;
-  // Either Hive has more pages or we haven't got all the data from this one.
-  const has_more = data.has_more || (n + 5) % 50 > 0;
-  log.info(`Fetched ${data.influencers.length} influencers.`);
-  return { ...data, has_more, influencers: data.influencers.slice(n, n + 5) };
+  return {
+    ...data,
+    has_more: data.has_more || (n + 5) % 50 > 0,
+    influencers: data.influencers.slice(n, n + 5),
+  };
 }
 
 interface TwitterData {
@@ -66,31 +83,33 @@ interface TwitterData {
     users?: { id: string; name: string; username: string }[];
     tweets?: Tweet[];
   };
-  meta: {
+  meta?: {
     newest_id?: string;
     oldest_id?: string;
-    result_count: number;
+    result_count?: number;
     next_token?: string;
   };
+  errors?: { parameters: Record<string, string[]>; message: string }[];
+  title?: string;
+  detail?: string;
+  type?: string;
 }
 
 async function getTweets(influencer: Influencer): Promise<TwitterData> {
   const id = influencer.social_account.social_account.id;
   log.info(`Fetching tweets for influencer (${id})...`);
-  const res = await fetch(
+  const res = await fetchFromCache(
     `https://api.twitter.com/2/users/${id}/tweets?` +
       `tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&` +
       `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
-      `max_results=10`,
-    {
-      headers: { authorization: `Bearer ${TWITTER_TOKEN}` },
-      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
-    }
+      `max_results=5`,
+    { headers: { authorization: `Bearer ${TWITTER_TOKEN}` } }
   );
   const headers = Object.fromEntries(res.headers.entries());
   log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
   const data = (await res.json()) as TwitterData;
-  log.info(`Fetched ${data.meta.result_count} tweets.`);
+  if (data.errors && data.title && data.detail && data.type)
+    log.error(`${data.title}: ${data.detail} (${data.type})`);
   return data;
 }
 
@@ -111,10 +130,13 @@ async function getArticle(link: Link): Promise<Article> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(link.url.expanded_url, {
+    const res = await fetchFromCache(link.url.expanded_url, {
       signal: controller.signal,
-      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
     });
+    const headers = Object.fromEntries(res.headers.entries());
+    log.debug(
+      `Headers (${link.url.expanded_url}): ${JSON.stringify(headers, null, 2)}`
+    );
     clearTimeout(timeoutId);
     let title = '';
     let description = '';
@@ -153,7 +175,7 @@ export const action: ActionFunction = async ({ params, request }) => {
   const { influencers, has_more } = await getInfluencers(params.topic, n);
   // 2. For each influencer, fetch all 3200 tweets from Twitter timeline (in
   // batches of 100).
-  const tweets = await Promise.all(influencers.slice(0, 5).map(getTweets));
+  const tweets = await Promise.all(influencers.map(getTweets));
   const all = tweets.reduce(
     (a, b) => [...a, ...(b.data ?? []), ...(b.includes?.tweets ?? [])],
     [] as Tweet[]
