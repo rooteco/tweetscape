@@ -6,6 +6,13 @@ import type { Article, Influencer, Tweet } from '~/types.server';
 import { caps, fetchFromCache, log } from '~/utils.server';
 import { topic } from '~/cookies.server';
 
+// How many influencers to fetch at a time. Hive returns influencers in batches
+// of 50, but Cloudflare only allows 50 subrequests per worker (which counts
+// calls to the cache API; thus, each influencer requires at max 3 calls: 1
+// `cache.match`, 1 `fetch`, and 1 `cache.put`). Thus: BATCH_SIZE * 3 <= 50 and,
+// to avoid further pagination complexity, 50 % BATCH_SIZE === 0.
+const BATCH_SIZE = 10;
+
 function logTweet(t: Tweet, a: Article): void {
   log.debug('============================================================');
   if (t.author)
@@ -50,8 +57,8 @@ async function getInfluencers(t: string, n = 0): Promise<HiveData> {
   const data = (await res.json()) as HiveData;
   return {
     ...data,
-    has_more: data.has_more || (n + 5) % 50 > 0,
-    influencers: data.influencers.slice(n, n + 5),
+    has_more: data.has_more || (n + BATCH_SIZE) % 50 > 0,
+    influencers: data.influencers.slice(n, n + BATCH_SIZE),
   };
 }
 
@@ -93,11 +100,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 
   // 3. Sort articles descendingly by their tweets' authors' attention scores.
   const sc = (a: number, b: Tweet) => a + (b.author?.attention_score ?? 0);
-  articles.sort((a, b) => a.tweets.reduce(sc, 0) - b.tweets.reduce(sc, 0));
+  articles.sort((a, b) => b.tweets.reduce(sc, 0) - a.tweets.reduce(sc, 0));
 
-  // 4. Recursively continue to fetch influencers and their articles.
-  if (!more || n >= 20) return json(articles);
-  return fetch(`${host}/articles/${params.topic}?n=${n + 5}`, {
+  // 4. Recursively continue to fetch influencers and their articles (note that
+  // Cloudflare Workers are limited to 16 recursions... i.e. 160 influencers).
+  if (!more || n >= 14 * BATCH_SIZE) return json(articles);
+  return fetch(`${host}/articles/${params.topic}?n=${n + BATCH_SIZE}`, {
     method: 'POST',
     body: JSON.stringify(articles),
     headers: { 'Set-Cookie': await topic.serialize(params.topic) },
