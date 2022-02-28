@@ -15,7 +15,7 @@ It also shows you the conversation around each link; you get to see the best lin
 
 ### Low level
 
-Tweetscape is a full-stack React application built with [Remix](https://remix.run) and React Router.
+Tweetscape is a full-stack React application built with [Remix](https://remix.run) and deployed on [Cloudflare Workers](https://developers.cloudflare.com/workers).
 
 Every 24 hours, when a user visits [`tweetscape.co`](https://tweetscape.co), we:
 
