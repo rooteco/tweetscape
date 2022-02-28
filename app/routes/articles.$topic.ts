@@ -38,8 +38,11 @@ interface HiveData {
   total: string;
 }
 
-async function getInfluencers(topic: string, page = 0): Promise<HiveData> {
+async function getInfluencers(topic: string, n = 0): Promise<HiveData> {
   log.info(`Fetching influencers for topic (${topic})...`);
+  // Hive returns results in batches of 50; currently, no way to change this.
+  // @see https://www.notion.so/API-Docs-69fe2f3d624843fcb0b44658b135161b
+  const page = Math.floor(n / 50);
   const res = await fetch(
     `https://api.borg.id/influence/clusters/${caps(topic)}/influencers?` +
       `page=${page}&sort_by=score&sort_direction=desc&influence_type=all`,
@@ -51,8 +54,10 @@ async function getInfluencers(topic: string, page = 0): Promise<HiveData> {
   const headers = Object.fromEntries(res.headers.entries());
   log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
   const data = (await res.json()) as HiveData;
+  // Either Hive has more pages or we haven't got all the data from this one.
+  const has_more = data.has_more || (n + 5) % 50 > 0;
   log.info(`Fetched ${data.influencers.length} influencers.`);
-  return data;
+  return { ...data, has_more, influencers: data.influencers.slice(n, n + 5) };
 }
 
 interface TwitterData {
@@ -142,10 +147,10 @@ async function getArticle(link: Link): Promise<Article> {
 
 export const action: ActionFunction = async ({ params, request }) => {
   invariant(params.topic, 'expected params.topic');
-  const page = Number(new URL(request.url).searchParams.get('page') ?? 0);
+  const n = Number(new URL(request.url).searchParams.get('n') ?? 0);
   const articles = ((await request.json()) ?? []) as Article[];
   // 1. Fetch all 12989 influencers from Hive (in batches of 100).
-  const { influencers, has_more } = await getInfluencers(params.topic, page);
+  const { influencers, has_more } = await getInfluencers(params.topic, n);
   // 2. For each influencer, fetch all 3200 tweets from Twitter timeline (in
   // batches of 100).
   const tweets = await Promise.all(influencers.slice(0, 5).map(getTweets));
@@ -223,10 +228,10 @@ export const action: ActionFunction = async ({ params, request }) => {
   });
   articles.sort((a, b) => b.score - a.score);
 
-  if (!has_more || page >= 5) return json(articles);
+  if (!has_more || n >= 20) return json(articles);
   const url = new URL(request.url);
   const host = `${url.protocol}//${url.host}`;
-  return fetch(`${host}/articles/${params.topic}?page=${page + 1}`, {
+  return fetch(`${host}/articles/${params.topic}?n=${n + 5}`, {
     method: 'POST',
     body: JSON.stringify(articles),
     headers: { 'Set-Cookie': await topic.serialize(params.topic) },
