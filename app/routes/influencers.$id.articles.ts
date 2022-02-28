@@ -45,7 +45,7 @@ async function getArticle(url: string, tweets: Tweet[]): Promise<Article> {
   const article = {
     url,
     tweets,
-    title: `${decode(url.substr(0, 10))}...`,
+    title: `${decode(url.replace(/^https?:\/\/(www\.)?/, '').substr(0, 50))}…`,
     description:
       'No appropriate description meta tag found in article html; perhaps' +
       ' they did something weird like put their tag names in all caps 🤷.',
