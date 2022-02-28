@@ -6,7 +6,12 @@ import type { Article, Influencer, Tweet, TweetRef, URL } from '~/types.server';
 import { caps, decode, log } from '~/utils.server';
 import { topic } from '~/cookies.server';
 
-function logTweet(t: Tweet, a: Influencer, l: Article): void {
+interface Link {
+  url: URL;
+  tweets: (Tweet & { author: Influencer })[];
+}
+
+function logTweet(t: Tweet, a: Influencer, url: string, tweets: Tweet[]): void {
   log.debug('============================================================');
   log.debug(
     `Author: ${a.social_account.social_account.id} | https://hive.one/p/${
@@ -19,7 +24,7 @@ function logTweet(t: Tweet, a: Influencer, l: Article): void {
       2
     )} | Weekly Change: ${a.attention_score_change_week.toFixed(2)}`
   );
-  log.debug(`Link: ${l.url} | ${l.tweets.length} tweets`);
+  log.debug(`Link: ${url} | ${tweets.length} tweets`);
   log.debug(
     `Tweet: https://twitter.com/` +
       `${a.social_account.social_account.screen_name}/status/${t.id}` +
@@ -84,25 +89,24 @@ async function getTweets(influencer: Influencer): Promise<TwitterData> {
   return data;
 }
 
-async function getArticle(url: URL): Promise<Article> {
-  const link = new URL(url.expanded_url).href;
-  log.debug(`Fetching metadata for link (${link})...`);
+async function getArticle(link: Link): Promise<Article> {
+  log.debug(`Fetching metadata for link (${link.url.expanded_url})...`);
   const article = {
-    score: 0,
-    url: link,
-    tweets: [],
-    title: decode(url.display_url),
+    score: link.tweets.reduce((a, b) => a + b.author.attention_score, 0),
+    tweets: link.tweets,
+    url: link.url.expanded_url,
+    title: decode(link.url.display_url),
     description:
       'No appropriate description meta tag found in article html; perhaps' +
       ' they did something weird like put their tag names in all caps 🤷.',
     // TODO: Perhaps show the most recent share or the first share or the date
     // the article or content link was actually published (use metascraper).
-    domain: new URL(link).hostname.replace(/^www\./, ''),
+    domain: new URL(link.url.expanded_url).hostname.replace(/^www\./, ''),
   };
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(link, {
+    const res = await fetch(link.url.expanded_url, {
       signal: controller.signal,
       cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
     });
@@ -131,7 +135,7 @@ async function getArticle(url: URL): Promise<Article> {
     article.title = decode(title) || article.title;
     article.description = decode(description) || article.description;
   } catch (e) {
-    log.error(`Error fetching metadata for link (${link}): ${e.message}`);
+    log.error(`Error fetching link (${link.url.expanded_url}): ${e.message}`);
   }
   return article;
 }
@@ -151,84 +155,78 @@ export const action: ActionFunction = async ({ params, request }) => {
   );
   // 3. From each tweet, construct an articles database ranking the top articles
   // by attention score sum.
+  const links: Link[] = [];
   const isArticleURL = (l?: URL) =>
     l && l.expanded_url && !/twitter.com/.test(l.expanded_url);
-  await Promise.all(
-    tweets
-      .reduce((a, b) => [...a, ...(b.data ?? [])], [] as Tweet[])
-      .filter((t) => t.entities?.urls?.some(isArticleURL))
-      .map(async (t: Tweet) => {
-        const url = t.entities?.urls?.filter(isArticleURL)[0];
-        const author = influencers.find(
-          (i) => i.social_account.social_account.id === t.author_id
-        );
+  tweets
+    .reduce((a, b) => [...a, ...(b.data ?? [])], [] as Tweet[])
+    .filter((t) => t.entities?.urls?.some(isArticleURL))
+    .map((t: Tweet) => {
+      const url = t.entities?.urls?.filter(isArticleURL)[0];
+      const author = influencers.find(
+        (i) => i.social_account.social_account.id === t.author_id
+      );
 
-        invariant(url, `expected tweet (${t.id}) to have url`);
-        invariant(author, `expected tweeter (${t.author_id}) to be influencer`);
+      invariant(url, `expected tweet (${t.id}) to have url`);
+      invariant(author, `expected tweeter (${t.author_id}) to be influencer`);
 
-        const exists = articles.find(
-          (a) => new URL(a.url).href === new URL(url.expanded_url).href
-        );
-        const article = exists ?? (await getArticle(url));
+      const existing =
+        articles.find((a) => a.url === url.expanded_url) ??
+        links.find((l) => l.url.expanded_url === url.expanded_url);
+      const link = existing ?? { url, tweets: [{ ...t, author }] };
 
-        logTweet(t, author, article);
+      logTweet(t, author, url.expanded_url, link.tweets);
 
-        function count(rt: Omit<TweetRef, 'type'> & Partial<TweetRef>) {
-          if (rt.type === 'replied_to') {
-            log.debug(`Skipping replied_to tweet (${rt.id})`);
-            return;
-          }
-          if (article.tweets.some((tt) => rt.id === tt.id)) {
-            log.debug(`Skipping already counted tweet (${rt.id})`);
-            return;
-          }
-          const tweet = all.find((tt) => rt.id === tt.id);
-          if (!tweet) {
-            log.warn(`Missing ${rt.type ?? 'original'} tweet (${rt.id})`);
-            return;
-          }
-          tweet.referenced_tweets?.forEach(count);
-          if (article.tweets.some((tt) => tt.author_id === tweet.author_id)) {
-            log.debug(`Skipping already counted author (${tweet.author_id})`);
-            return;
-          }
-          const a = influencers.find(
-            (i) => i.social_account.social_account.id === tweet.author_id
-          );
-          if (!a) {
-            log.warn(
-              `Missing ${rt.type ?? 'original'} tweet (${rt.id}) author`
-            );
-            return;
-          }
-          log.debug(
-            `Adding ${rt.type ?? 'original'} tweet (${rt.id}) author (https:` +
-              `//hive.one/p/${a.social_account.social_account.screen_name}) ` +
-              `score (${a.attention_score.toFixed(2)}) to link (${article.url})`
-          );
-          article.tweets.push({ ...tweet, author: a });
-          log.debug(
-            `${article.tweets.length} tweets for link (${article.url})`
-          );
+      function count(rt: Omit<TweetRef, 'type'> & Partial<TweetRef>) {
+        if (rt.type === 'replied_to') {
+          log.debug(`Skipping replied_to tweet (${rt.id})`);
+          return;
         }
+        if (link.tweets.some((tt) => rt.id === tt.id)) {
+          log.debug(`Skipping already counted tweet (${rt.id})`);
+          return;
+        }
+        const tweet = all.find((tt) => rt.id === tt.id);
+        if (!tweet) {
+          log.warn(`Missing ${rt.type ?? 'original'} tweet (${rt.id})`);
+          return;
+        }
+        tweet.referenced_tweets?.forEach(count);
+        if (link.tweets.some((tt) => tt.author_id === tweet.author_id)) {
+          log.debug(`Skipping already counted author (${tweet.author_id})`);
+          return;
+        }
+        const a = influencers.find(
+          (i) => i.social_account.social_account.id === tweet.author_id
+        );
+        if (!a) {
+          log.warn(`Missing ${rt.type ?? 'original'} tweet (${rt.id}) author`);
+          return;
+        }
+        log.debug(
+          `Adding ${rt.type ?? 'original'} tweet (${rt.id}) author (https:` +
+            `//hive.one/p/${a.social_account.social_account.screen_name}) ` +
+            `score (${a.attention_score.toFixed(2)}) to link (${link.url})`
+        );
+        link.tweets.push({ ...tweet, author: a });
+        log.debug(`${link.tweets.length} tweets for link (${link.url})`);
+      }
 
-        count(t);
+      count(t);
 
-        if (!articles.includes(article)) articles.push(article);
-      })
-  );
+      if (!existing) links.push(link as Link);
+    });
 
+  (await Promise.all(links.map(getArticle))).map((a) => articles.push(a));
   articles.forEach((a) => {
-    a.score = a.tweets.reduce((s, c) => s + c.author.attention_score, 0);
+    a.score = a.tweets.reduce((b, c) => b + c.author.attention_score, 0);
   });
   articles.sort((a, b) => b.score - a.score);
 
   if (!has_more || page >= 5) return json(articles);
   const url = new URL(request.url);
-  const api = `${url.protocol}//${url.host}/articles/${params.topic}?page=${
-    page + 1
-  }`;
-  return fetch(api, {
+  const host = `${url.protocol}//${url.host}`;
+  return fetch(`${host}/articles/${params.topic}?page=${page + 1}`, {
     method: 'POST',
     body: JSON.stringify(articles),
     headers: { 'Set-Cookie': await topic.serialize(params.topic) },
