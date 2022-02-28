@@ -138,6 +138,43 @@ function logTweet(t: Tweet, a: Influencer, l: Link): void {
   );
 }
 
+async function getInfluencers(topic: string): Promise<Influencer[]> {
+  log.info(`Fetching influencers for topic (${topic})...`);
+  const res = await fetch(
+    `https://api.borg.id/influence/clusters/${caps(topic)}/influencers?` +
+      `page=0&sort_by=score&sort_direction=desc&influence_type=all`,
+    {
+      headers: { authorization: `Token ${HIVE_TOKEN}` },
+      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
+    }
+  );
+  const headers = Object.fromEntries(res.headers.entries());
+  log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
+  const { influencers } = (await res.json()) as { influencers: Influencer[] };
+  log.info(`Fetched ${influencers.length} influencers.`);
+  return influencers;
+}
+
+async function getTweets(influencer: Influencer): Promise<Tweet[]> {
+  const id = influencer.social_account.social_account.id;
+  log.info(`Fetching tweets for influencer (${id})...`);
+  const res = await fetch(
+    `https://api.twitter.com/2/users/${id}/tweets?` +
+      `tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&` +
+      `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
+      `max_results=100`,
+    {
+      headers: { authorization: `Bearer ${TWITTER_TOKEN}` },
+      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
+    }
+  );
+  const headers = Object.fromEntries(res.headers.entries());
+  log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
+  const search = (await res.json()) as TwitterSearch;
+  log.info(`Fetched ${search.meta.result_count} tweets.`);
+  return [...(search.data ?? []), ...(search.includes?.tweets ?? [])];
+}
+
 async function getArticle(l: Link): Promise<Article> {
   const url = l.url.expanded_url;
   log.debug(`Fetching metadata for link (${url})...`);
@@ -188,43 +225,6 @@ async function getArticle(l: Link): Promise<Article> {
     log.error(`Error fetching metadata for link (${url}): ${e.message}`);
   }
   return article;
-}
-
-async function getInfluencers(topic: string): Promise<Influencer[]> {
-  log.info(`Fetching influencers for topic (${topic})...`);
-  const res = await fetch(
-    `https://api.borg.id/influence/clusters/${caps(topic)}/influencers?` +
-      `page=0&sort_by=score&sort_direction=desc&influence_type=all`,
-    {
-      headers: { authorization: `Token ${HIVE_TOKEN}` },
-      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
-    }
-  );
-  const headers = Object.fromEntries(res.headers.entries());
-  log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
-  const { influencers } = (await res.json()) as { influencers: Influencer[] };
-  log.info(`Fetched ${influencers.length} influencers.`);
-  return influencers;
-}
-
-async function getTweets(influencer: Influencer): Promise<Tweet[]> {
-  const id = influencer.social_account.social_account.id;
-  log.info(`Fetching tweets for influencer (${id})...`);
-  const res = await fetch(
-    `https://api.twitter.com/2/users/${id}/tweets?` +
-      `tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&` +
-      `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
-      `max_results=100`,
-    {
-      headers: { authorization: `Bearer ${TWITTER_TOKEN}` },
-      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
-    }
-  );
-  const headers = Object.fromEntries(res.headers.entries());
-  log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
-  const search = (await res.json()) as TwitterSearch;
-  log.info(`Fetched ${search.meta.result_count} tweets.`);
-  return [...(search.data ?? []), ...(search.includes?.tweets ?? [])];
 }
 
 export async function getArticles(topic: string): Promise<Article[]> {
