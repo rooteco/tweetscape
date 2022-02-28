@@ -1,9 +1,11 @@
-import type { LoaderFunction } from 'remix';
+import type { ActionFunction } from 'remix';
 import invariant from 'tiny-invariant';
 import { json } from 'remix';
 
 import type { Article, Tweet, TweetRef, URL } from '~/types.server';
 import { decode, fetchFromCache, log } from '~/utils.server';
+
+const BATCH_SIZE = 15;
 
 interface TwitterData {
   data?: Tweet[];
@@ -23,13 +25,13 @@ interface TwitterData {
   type?: string;
 }
 
-async function getTweets(id: string): Promise<TwitterData> {
+async function getTweets(id: string, token = ''): Promise<TwitterData> {
   log.info(`Fetching tweets for influencer (${id})...`);
   const res = await fetchFromCache(
     `https://api.twitter.com/2/users/${id}/tweets?` +
       `tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&` +
       `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
-      `max_results=15`,
+      `max_results=${BATCH_SIZE}${token ? `&pagination_token=${token}` : ''}`,
     { headers: { authorization: `Bearer ${TWITTER_TOKEN}` } }
   );
   const headers = Object.fromEntries(res.headers.entries());
@@ -95,8 +97,10 @@ function isArticleURL(l?: URL): boolean {
   return !!l && !!l.expanded_url && !/twitter.com/.test(l.expanded_url);
 }
 
-async function getArticles(id: string): Promise<Article[]> {
-  const tweets = await getTweets(id);
+async function getArticles(
+  id: string,
+  tweets: TwitterData
+): Promise<Article[]> {
   const all = [...(tweets.data ?? []), ...(tweets.includes?.tweets ?? [])];
   const links: { url: string; tweets: Tweet[] }[] = [];
   (tweets.data ?? [])
@@ -144,9 +148,26 @@ async function getArticles(id: string): Promise<Article[]> {
   return Promise.all(links.map((l) => getArticle(l.url, l.tweets)));
 }
 
-export const loader: LoaderFunction = async ({ params }) => {
+export const action: ActionFunction = async ({ params, request }) => {
   invariant(params.id, 'expected params.id');
+  const n = Number(new URL(request.url).searchParams.get('n') ?? 0);
+  const token = new URL(request.url).searchParams.get('token') ?? '';
+  const articles = ((await request.json()) ?? []) as Article[];
+
+  // 1. Fetch the most recent 15 tweets.
+  log.info(`Fetching tweets for influencer (${params.id})...`);
+  const tweets = await getTweets(params.id, token);
+
+  // 2. Fetch the article metadata for each of those tweets.
   log.info(`Fetching articles for influencer (${params.id})...`);
-  const articles = await getArticles(params.id);
-  return json(articles);
+  (await getArticles(params.id, tweets)).forEach((a) => articles.push(a));
+
+  // 3. Continue to recursively fetch tweets (and their article metadata).
+  if (!tweets.meta?.next_token || n >= 13) return json(articles);
+  const url = new URL(request.url);
+  const api = `${url.protocol}//${url.host}/influencers/${params.id}/articles`;
+  return fetch(`${api}?token=${tweets.meta.next_token}&n=${n + 1}`, {
+    body: JSON.stringify(articles),
+    method: 'POST',
+  });
 };

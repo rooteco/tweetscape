@@ -65,7 +65,10 @@ async function getInfluencers(t: string, n = 0): Promise<HiveData> {
 async function getArticles(i: Influencer, host: string): Promise<Article[]> {
   const { id } = i.social_account.social_account;
   log.debug(`Fetching articles for influencer (${id})...`);
-  const res = await fetchFromCache(`${host}/influencers/${id}/articles`);
+  const res = await fetch(`${host}/influencers/${id}/articles`, {
+    body: JSON.stringify([]),
+    method: 'POST',
+  });
   const data = (await res.json()) as Article[];
   return data;
 }
@@ -106,8 +109,8 @@ export const action: ActionFunction = async ({ params, request }) => {
   // Cloudflare Workers are limited to 16 recursions... i.e. 160 influencers).
   if (!more || n >= 14 * BATCH_SIZE) return json(articles);
   return fetch(`${host}/articles/${params.topic}?n=${n + BATCH_SIZE}`, {
-    method: 'POST',
-    body: JSON.stringify(articles),
     headers: { 'Set-Cookie': await topic.serialize(params.topic) },
+    body: JSON.stringify(articles),
+    method: 'POST',
   });
 };

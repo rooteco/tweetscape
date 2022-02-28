@@ -13,7 +13,6 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
 export default function Index() {
   const articles = useLoaderData<Article[]>();
-  console.log('Articles:', articles);
   return (
     <main>
       <ol className='list-decimal text-sm ml-6 mr-4'>
