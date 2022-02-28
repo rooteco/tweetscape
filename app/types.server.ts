@@ -1,3 +1,33 @@
+interface SocialAccount {
+  created_at: string;
+  followers_count: string;
+  following_count: string;
+  id: string;
+  name: string;
+  personal: boolean;
+  profile_image_url: string;
+  screen_name: string;
+  tweets_count: string;
+  updated_at: string;
+}
+
+export interface Influencer {
+  attention_score: number;
+  attention_score_change_week: number;
+  cluster_id: string;
+  created_at: string;
+  id: string;
+  identity: {
+    clusters: unknown[];
+    id: string;
+    social_accounts: { social_account: SocialAccount }[];
+  };
+  insider_score: number;
+  personal_rank: string;
+  rank: string;
+  social_account: { social_account: SocialAccount };
+}
+
 interface Entity {
   start: number;
   end: number;
@@ -35,6 +65,7 @@ export interface TweetRef {
 }
 
 export interface Tweet {
+  author?: Influencer;
   author_id: string;
   text: string;
   referenced_tweets: TweetRef[];
@@ -55,41 +86,10 @@ export interface Tweet {
   created_at: string;
 }
 
-interface SocialAccount {
-  created_at: string;
-  followers_count: string;
-  following_count: string;
-  id: string;
-  name: string;
-  personal: boolean;
-  profile_image_url: string;
-  screen_name: string;
-  tweets_count: string;
-  updated_at: string;
-}
-
-export interface Influencer {
-  attention_score: number;
-  attention_score_change_week: number;
-  cluster_id: string;
-  created_at: string;
-  id: string;
-  identity: {
-    clusters: unknown[];
-    id: string;
-    social_accounts: { social_account: SocialAccount }[];
-  };
-  insider_score: number;
-  personal_rank: string;
-  rank: string;
-  social_account: { social_account: SocialAccount };
-}
-
 export interface Article {
   url: string;
   domain: string;
   title: string;
   description: string;
-  tweets: (Tweet & { author: Influencer })[];
-  score: number;
+  tweets: Tweet[];
 }
