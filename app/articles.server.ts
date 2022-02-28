@@ -1,3 +1,5 @@
+import invariant from 'tiny-invariant';
+
 import { caps, decode, log } from '~/utils.server';
 
 interface Entity {
@@ -115,68 +117,130 @@ export interface Article {
   date: string;
 }
 
-export async function getArticles(topic: string): Promise<Article[]> {
-  log.info('Fetching influencers...');
-  const hive = await fetch(
-    `https://api.borg.id/influence/clusters/${caps(topic)}/influencers` +
-      `?page=0&sort_by=score&sort_direction=desc&influence_type=all`,
+function logTweet(t: Tweet, a: Influencer, l: Link): void {
+  log.debug('============================================================');
+  log.debug(
+    `Author: ${a.social_account.social_account.id} | https://hive.one/p/${
+      a.social_account.social_account.screen_name
+    } | ${a.social_account.social_account.name} | @${
+      a.social_account.social_account.screen_name
+    } | Rank: ${a.rank} | Insider Score: ${a.insider_score.toFixed(
+      2
+    )} | Attention Score: ${a.attention_score.toFixed(
+      2
+    )} | Weekly Change: ${a.attention_score_change_week.toFixed(2)}`
+  );
+  log.debug(`Link: ${l.url.expanded_url} | ${l.tweets.length} tweets`);
+  log.debug(
+    `Tweet: https://twitter.com/` +
+      `${a.social_account.social_account.screen_name}/status/${t.id}` +
+      `\n\n${t.text}\n`
+  );
+}
+
+async function getArticle(l: Link): Promise<Article> {
+  const url = l.url.expanded_url;
+  log.debug(`Fetching metadata for link (${url})...`);
+  const article = {
+    url,
+    tweets: l.tweets,
+    title: decode(l.url.display_url),
+    description:
+      'No appropriate description meta tag found in article html; perhaps' +
+      ' they did something weird like put their tag names in all caps 🤷.',
+    // TODO: Perhaps show the most recent share or the first share or the date
+    // the article or content link was actually published (use metascraper).
+    date: l.tweets[0].created_at,
+    domain: new URL(url).hostname.replace(/^www\./, ''),
+  };
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(url, {
+      signal: controller.signal,
+      cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
+    });
+    clearTimeout(timeoutId);
+    let title = '';
+    let description = '';
+    await new HTMLRewriter()
+      .on('meta', {
+        element(el) {
+          const content = el.getAttribute('content');
+          if (content && el.getAttribute('property') === 'og:description')
+            description = content;
+          if (content && el.getAttribute('name') === 'description')
+            description = content;
+          if (content && el.getAttribute('property') === 'og:title')
+            title = content;
+        },
+      })
+      .on('title', {
+        text(txt) {
+          title += txt.text;
+        },
+      })
+      .transform(res)
+      .text();
+    article.title = decode(title) || article.title;
+    article.description = decode(description) || article.description;
+  } catch (e) {
+    log.error(`Error fetching metadata for link (${url}): ${e.message}`);
+  }
+  return article;
+}
+
+async function getInfluencers(topic: string): Promise<Influencer[]> {
+  log.info(`Fetching influencers for topic (${topic})...`);
+  const res = await fetch(
+    `https://api.borg.id/influence/clusters/${caps(topic)}/influencers?` +
+      `page=0&sort_by=score&sort_direction=desc&influence_type=all`,
     {
       headers: { authorization: `Token ${HIVE_TOKEN}` },
       cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
     }
   );
-  log.debug(
-    `Headers: ${JSON.stringify(
-      Object.fromEntries(hive.headers.entries()),
-      null,
-      2
-    )}`
-  );
-  const { influencers } = (await hive.json()) as { influencers: Influencer[] };
-  log.info('Fetching tweets...');
-  // I'm limited to 512 characters in my Twitter search query and thus can't
-  // filter by all 100 of the top ranked influencers from Hive. Instead, I just
-  // search for tweets made by the top 25 influencers in the last 7 days.
-  let query = `${topic} has:links (`;
-  influencers.forEach((i, idx) => {
-    let filter = `from:${i.social_account.social_account.screen_name}`;
-    if (idx > 0) filter = ` OR ${filter}`;
-    if (query.length + filter.length >= 512) return;
-    query += filter;
-  });
-  query += ')';
-  log.debug(`Query (${query.length}): ${query}`);
-  // TODO: Decide whether or not to sort by recency or relevancy.
-  const twitter = await fetch(
-    `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(
-      query
-    )}&tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&expansions=referenced_tweets.id,referenced_tweets.id.author_id&max_results=100`,
+  const headers = Object.fromEntries(res.headers.entries());
+  log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
+  const { influencers } = (await res.json()) as { influencers: Influencer[] };
+  log.info(`Fetched ${influencers.length} influencers.`);
+  return influencers;
+}
+
+async function getTweets(influencer: Influencer): Promise<Tweet[]> {
+  const id = influencer.social_account.social_account.id;
+  log.info(`Fetching tweets for influencer (${id})...`);
+  const res = await fetch(
+    `https://api.twitter.com/2/users/${id}/tweets?` +
+      `tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&` +
+      `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
+      `max_results=100`,
     {
       headers: { authorization: `Bearer ${TWITTER_TOKEN}` },
       cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
     }
   );
-  log.debug(
-    `Headers: ${JSON.stringify(
-      Object.fromEntries(twitter.headers.entries()),
-      null,
-      2
-    )}`
-  );
-  const search = (await twitter.json()) as TwitterSearch;
+  const headers = Object.fromEntries(res.headers.entries());
+  log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
+  const search = (await res.json()) as TwitterSearch;
   log.info(`Fetched ${search.meta.result_count} tweets.`);
-  // Only look at tweets that link to articles and content outside of Twitter.
-  // TODO: Also add the attention scores of every referenced tweet. Ideally, we
-  // want the sum of every single time the link has been shared on Twitter. This
-  // is, however, beyond the scope of what Tweetscape would be capable of, so we
-  // do the next best thing:
-  // - Start with the author's attention score.
-  // - Add the attention scores of the authors of the quoted or retweeted tweet.
+  return [...(search.data ?? []), ...(search.includes?.tweets ?? [])];
+}
+
+export async function getArticles(topic: string): Promise<Article[]> {
+  // 1. Fetch all 12989 influencers from Hive (in batches of 100).
+  const influencers = await getInfluencers(topic);
+  // 2. For each influencer, fetch all 3200 tweets from Twitter timeline (in
+  // batches of 100).
+  const tweets = await Promise.all(influencers.map((i) => getTweets(i)));
+  // 3. From each tweet, construct an articles database ranking the top articles
+  // by attention score sum.
   const links: Link[] = [];
   const isArticleURL = (l?: URL) =>
     l && l.expanded_url && !/twitter.com/.test(l.expanded_url);
-  search.data
-    ?.filter((t) => t.entities.urls?.some(isArticleURL))
+  tweets
+    .flat()
+    .filter((t) => t.entities.urls?.some(isArticleURL))
     .forEach((t: Tweet) => {
       const url = t.entities.urls.filter(isArticleURL)[0];
       const author = influencers.find(
@@ -184,34 +248,10 @@ export async function getArticles(topic: string): Promise<Article[]> {
       );
       invariant(author, `expected tweeter (${t.author_id}) to be influencer`);
 
-      const link = links.find(
-        (l) => l.url.expanded_url === url.expanded_url
-      ) ?? { url, tweets: [] };
+      const exists = links.find((l) => l.url.expanded_url === url.expanded_url);
+      const link = exists ?? { url, tweets: [] };
 
-      log.debug('============================================================');
-      log.debug(
-        `Author: ${
-          author.social_account.social_account.id
-        } | https://hive.one/p/${
-          author.social_account.social_account.screen_name
-        } | ${author.social_account.social_account.name} | @${
-          author.social_account.social_account.screen_name
-        } | Rank: ${
-          author.rank
-        } | Insider Score: ${author.insider_score.toFixed(
-          2
-        )} | Attention Score: ${author.attention_score.toFixed(
-          2
-        )} | Weekly Change: ${author.attention_score_change_week.toFixed(2)}`
-      );
-      log.debug(
-        `Link: ${link.url.expanded_url} | ${link.tweets.length} tweets`
-      );
-      log.debug(
-        `Tweet: https://twitter.com/` +
-          `${author.social_account.social_account.screen_name}/status/${t.id}` +
-          `\n\n${t.text}\n`
-      );
+      logTweet(t, author, link);
 
       function count(rt: Omit<TweetRef, 'type'> & Partial<TweetRef>) {
         if (rt.type === 'replied_to') {
@@ -222,11 +262,7 @@ export async function getArticles(topic: string): Promise<Article[]> {
           log.debug(`Skipping already counted tweet (${rt.id})`);
           return;
         }
-        const tweets = [
-          ...(search.data ?? []),
-          ...(search.includes?.tweets ?? []),
-        ];
-        const tweet = tweets.find((tt) => rt.id === tt.id);
+        const tweet = tweets.flat().find((tt) => rt.id === tt.id);
         if (!tweet) {
           log.warn(`Missing ${rt.type ?? 'original'} tweet (${rt.id})`);
           return;
@@ -261,76 +297,14 @@ export async function getArticles(topic: string): Promise<Article[]> {
       if (!links.includes(link)) links.push(link);
     });
 
-  // Sort links descendingly by attention score sum.
-  const ranked = links
-    .map((l) => ({
-      ...l,
-      score: l.tweets.reduce((s, c) => s + c.author.attention_score, 0),
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  log.info(`Fetching metadata for ${ranked.length} links...`);
+  log.info(`Fetching metadata for ${links.length} links...`);
   return Promise.all(
-    ranked.map(async (l) => {
-      const url = l.url.expanded_url;
-      log.debug(`Fetching metadata for link (${url})...`);
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(url, {
-          signal: controller.signal,
-          cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
-        });
-        clearTimeout(timeoutId);
-        let title = '';
-        let description = '';
-        await new HTMLRewriter()
-          .on('meta', {
-            element(el) {
-              const content = el.getAttribute('content');
-              if (content && el.getAttribute('property') === 'og:description')
-                description = content;
-              if (content && el.getAttribute('name') === 'description')
-                description = content;
-              if (content && el.getAttribute('property') === 'og:title')
-                title = content;
-            },
-          })
-          .on('title', {
-            text(txt) {
-              title += txt.text;
-            },
-          })
-          .transform(res)
-          .text();
-        return {
-          url,
-          tweets: l.tweets,
-          title: decode(title || l.url.display_url),
-          description:
-            decode(description) ||
-            'No appropriate description meta tag found in article html; perhaps' +
-              ' they did something weird like put their tag names in all caps 🤷.',
-          // TODO: Perhaps show the most recent share or the first share or the date
-          // the article or content link was actually published (use metascraper).
-          date: l.tweets[0].created_at,
-          domain: new URL(url).hostname.replace(/^www\./, ''),
-        };
-      } catch (e) {
-        log.error(`Error fetching metadata for link (${url}): ${e.message}`);
-        return {
-          url,
-          tweets: l.tweets,
-          title: decode(l.url.display_url),
-          description:
-            'No appropriate description meta tag found in article html; perhaps' +
-            ' they did something weird like put their tag names in all caps 🤷.',
-          // TODO: Perhaps show the most recent share or the first share or the date
-          // the article or content link was actually published (use metascraper).
-          date: l.tweets[0].created_at,
-          domain: new URL(url).hostname.replace(/^www\./, ''),
-        };
-      }
-    })
+    links
+      .map((l) => ({
+        ...l,
+        score: l.tweets.reduce((s, c) => s + c.author.attention_score, 0),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .map((l) => getArticle(l))
   );
 }
