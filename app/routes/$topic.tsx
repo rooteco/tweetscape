@@ -1,21 +1,19 @@
-import { json, useLoaderData } from 'remix';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
+import { useLoaderData } from 'remix';
 
-import type { Article } from '~/articles.server';
-import { getArticles } from '~/articles.server';
-import { topic } from '~/cookies.server';
+import type { Article } from '~/types.server';
 
-export const loader: LoaderFunction = async ({ params }) => {
+export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.topic, 'expected params.topic');
-  const articles = await getArticles(params.topic);
-  return json(articles, {
-    headers: { 'Set-Cookie': await topic.serialize(params.topic) },
-  });
+  const url = new URL(request.url);
+  const api = `${url.protocol}//${url.host}/articles/${params.topic}?page=0`;
+  return fetch(api, { method: 'POST', body: JSON.stringify([]) });
 };
 
 export default function Index() {
   const articles = useLoaderData<Article[]>();
+  console.log('Articles:', articles);
   return (
     <main>
       <ol className='list-decimal text-sm ml-6 mr-4'>
@@ -82,17 +80,23 @@ export default function Index() {
               </a>
               <span className='mx-1'>•</span>
               <span>
-                {new Date(article.date).toLocaleString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                })}
+                {new Date(article.tweets[0].created_at).toLocaleString(
+                  undefined,
+                  {
+                    month: 'short',
+                    day: 'numeric',
+                  }
+                )}
               </span>
               <span className='mx-1'>•</span>
               <span>
-                {new Date(article.date).toLocaleString(undefined, {
-                  hour: 'numeric',
-                  minute: 'numeric',
-                })}
+                {new Date(article.tweets[0].created_at).toLocaleString(
+                  undefined,
+                  {
+                    hour: 'numeric',
+                    minute: 'numeric',
+                  }
+                )}
               </span>
             </div>
           </li>
