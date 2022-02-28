@@ -49,12 +49,12 @@ interface Tweet {
     like_count: number;
     quote_count: number;
   };
-  entities: {
-    urls: URL[];
-    mentions: Mention[];
-    annotations: Annotation[];
-    hashtags: Tag[];
-    cashtags: Tag[];
+  entities?: {
+    urls?: URL[];
+    mentions?: Mention[];
+    annotations?: Annotation[];
+    hashtags?: Tag[];
+    cashtags?: Tag[];
   };
   created_at: string;
 }
@@ -152,10 +152,10 @@ async function getInfluencers(topic: string): Promise<Influencer[]> {
   log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
   const { influencers } = (await res.json()) as { influencers: Influencer[] };
   log.info(`Fetched ${influencers.length} influencers.`);
-  return influencers;
+  return influencers.slice(0, 5);
 }
 
-async function getTweets(influencer: Influencer): Promise<Tweet[]> {
+async function getTweets(influencer: Influencer): Promise<TwitterSearch> {
   const id = influencer.social_account.social_account.id;
   log.info(`Fetching tweets for influencer (${id})...`);
   const res = await fetch(
@@ -172,7 +172,7 @@ async function getTweets(influencer: Influencer): Promise<Tweet[]> {
   log.debug(`Headers: ${JSON.stringify(headers, null, 2)}`);
   const search = (await res.json()) as TwitterSearch;
   log.info(`Fetched ${search.meta.result_count} tweets.`);
-  return [...(search.data ?? []), ...(search.includes?.tweets ?? [])];
+  return search;
 }
 
 async function getArticle(l: Link): Promise<Article> {
@@ -233,19 +233,25 @@ export async function getArticles(topic: string): Promise<Article[]> {
   // 2. For each influencer, fetch all 3200 tweets from Twitter timeline (in
   // batches of 100).
   const tweets = await Promise.all(influencers.map((i) => getTweets(i)));
+  const all = tweets.reduce(
+    (a, b) => [...a, ...(b.data ?? []), ...(b.includes?.tweets ?? [])],
+    [] as Tweet[]
+  );
   // 3. From each tweet, construct an articles database ranking the top articles
   // by attention score sum.
   const links: Link[] = [];
   const isArticleURL = (l?: URL) =>
     l && l.expanded_url && !/twitter.com/.test(l.expanded_url);
   tweets
-    .flat()
-    .filter((t) => t.entities.urls?.some(isArticleURL))
+    .reduce((a, b) => [...a, ...(b.data ?? [])], [] as Tweet[])
+    .filter((t) => t.entities?.urls?.some(isArticleURL))
     .forEach((t: Tweet) => {
-      const url = t.entities.urls.filter(isArticleURL)[0];
+      const url = t.entities?.urls?.filter(isArticleURL)[0];
       const author = influencers.find(
         (i) => i.social_account.social_account.id === t.author_id
       );
+
+      invariant(url, `expected tweet (${t.id}) to have url`);
       invariant(author, `expected tweeter (${t.author_id}) to be influencer`);
 
       const exists = links.find((l) => l.url.expanded_url === url.expanded_url);
@@ -262,7 +268,7 @@ export async function getArticles(topic: string): Promise<Article[]> {
           log.debug(`Skipping already counted tweet (${rt.id})`);
           return;
         }
-        const tweet = tweets.flat().find((tt) => rt.id === tt.id);
+        const tweet = all.find((tt) => rt.id === tt.id);
         if (!tweet) {
           log.warn(`Missing ${rt.type ?? 'original'} tweet (${rt.id})`);
           return;
@@ -300,10 +306,10 @@ export async function getArticles(topic: string): Promise<Article[]> {
   log.info(`Fetching metadata for ${links.length} links...`);
   return Promise.all(
     links
-      .map((l) => ({
-        ...l,
-        score: l.tweets.reduce((s, c) => s + c.author.attention_score, 0),
-      }))
+      .map((l) => {
+        const sum = l.tweets.reduce((s, c) => s + c.author.attention_score, 0);
+        return { ...l, score: sum };
+      })
       .sort((a, b) => b.score - a.score)
       .map((l) => getArticle(l))
   );
