@@ -68,11 +68,11 @@ create table tweets (
   "reply_count" integer not null,
   "like_count" integer not null,
   "quote_count" integer not null,
-  "urls" url[],
-  "mentions" mention[],
-  "annotations" annotation[],
-  "hashtags" tag[],
-  "cashtags" tag[],
+  "urls" url[] not null default array[]::url[],
+  "mentions" mention[] not null default array[]::mention[],
+  "annotations" annotation[] not null default array[]::annotation[],
+  "hashtags" tag[] not null default array[]::tag[],
+  "cashtags" tag[] not null default array[]::tag[],
   "created_at" timestamptz not null
 );
 
