@@ -1,8 +1,7 @@
-import { fetch } from '@miniflare/core';
+const { decode } = require('html-entities');
+const { fetch } = require('@miniflare/core');
 
-export { decode } from 'html-entities';
-
-export const LogLevel = {
+const LogLevel = {
   Trace: 0,
   Debug: 1,
   Info: 2,
@@ -10,7 +9,7 @@ export const LogLevel = {
   Error: 4,
 };
 
-export class Logger {
+class Logger {
   level = LogLevel.Info;
 
   constructor(level) {
@@ -38,12 +37,8 @@ export class Logger {
   }
 }
 
-export const log = new Logger(LogLevel.Debug);
+const log = new Logger(LogLevel.Debug);
+const caps = (str) => `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
+const fetchFromCache = (...args) => fetch(...args);
 
-export function caps(str) {
-  return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
-}
-
-export function fetchFromCache(url, init) {
-  return fetch(url, init);
-}
+module.exports = { caps, decode, fetchFromCache, log };

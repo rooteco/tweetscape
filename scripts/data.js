@@ -4,13 +4,13 @@
 // database doesn't have any rate limits and can be deployed on fly to be close
 // to our serverless deployments (and thus very fast to query).
 
-import path from 'path';
+const path = require('path');
 
-import Bottleneck from 'bottleneck';
-import { Client } from 'pg';
-import dotenv from 'dotenv';
+const Bottleneck = require('bottleneck');
+const { Pool } = require('pg');
+const dotenv = require('dotenv');
 
-import { caps, fetchFromCache, log } from './utils.mjs';
+const { caps, fetchFromCache, log } = require('./utils');
 
 // follow the next.js convention for loading `.env` files.
 // @see {@link https://nextjs.org/docs/basic-features/environment-variables}
@@ -25,9 +25,8 @@ const env = process.env.NODE_ENV || 'development';
   dotenv.config({ path: dotfile });
 });
 
-const db = new Client({ connectionString: process.env.DATABASE_URL });
-
 // twitter api rate limit: max 1500 timeline API requests per 15 mins per app.
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const twitter = new Bottleneck({
   reservoir: 1500,
   reservoirRefreshInterval: 15 * 60 * 1000,
@@ -66,7 +65,7 @@ async function getTweets(id, start, end, token = '', tweets = []) {
   return getTweets(id, data.meta.next_token, tweets);
 }
 
-async function data(topic, start, end) {
+async function data(topic, start, end, db) {
   const { total, ...data } = await getInfluencers(topic, 0);
   // 1. Fetch all 10-15K influencers from Hive in parallel (pages of 100).
   log.info(`Fetching ${total} influencers from Hive (in pages of 100)...`);
@@ -115,9 +114,9 @@ async function data(topic, start, end) {
                 await db.query(
                   `
                     INSERT INTO tweets(
-                      twitter_id, 
-                      author_id, 
-                      text, 
+                      twitter_id,
+                      author_id,
+                      text,
                       retweet_count,
                       reply_count,
                       like_count,
@@ -170,25 +169,35 @@ async function data(topic, start, end) {
   );
 }
 
-async function main() {
-  // monthly cap - 500k per month (or 2M per month).
-  // rate limit - 1500 tweets per 15 mins (max to last 7 days of tweets).
-  // hive - 11 clusters, each with ~10-15K influencers.
-  // thus, i only fetch the last day's worth of tweets from each influencer.
-  const n = new Date();
-  const start = new Date(n.getFullYear(), n.getMonth(), n.getDate());
-  const end = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
-  await db.connect();
-  await db.query('BEGIN');
-  const intervalId = setInterval(() => {
-    const c = twitter.counts();
-    const msg =
-      `RECEIVED: ${c.RECEIVED} - QUEUED: ${c.QUEUED} - ` +
-      `RUNNING: ${c.RUNNING} - EXECUTING: ${c.EXECUTING} - DONE: ${c.DONE}`;
-    log.debug(msg);
-  }, 2500);
-  await data('tesla', start, end);
-  clearInterval(intervalId);
+if (require.main === module) {
+  (async () => {
+    // monthly cap - 500k per month (or 2M per month).
+    // rate limit - 1500 tweets per 15 mins (max to last 7 days of tweets).
+    // hive - 11 clusters, each with ~10-15K influencers.
+    // thus, i only fetch the last day's worth of tweets from each influencer.
+    const n = new Date();
+    const start = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+    const end = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+    // note: we don't try/catch this because if connecting throws an exception
+    // we don't need to dispose of the client (it will be undefined)
+    const db = await pool.connect();
+    const intervalId = setInterval(() => {
+      const c = twitter.counts();
+      const msg =
+        `RECEIVED: ${c.RECEIVED} - QUEUED: ${c.QUEUED} - ` +
+        `RUNNING: ${c.RUNNING} - EXECUTING: ${c.EXECUTING} - DONE: ${c.DONE}`;
+      log.debug(msg);
+    }, 2500);
+    try {
+      await db.query('BEGIN');
+      await data('tesla', start, end, db);
+      await db.query('COMMIT');
+    } catch (e) {
+      await db.query('ROLLBACK');
+      throw e;
+    } finally {
+      db.release();
+      clearInterval(intervalId);
+    }
+  })().catch((e) => log.error(e.stack));
 }
-
-void main();
