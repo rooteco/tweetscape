@@ -3,7 +3,7 @@ const path = require('path');
 const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
-const { log } = require('./utils');
+const { fetchFromCache, log } = require('./utils');
 
 // follow the next.js convention for loading `.env` files.
 // @see {@link https://nextjs.org/docs/basic-features/environment-variables}
@@ -21,15 +21,21 @@ const env = process.env.NODE_ENV || 'development';
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 async function getTweet(id) {
-  log.debug(`Fetching tweets by influencer (${id})...`);
+  const n = new Date();
+  const start = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  const end = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+  const msg =
+    `Fetching tweets (${start.toDateString()}–${end.toDateString()}) ` +
+    `by influencer (${id})...`;
+  log.debug(msg);
   const url =
     `https://api.twitter.com/2/users/${id}/tweets?tweet.fields=created_at,` +
     `entities,author_id,public_metrics,referenced_tweets&` +
     `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
-    `start_date=${start.toISOString()}&end_date=${end.toISOString()}&` +
+    `start_time=${start.toISOString()}&end_time=${end.toISOString()}&` +
     `max_results=5`;
   const headers = { authorization: `Bearer ${process.env.TWITTER_TOKEN}` };
-  const res = await fetch(url, { headers });
+  const res = await fetchFromCache(url, { headers });
   const data = await res.json();
   if (data.errors && data.title && data.detail && data.type)
     log.error(`${data.title}: ${data.detail} (${data.type})`);
@@ -63,28 +69,27 @@ async function data(db) {
       0.8322759866714478,
       Number('1'),
       Number('1'),
-      {
-        created_at: new Date('2009-06-02T20:12:29Z'),
-        followers_count: Number('76287234'),
-        following_count: Number('112'),
-        id: '44196397',
-        name: 'Elon Musk',
-        personal: true,
-        profile_image_url:
-          'https://pbs.twimg.com/profile_images/1489375145684873217/3VYnFrzx_normal.jpg',
-        screen_name: 'elonmusk',
-        tweets_count: Number('17041'),
-        updated_at: new Date('2022-03-04T00:55:43Z'),
-      },
+      `(${[
+        new Date('2009-06-02T20:12:29Z').toISOString(),
+        Number('76287234'),
+        Number('112'),
+        '44196397',
+        'Elon Musk',
+        true,
+        'https://pbs.twimg.com/profile_images/1489375145684873217/3VYnFrzx_normal.jpg',
+        'elonmusk',
+        Number('17041'),
+        new Date('2022-03-04T00:55:43Z').toISOString(),
+      ].join(',')})`,
     ]
   );
   const t = await getTweet('44196397');
   await db.query(
     `
       INSERT INTO tweets(
-        twitter_id, 
-        author_id, 
-        text, 
+        twitter_id,
+        author_id,
+        text,
         retweet_count,
         reply_count,
         like_count,
@@ -107,11 +112,11 @@ async function data(db) {
       t.public_metrics.reply_count,
       t.public_metrics.like_count,
       t.public_metrics.quote_count,
-      t.entities?.urls ?? [],
-      t.entities?.mentions ?? [],
-      t.entities?.annotations ?? [],
-      t.entities?.hashtags ?? [],
-      t.entities?.cashtags ?? [],
+      t.entities?.urls?.map((o) => `(${Object.values(o).join()})`) ?? [],
+      t.entities?.mentions?.map((o) => `(${Object.values(o).join()})`) ?? [],
+      t.entities?.annotations?.map((o) => `(${Object.values(o).join()})`) ?? [],
+      t.entities?.hashtags?.map((o) => `(${Object.values(o).join()})`) ?? [],
+      t.entities?.cashtags?.map((o) => `(${Object.values(o).join()})`) ?? [],
       new Date(t.created_at),
     ]
   );

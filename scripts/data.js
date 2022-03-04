@@ -52,7 +52,7 @@ async function getTweets(id, start, end, token = '', tweets = []) {
     `https://api.twitter.com/2/users/${id}/tweets?tweet.fields=created_at,` +
     `entities,author_id,public_metrics,referenced_tweets&` +
     `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
-    `start_date=${start.toISOString()}&end_date=${end.toISOString()}&` +
+    `start_time=${start.toISOString()}&end_time=${end.toISOString()}&` +
     `max_results=100${token ? `&pagination_token=${token}` : ''}`;
   const headers = { authorization: `Bearer ${process.env.TWITTER_TOKEN}` };
   const res = await fetchFromTwitter(url, { headers });
@@ -78,6 +78,7 @@ async function data(topic, start, end, db) {
       await Promise.all(
         influencers.map(async (i) => {
           // 3. Store each influencer in PostgreSQL database.
+          const s = i.social_account.social_account;
           await db.query(
             `
               INSERT INTO influencers(
@@ -101,7 +102,18 @@ async function data(topic, start, end, db) {
               i.insider_score,
               Number(i.personal_rank),
               Number(i.rank),
-              i.social_account.social_account,
+              `(${[
+                new Date(s.created_at).toISOString(),
+                Number(s.followers_count),
+                Number(s.following_count),
+                s.id,
+                s.name,
+                s.personal,
+                s.profile_image_url,
+                s.screen_name,
+                Number(s.tweets_count),
+                new Date(s.updated_at).toISOString(),
+              ].join(',')})`,
             ]
           );
           // 4. Store each tweet in PostgreSQL database.
@@ -111,6 +123,7 @@ async function data(topic, start, end, db) {
             )
               .reduce((a, b) => [...a, ...(b.data ?? [])], [])
               .map(async (t) => {
+                const obj = (o) => `(${Object.values(o).join()})`;
                 await db.query(
                   `
                     INSERT INTO tweets(
@@ -139,11 +152,11 @@ async function data(topic, start, end, db) {
                     t.public_metrics.reply_count,
                     t.public_metrics.like_count,
                     t.public_metrics.quote_count,
-                    t.entities?.urls ?? [],
-                    t.entities?.mentions ?? [],
-                    t.entities?.annotations ?? [],
-                    t.entities?.hashtags ?? [],
-                    t.entities?.cashtags ?? [],
+                    t.entities?.urls?.map(obj) ?? [],
+                    t.entities?.mentions?.map(obj) ?? [],
+                    t.entities?.annotations?.map(obj) ?? [],
+                    t.entities?.hashtags?.map(obj) ?? [],
+                    t.entities?.cashtags?.map(obj) ?? [],
                     new Date(t.created_at),
                   ]
                 );
