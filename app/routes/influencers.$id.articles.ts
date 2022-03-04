@@ -30,7 +30,7 @@ async function getTweets(id: string, token = ''): Promise<TwitterData> {
   const res = await fetchFromCache(
     `https://api.twitter.com/2/users/${id}/tweets?` +
       `tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&` +
-      `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
+      `expansions=referenced_tweets.id.author_id,referenced_tweets.id&` +
       `max_results=${BATCH_SIZE}${token ? `&pagination_token=${token}` : ''}`,
     { headers: { authorization: `Bearer ${TWITTER_TOKEN}` } }
   );
@@ -58,9 +58,7 @@ async function getArticle(url: string, tweets: Tweet[]): Promise<Article> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const res = await fetchFromCache(url, {
-      signal: controller.signal,
-    });
+    const res = await fetchFromCache(url, { signal: controller.signal });
     const headers = Object.fromEntries(res.headers.entries());
     log.trace(`Headers (${url}): ${JSON.stringify(headers, null, 2)}`);
     clearTimeout(timeoutId);
@@ -97,10 +95,8 @@ function isArticleURL(l?: URL): boolean {
   return !!l && !!l.expanded_url && !/twitter.com/.test(l.expanded_url);
 }
 
-async function getArticles(
-  id: string,
-  tweets: TwitterData
-): Promise<Article[]> {
+function getArticles(id: string, tweets: TwitterData): Promise<Article[]> {
+  log.info(`Constructing articles for influencer (${id})...`);
   const all = [...(tweets.data ?? []), ...(tweets.includes?.tweets ?? [])];
   const links: { url: string; tweets: Tweet[] }[] = [];
   (tweets.data ?? [])
@@ -155,11 +151,9 @@ export const action: ActionFunction = async ({ params, request }) => {
   const articles = ((await request.json()) ?? []) as Article[];
 
   // 1. Fetch the most recent 15 tweets.
-  log.info(`Fetching tweets for influencer (${params.id})...`);
   const tweets = await getTweets(params.id, token);
 
   // 2. Fetch the article metadata for each of those tweets.
-  log.info(`Fetching articles for influencer (${params.id})...`);
   (await getArticles(params.id, tweets)).forEach((a) => articles.push(a));
 
   // 3. Continue to recursively fetch tweets (and their article metadata).
