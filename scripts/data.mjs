@@ -1,16 +1,26 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+import Bottleneck from 'bottleneck';
 import { HTMLRewriter } from '@miniflare/html-rewriter';
 
 import { caps, decode, fetchFromCache, log } from './utils.mjs';
 
 const HIVE_TOKEN = 'c23ace1f-c6ab-4d4e-b253-73dfc0fdc21d';
 const TWITTER_TOKEN =
-  'AAAAAAAAAAAAAAAAAAAAAKR4ZgEAAAAAUqVKjSn2duWccIKmB6OqyLVu%2B2o%3D6iIomCUAad4SPTCNcvNVCxOOxDWtg3zJiktr09jfdoemPqvf3y';
+  'AAAAAAAAAAAAAAAAAAAAAKR4ZgEAAAAAUqVKjSn2duWccIKmB6OqyLVu%2B2o%3D6iIomCUAad' +
+  '4SPTCNcvNVCxOOxDWtg3zJiktr09jfdoemPqvf3y';
+
+// Twitter API rate limit: max 1500 timeline API requests per 15 mins per app.
+const twitter = new Bottleneck({
+  reservoir: 1500,
+  reservoirRefreshInterval: 15 * 60 * 1000,
+  reservoirRefreshAmount: 1500,
+});
+const fetchFromTwitter = twitter.wrap(fetchFromCache);
 
 async function getInfluencers(t, pg = 0) {
-  log.debug(`Fetching influencers for topic (${t})...`);
+  log.debug(`Fetching influencers (${pg}) for topic (${t})...`);
   const res = await fetchFromCache(
     `https://api.borg.id/influence/clusters/${caps(t)}/influencers?` +
       `page=${pg}&sort_by=score&sort_direction=desc&influence_type=all`,
@@ -23,8 +33,8 @@ async function getInfluencers(t, pg = 0) {
 }
 
 async function getTweets(id, token = '', tweets = []) {
-  log.debug(`Fetching tweets for influencer (${id})...`);
-  const res = await fetchFromCache(
+  log.debug(`Fetching tweets (${token}) by influencer (${id})...`);
+  const res = await fetchFromTwitter(
     `https://api.twitter.com/2/users/${id}/tweets?` +
       `tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&` +
       `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
@@ -36,6 +46,7 @@ async function getTweets(id, token = '', tweets = []) {
   const data = await res.json();
   if (data.errors && data.title && data.detail && data.type)
     log.error(`${data.title}: ${data.detail} (${data.type})`);
+  log.debug(`Fetched ${data.meta?.result_count} tweets by influencer (${id}).`);
   tweets.push(data);
   if (!data.meta?.next_token) return tweets;
   return getTweets(id, data.meta.next_token, tweets);
@@ -96,7 +107,7 @@ function isArticleURL(l) {
   return !!l && !!l.expanded_url && !/twitter.com/.test(l.expanded_url);
 }
 
-async function fast(topic) {
+async function data(topic) {
   const articles = [];
   const { total, ...data } = await getInfluencers(topic, 0);
   // 1. Fetch all 12989 influencers from Hive in parallel (pages of 100).
@@ -143,4 +154,15 @@ async function fast(topic) {
   await fs.writeFile(filename, JSON.stringify(articles, null, 2));
 }
 
-void fast('tesla');
+async function main() {
+  const intervalId = setInterval(() => {
+    const c = twitter.counts();
+    log.debug(
+      `RECEIVED: ${c.RECEIVED} - QUEUED: ${c.QUEUED} - RUNNING: ${c.RUNNING} - EXECUTING: ${c.EXECUTING} - DONE: ${c.DONE}`
+    );
+  }, 2500);
+  await data('tesla');
+  clearInterval(intervalId);
+}
+
+void main();

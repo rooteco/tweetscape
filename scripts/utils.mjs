@@ -38,9 +38,7 @@ export class Logger {
   }
 }
 
-export const log = new Logger(
-  process.env.NODE_ENV === 'development' ? LogLevel.Debug : LogLevel.Info
-);
+export const log = new Logger(LogLevel.Debug);
 
 export function caps(str) {
   return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
