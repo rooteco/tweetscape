@@ -1,15 +1,33 @@
+// Node.js module script to seed a PostgreSQL database of all the available
+// (3200) tweets from each of the (1300) influencers from a given Hive cluster.
+// I do this instead of simply using Twitter's API directly as a PostgreSQL
+// database doesn't have any rate limits and can be deployed on Fly to be close
+// to our serverless deployments (and thus very fast to query).
+
 import fs from 'fs/promises';
 import path from 'path';
 
 import Bottleneck from 'bottleneck';
+import { Client } from 'pg';
 import { HTMLRewriter } from '@miniflare/html-rewriter';
+import dotenv from 'dotenv';
 
 import { caps, decode, fetchFromCache, log } from './utils.mjs';
 
-const HIVE_TOKEN = 'c23ace1f-c6ab-4d4e-b253-73dfc0fdc21d';
-const TWITTER_TOKEN =
-  'AAAAAAAAAAAAAAAAAAAAAKR4ZgEAAAAAUqVKjSn2duWccIKmB6OqyLVu%2B2o%3D6iIomCUAad' +
-  '4SPTCNcvNVCxOOxDWtg3zJiktr09jfdoemPqvf3y';
+// Follow the Next.js convention for loading `.env` files.
+// @see {@link https://nextjs.org/docs/basic-features/environment-variables}
+const env = process.env.NODE_ENV || 'development';
+[
+  path.resolve(__dirname, `../.env.${env}.local`),
+  path.resolve(__dirname, '../.env.local'),
+  path.resolve(__dirname, `../.env.${env}`),
+  path.resolve(__dirname, '../.env'),
+].forEach((dotfile) => {
+  logger.info(`Loaded env from ${dotfile}`);
+  dotenv.config({ path: dotfile });
+});
+
+const db = new Client({ connectionString: process.env.DATABASE_URL });
 
 // Twitter API rate limit: max 1500 timeline API requests per 15 mins per app.
 const twitter = new Bottleneck({
@@ -24,7 +42,7 @@ async function getInfluencers(t, pg = 0) {
   const res = await fetchFromCache(
     `https://api.borg.id/influence/clusters/${caps(t)}/influencers?` +
       `page=${pg}&sort_by=score&sort_direction=desc&influence_type=all`,
-    { headers: { authorization: `Token ${HIVE_TOKEN}` } }
+    { headers: { authorization: `Token ${process.env.HIVE_TOKEN}` } }
   );
   const headers = Object.fromEntries(res.headers.entries());
   log.trace(`Headers: ${JSON.stringify(headers, null, 2)}`);
@@ -39,7 +57,7 @@ async function getTweets(id, token = '', tweets = []) {
       `tweet.fields=created_at,entities,author_id,public_metrics,referenced_tweets&` +
       `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
       `max_results=100${token ? `&pagination_token=${token}` : ''}`,
-    { headers: { authorization: `Bearer ${TWITTER_TOKEN}` } }
+    { headers: { authorization: `Bearer ${process.env.TWITTER_TOKEN}` } }
   );
   const headers = Object.fromEntries(res.headers.entries());
   log.trace(`Headers: ${JSON.stringify(headers, null, 2)}`);
@@ -155,10 +173,13 @@ async function data(topic) {
 }
 
 async function main() {
+  await db.connect();
+  await db.query('BEGIN');
   const intervalId = setInterval(() => {
     const c = twitter.counts();
     log.debug(
-      `RECEIVED: ${c.RECEIVED} - QUEUED: ${c.QUEUED} - RUNNING: ${c.RUNNING} - EXECUTING: ${c.EXECUTING} - DONE: ${c.DONE}`
+      `RECEIVED: ${c.RECEIVED} - QUEUED: ${c.QUEUED} - ` +
+        `RUNNING: ${c.RUNNING} - EXECUTING: ${c.EXECUTING} - DONE: ${c.DONE}`
     );
   }, 2500);
   await data('tesla');
