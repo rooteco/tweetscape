@@ -6,21 +6,21 @@ grant all on schema public to public;
 create domain url as text check (value ~ '^https?:\/\/\S+$');
 create table influencers (
   "id" text unique not null primary key,
-  "hive_id" text unique not null,
-  "attention_score" numeric not null,
-  "attention_score_change_week" numeric not null,
-  "insider_score" numeric not null,
+  "hive_id" text unique,
+  "attention_score" numeric,
+  "attention_score_change_week" numeric,
+  "insider_score" numeric,
   "organization_rank" integer,
   "personal_rank" integer,
-  "rank" integer not null,
-  "created_at" timestamptz not null,
-  "followers_count" integer not null,
-  "following_count" integer not null,
+  "rank" integer,
+  "created_at" timestamptz,
+  "followers_count" integer,
+  "following_count" integer,
+  "tweets_count" integer,
   "name" text not null,
-  "profile_image_url" url not null,
-  "screen_name" text not null,
-  "tweets_count" integer not null,
-  "updated_at" timestamptz not null
+  "username" text not null,
+  "profile_image_url" url,
+  "updated_at" timestamptz
 );
 create table tweets (
   "id" text unique not null primary key,
