@@ -1,41 +1,40 @@
-create domain url as text check (value ~ '^https?:\/\/\S+$');
-
-create type social_account as (
-  "created_at" timestamptz,
-  "followers_count" integer,
-  "following_count" integer,
-  "id" text,
-  "name" text,
-  "personal" boolean,
-  "profile_image_url" url,
-  "screen_name" text,
-  "tweets_count" integer,
-  "updated_at" timestamptz
-);
+create domain href as text check (value ~ '^https?:\/\/\S+$');
 
 create table influencers (
   "twitter_id" text unique not null primary key,
   "hive_id" text unique not null,
   "attention_score" numeric not null,
   "attention_score_change_week" numeric not null,
-  "created_at" timestamptz not null,
   "insider_score" numeric not null,
   "personal_rank" integer not null,
   "rank" integer not null,
-  "social_account" social_account not null 
+  "created_at" timestamptz not null,
+  "followers_count" integer not null,
+  "following_count" integer not null,
+  "name" text not null,
+  "personal" boolean not null,
+  "profile_image_url" href not null,
+  "screen_name" text not null,
+  "tweets_count" integer not null,
+  "updated_at" timestamptz not null
 );
 
+create type image as (
+  "url" href,
+  "width" integer,
+  "height" integer
+);
 create type url as (
   "start" integer,
   "end" integer,
-  "url" url,
-  "expanded_url" url,
+  "url" href,
+  "expanded_url" href,
   "display_url" text,
   "images" image[],
   "status" integer,
   "title" text,
   "description" text,
-  "unwound_url" url
+  "unwound_url" href 
 );
 
 create type mention as (

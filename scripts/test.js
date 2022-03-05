@@ -22,7 +22,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 async function getTweet(id) {
   const n = new Date();
-  const start = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  const start = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 6);
   const end = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
   const msg =
     `Fetching tweets (${start.toDateString()}–${end.toDateString()}) ` +
@@ -53,37 +53,43 @@ async function data(db) {
         hive_id,
         attention_score,
         attention_score_change_week,
-        created_at,
         insider_score,
         personal_rank,
         rank,
-        social_account
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+        created_at,
+        followers_count,
+        following_count,
+        name,
+        personal,
+        profile_image_url,
+        screen_name,
+        tweets_count,
+        updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+      );
     `,
     [
       '44196397',
       '8403680236',
       961.3900146484375,
       -0.03799999877810478,
-      new Date('2022-03-04T00:00:00Z'),
       0.8322759866714478,
       Number('1'),
       Number('1'),
-      `(${[
-        new Date('2009-06-02T20:12:29Z').toISOString(),
-        Number('76287234'),
-        Number('112'),
-        '44196397',
-        'Elon Musk',
-        true,
-        'https://pbs.twimg.com/profile_images/1489375145684873217/3VYnFrzx_normal.jpg',
-        'elonmusk',
-        Number('17041'),
-        new Date('2022-03-04T00:55:43Z').toISOString(),
-      ].join(',')})`,
+      new Date('2009-06-02T20:12:29Z'),
+      Number('76287234'),
+      Number('112'),
+      'Elon Musk',
+      true,
+      'https://pbs.twimg.com/profile_images/1489375145684873217/3VYnFrzx_normal.jpg',
+      'elonmusk',
+      Number('17041'),
+      new Date('2022-03-04T00:55:43Z'),
     ]
   );
   const t = await getTweet('44196397');
+  const obj = (o) => `(${Object.values(o).join()})`;
   await db.query(
     `
       INSERT INTO tweets(
@@ -100,7 +106,7 @@ async function data(db) {
         hashtags,
         cashtags,
         created_at
-      ) VALUES(
+      ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
       );
     `,
@@ -112,11 +118,11 @@ async function data(db) {
       t.public_metrics.reply_count,
       t.public_metrics.like_count,
       t.public_metrics.quote_count,
-      t.entities?.urls?.map((o) => `(${Object.values(o).join()})`) ?? [],
-      t.entities?.mentions?.map((o) => `(${Object.values(o).join()})`) ?? [],
-      t.entities?.annotations?.map((o) => `(${Object.values(o).join()})`) ?? [],
-      t.entities?.hashtags?.map((o) => `(${Object.values(o).join()})`) ?? [],
-      t.entities?.cashtags?.map((o) => `(${Object.values(o).join()})`) ?? [],
+      t.entities?.urls?.map(obj) ?? [],
+      t.entities?.mentions?.map(obj) ?? [],
+      t.entities?.annotations?.map(obj) ?? [],
+      t.entities?.hashtags?.map(obj) ?? [],
+      t.entities?.cashtags?.map(obj) ?? [],
       new Date(t.created_at),
     ]
   );

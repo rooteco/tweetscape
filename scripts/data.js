@@ -86,34 +86,40 @@ async function data(topic, start, end, db) {
                 hive_id,
                 attention_score,
                 attention_score_change_week,
-                created_at,
                 insider_score,
                 personal_rank,
                 rank,
-                social_account
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+                created_at,
+                followers_count,
+                following_count,
+                name,
+                personal,
+                profile_image_url,
+                screen_name,
+                tweets_count,
+                updated_at
+              ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+              );
             `,
             [
               i.social_account.social_account.id,
               i.id,
               i.attention_score,
               i.attention_score_change_week,
-              new Date(i.created_at),
               i.insider_score,
               Number(i.personal_rank),
               Number(i.rank),
-              `(${[
-                new Date(s.created_at).toISOString(),
-                Number(s.followers_count),
-                Number(s.following_count),
-                s.id,
-                s.name,
-                s.personal,
-                s.profile_image_url,
-                s.screen_name,
-                Number(s.tweets_count),
-                new Date(s.updated_at).toISOString(),
-              ].join(',')})`,
+              new Date(s.created_at),
+              Number(s.followers_count),
+              Number(s.following_count),
+              s.id,
+              s.name,
+              s.personal,
+              s.profile_image_url,
+              s.screen_name,
+              Number(s.tweets_count),
+              new Date(s.updated_at),
             ]
           );
           // 4. Store each tweet in PostgreSQL database.
