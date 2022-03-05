@@ -44,7 +44,7 @@ async function insertRef(r, t, db) {
         referenced_tweet_id,
         referencer_tweet_id,
         type
-      ) VALUES ($1, $2, $3);
+      ) VALUES ($1, $2, $3) ON CONFLICT ON CONSTRAINT refs_pkey DO NOTHING;
     `,
       values
     );
@@ -67,7 +67,9 @@ async function insertTag(h, t, db, type = 'hashtag') {
         type,
         start,
         end
-      ) VALUES ($1, $2, $3, $4, $5);
+      ) VALUES (
+        $1, $2, $3, $4, $5
+      ) ON CONFLICT ON CONSTRAINT tags_pkey DO NOTHING;
       `,
       values
     );
@@ -97,7 +99,9 @@ async function insertAnnotation(a, t, db) {
         type,
         start,
         end
-      ) VALUES ($1, $2, $3, $5, $5, $6);
+      ) VALUES (
+        $1, $2, $3, $5, $5, $6
+      ) ON CONFLICT ON CONSTRAINT annotations_pkey DO NOTHING;
       `,
       values
     );
@@ -118,7 +122,9 @@ async function insertMention(m, t, db) {
         influencer_id,
         start,
         end
-      ) VALUES ($1, $2, $3, $4);
+      ) VALUES (
+        $1, $2, $3, $4
+      ) ON CONFLICT ON CONSTRAINT mentions_pkey DO NOTHING;
       `,
       values
     );
@@ -142,10 +148,9 @@ async function insertURL(u, t, db) {
         title,
         description,
         unwound_url
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      ON CONFLICT expanded_url
-      DO NOTHING
-      RETURNING id;
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8
+      ) ON CONFLICT (expanded_url) DO NOTHING RETURNING id;
       `,
       [
         u.url,
@@ -166,7 +171,9 @@ async function insertURL(u, t, db) {
         link_id,
         start,
         end
-      ) VALUES ($1, $2, $3, $4);
+      ) VALUES (
+        $1, $2, $3, $4
+      ) ON CONFLICT ON CONSTRAINT urls_pkey DO NOTHING;
       `,
       [t.id, link.rows[0].id, u.start, u.end]
     );
@@ -202,7 +209,7 @@ async function insertTweet(t, db) {
         created_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8
-      );
+      ) ON CONFLICT (id) DO NOTHING;
       `,
       values
     );
@@ -356,22 +363,20 @@ async function data(topic, start, end, db) {
           await Promise.all(
             tweets.map(async (t) => {
               await insertTweet(t, db);
-              await Promise.all(
-                [
-                  t.entities?.urls?.map((u) => insertURL(u, t, db)),
-                  t.entities?.mentions?.map((m) => insertMention(m, t, db)),
-                  t.entities?.annotations?.map((a) =>
-                    insertAnnotation(a, t, db)
-                  ),
-                  t.entities?.hashtags?.map((h) =>
-                    insertTag(h, t, db, 'hashtag')
-                  ),
-                  t.entities?.cashtags?.map((h) =>
-                    insertTag(h, t, db, 'cashtag')
-                  ),
-                  t.referenced_tweets.map((r) => insertRef(r, t, db)),
-                ].flat()
-              );
+              await Promise.all([
+                ...t.entities?.urls?.map((u) => insertURL(u, t, db)),
+                ...t.entities?.mentions?.map((m) => insertMention(m, t, db)),
+                ...t.entities?.annotations?.map((a) =>
+                  insertAnnotation(a, t, db)
+                ),
+                ...t.entities?.hashtags?.map((h) =>
+                  insertTag(h, t, db, 'hashtag')
+                ),
+                ...t.entities?.cashtags?.map((h) =>
+                  insertTag(h, t, db, 'cashtag')
+                ),
+                ...t.referenced_tweets.map((r) => insertRef(r, t, db)),
+              ]);
             })
           );
         })
