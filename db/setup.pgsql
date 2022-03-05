@@ -1,83 +1,85 @@
-create domain href as text check (value ~ '^https?:\/\/\S+$');
-
+create domain url as text check (value ~ '^https?:\/\/\S+$');
 create table influencers (
-  "twitter_id" text unique not null primary key,
+  "id" text unique not null primary key,
   "hive_id" text unique not null,
   "attention_score" numeric not null,
   "attention_score_change_week" numeric not null,
   "insider_score" numeric not null,
-  "personal_rank" integer not null,
+  "organization_rank" integer,
+  "personal_rank" integer,
   "rank" integer not null,
   "created_at" timestamptz not null,
   "followers_count" integer not null,
   "following_count" integer not null,
   "name" text not null,
-  "personal" boolean not null,
-  "profile_image_url" href not null,
+  "profile_image_url" url not null,
   "screen_name" text not null,
   "tweets_count" integer not null,
   "updated_at" timestamptz not null
 );
-
 create type image as (
-  "url" href,
+  "url" url,
   "width" integer,
   "height" integer
 );
-create type url as (
-  "start" integer,
-  "end" integer,
-  "url" href,
-  "expanded_url" href,
-  "display_url" text,
+create table links (
+  "id" bigint generated always as identity primary key,
+  "url" url unique not null,
+  "expanded_url" url unique not null,
+  "display_url" text not null,
   "images" image[],
   "status" integer,
   "title" text,
   "description" text,
-  "unwound_url" href 
+  "unwound_url" url 
 );
-
-create type mention as (
-  "start" integer,
-  "end" integer,
-  "username" text,
-  "id" text
+create table urls (
+  "tweet_id" text references tweets(id) not null,
+  "link_id" bigint references links(id) not null,
+  "start" integer not null,
+  "end" integer not null,
+  primary key ("tweet", "link")
 );
-
+create table mentions (
+  "tweet_id" text references tweets(id) not null,
+  "influencer_id" text references influencers(id) not null,
+  "start" integer not null,
+  "end" integer not null,
+  primary key ("tweet", "influencer")
+);
 create type annotation_type as enum('Organization', 'Place', 'Person', 'Product');
-create type annotation as (
-  "start" integer,
-  "end" integer,
-  "probability" numeric,
-  "type" annotation_type,
-  "normalized_text" text
+create table annotations (
+  "tweet_id" text references tweets(id) not null,
+  "normalized_text" text not null,
+  "probability" numeric not null,
+  "type" annotation_type not null,
+  "start" integer not null,
+  "end" integer not null,
+  primary key ("tweet", "normalized_text")
 );
-
-create type tag as (
-  "start" integer,
-  "end" integer,
-  "tag" text 
+create type tag_type as enum('cashtag', 'hashtag');
+create table tags (
+  "tweet_id" text references tweets(id) not null,
+  "tag" text not null,
+  "type" tag_type not null,
+  "start" integer not null,
+  "end" integer not null,
+  primary key ("tweet", "tag", "type")
 );
-
 create table tweets (
-  "twitter_id" text unique not null primary key,
-  "author_id" text references influencers(twitter_id),
+  "id" text unique not null primary key,
+  "author_id" text references influencers(id) not null,
   "text" text not null,
   "retweet_count" integer not null,
   "reply_count" integer not null,
   "like_count" integer not null,
   "quote_count" integer not null,
-  "urls" url[] not null default array[]::url[],
-  "mentions" mention[] not null default array[]::mention[],
-  "annotations" annotation[] not null default array[]::annotation[],
-  "hashtags" tag[] not null default array[]::tag[],
-  "cashtags" tag[] not null default array[]::tag[],
   "created_at" timestamptz not null
 );
-
-create type tweet_ref_type as enum('quoted', 'retweeted', 'replied_to');
-create table tweet_refs (
-  "twitter_id" text unique not null primary key,
-  "type" tweet_ref_type not null,
-  "referencer_tweet_id" text references tweets(twitter_id)
+create type ref_type as enum('quoted', 'retweeted', 'replied_to');
+create table refs (
+  "referenced_tweet_id" text references tweets(id) not null,
+  "referencer_tweet_id" text references tweets(id) not null,
+  "type" ref_type not null,
+  primary key ("referenced_tweet_id", "referencer_tweet_id")
 );
