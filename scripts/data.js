@@ -24,7 +24,7 @@ const { caps, fetchFromCache, log } = require('./utils');
 
 // follow the next.js convention for loading `.env` files.
 // @see {@link https://nextjs.org/docs/basic-features/environment-variables}
-const env = process.env.NODE_ENV || 'development';
+const env = process.env.NODE_ENV ?? 'development';
 [
   path.resolve(__dirname, `../.env.${env}.local`),
   path.resolve(__dirname, '../.env.local'),
@@ -168,7 +168,7 @@ if (require.main === module) {
     // hive - 11 clusters, each with ~10-15K influencers.
     // thus, i only fetch the last day's worth of tweets from each influencer.
     const n = new Date();
-    const start = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+    const start = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 6);
     const end = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
     // note: we don't try/catch this because if connecting throws an exception
     // we don't need to dispose of the client (it will be undefined)

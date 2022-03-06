@@ -13,7 +13,7 @@ const { fetchFromCache, log } = require('./utils');
 
 // follow the next.js convention for loading `.env` files.
 // @see {@link https://nextjs.org/docs/basic-features/environment-variables}
-const env = process.env.NODE_ENV || 'development';
+const env = process.env.NODE_ENV ?? 'development';
 [
   path.resolve(__dirname, `../.env.${env}.local`),
   path.resolve(__dirname, '../.env.local'),
