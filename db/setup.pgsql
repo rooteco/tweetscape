@@ -69,7 +69,13 @@ create table mentions (
   "end" integer not null,
   primary key ("tweet_id", "influencer_id")
 );
-create type annotation_type as enum('Organization', 'Place', 'Person', 'Product');
+create type annotation_type as enum(
+  'Person',
+  'Place',
+  'Product',
+  'Organization', 
+  'Other'
+);
 create table annotations (
   "tweet_id" text references tweets(id) not null,
   "normalized_text" text not null,
