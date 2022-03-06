@@ -7,19 +7,19 @@ create domain url as text check (value ~ '^https?:\/\/\S+$');
 create table influencers (
   "id" text unique not null primary key,
   "hive_id" text unique,
+  "name" text not null,
+  "username" text not null,
+  "profile_image_url" url,
   "attention_score" numeric,
   "attention_score_change_week" numeric,
   "insider_score" numeric,
   "organization_rank" integer,
   "personal_rank" integer,
   "rank" integer,
-  "created_at" timestamptz,
   "followers_count" integer,
   "following_count" integer,
   "tweets_count" integer,
-  "name" text not null,
-  "username" text not null,
-  "profile_image_url" url,
+  "created_at" timestamptz,
   "updated_at" timestamptz
 );
 create table tweets (
