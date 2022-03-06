@@ -37,7 +37,7 @@ class Logger {
   }
 }
 
-const log = new Logger(LogLevel.Debug);
+const log = new Logger(LogLevel.Trace);
 const caps = (str) => `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
 const fetchFromCache = (...args) => fetch(...args);
 

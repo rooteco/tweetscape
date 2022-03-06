@@ -5,14 +5,14 @@
 // to our serverless deployments (and thus very fast to query).
 
 const {
-  insertRef,
-  insertTag,
-  insertAnnotation,
-  insertMention,
-  insertURL,
-  insertTweet,
-  insertInfluencer,
-  insertUser,
+  insertRefs,
+  insertTags,
+  insertAnnotations,
+  insertMentions,
+  insertURLs,
+  insertTweets,
+  insertInfluencers,
+  insertUsers,
 } = require('./sql');
 const { pool, twitter, getTweets, getInfluencers } = require('./shared');
 const { log } = require('./utils');
@@ -23,40 +23,37 @@ async function data(topic, start, end, db) {
   const arr = Array(Math.ceil(Number(total) / 50)).fill(null);
   await Promise.all(
     arr.map(async (_, pg) => {
-      if (pg > 0) return log.trace(`Skipping page (${pg}) for now...`);
+      if (pg > 0) return;
       const { influencers } = pg === 0 ? data : await getInfluencers(topic, pg);
+      await insertInfluencers(influencers, db);
       log.info(`Fetching tweets from ${influencers.length} timelines...`);
       await Promise.all(
         influencers.map(async (i) => {
-          const s = i.social_account.social_account;
-          await insertInfluencer(i, s, db);
-          const data = await getTweets(s.id, start, end);
+          const { id } = i.social_account.social_account;
+          const data = await getTweets(id, start, end);
           const users = data.reduce(
             (a, b) => [...a, ...(b.includes?.users ?? [])],
             []
           );
-          await Promise.all(users.map((u) => insertUser(u, db)));
+          await insertUsers(users, db);
           const referencedTweets = data.reduce(
             (a, b) => [...a, ...(b.includes?.tweets ?? [])],
             []
           );
-          await Promise.all(referencedTweets.map((t) => insertTweet(t, db)));
+          await insertTweets(referencedTweets, db);
           const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
-          log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
+          await insertTweets(tweets, db);
           await Promise.all(
-            tweets.map(async (t) => {
-              await insertTweet(t, db);
-              const entities = t.entities ?? {};
-              const promises = [
-                entities.urls?.map((u) => insertURL(u, t, db)),
-                entities.mentions?.map((m) => insertMention(m, t, db)),
-                entities.annotations?.map((a) => insertAnnotation(a, t, db)),
-                entities.hashtags?.map((h) => insertTag(h, t, db, 'hashtag')),
-                entities.cashtags?.map((h) => insertTag(h, t, db, 'cashtag')),
-                t.referenced_tweets?.map((r) => insertRef(r, t, db)),
-              ];
-              await Promise.all(promises.flat());
-            })
+            tweets
+              .map((t) => [
+                insertURLs(t.entities?.urls ?? [], t, db),
+                insertMentions(t.entities?.mentions ?? [], t, db),
+                insertAnnotations(t.entities?.annotations ?? [], t, db),
+                insertTags(t.entities?.hashtags ?? [], t, db, 'hashtag'),
+                insertTags(t.entities?.cashtags ?? [], t, db, 'cashtag'),
+                insertRefs(t.referenced_tweets ?? [], t, db),
+              ])
+              .flat()
           );
         })
       );
@@ -86,6 +83,7 @@ if (require.main === module) {
     try {
       log.info('Beginning database transaction...');
       await db.query('BEGIN');
+      await db.query('SET CONSTRAINTS ALL DEFERRED');
       await data('tesla', start, end, db);
       log.info('Committing database transaction...');
       await db.query('COMMIT');
@@ -96,7 +94,7 @@ if (require.main === module) {
     } finally {
       log.info('Releasing database connection...');
       clearInterval(intervalId);
-      await db.release();
+      db.release();
     }
   })().catch((e) => log.error(`Caught error: ${e.stack}`));
 }

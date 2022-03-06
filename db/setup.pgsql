@@ -24,7 +24,7 @@ create table influencers (
 );
 create table tweets (
   "id" text unique not null primary key,
-  "author_id" text references influencers(id) not null,
+  "author_id" text references influencers(id) deferrable not null,
   "text" text not null,
   "retweet_count" integer not null,
   "reply_count" integer not null,
@@ -34,8 +34,8 @@ create table tweets (
 );
 create type ref_type as enum('quoted', 'retweeted', 'replied_to');
 create table refs (
-  "referenced_tweet_id" text references tweets(id) not null,
-  "referencer_tweet_id" text references tweets(id) not null,
+  "referenced_tweet_id" text references tweets(id) deferrable not null,
+  "referencer_tweet_id" text references tweets(id) deferrable not null,
   "type" ref_type not null,
   primary key ("referenced_tweet_id", "referencer_tweet_id")
 );
@@ -56,15 +56,15 @@ create table links (
   "unwound_url" url 
 );
 create table urls (
-  "tweet_id" text references tweets(id) not null,
-  "link_id" bigint references links(id) not null,
+  "tweet_id" text references tweets(id) deferrable not null,
+  "link_id" bigint references links(id) deferrable not null,
   "start" integer not null,
   "end" integer not null,
   primary key ("tweet_id", "link_id")
 );
 create table mentions (
-  "tweet_id" text references tweets(id) not null,
-  "influencer_id" text references influencers(id) not null,
+  "tweet_id" text references tweets(id) deferrable not null,
+  "influencer_id" text references influencers(id) deferrable not null,
   "start" integer not null,
   "end" integer not null,
   primary key ("tweet_id", "influencer_id")
@@ -77,7 +77,7 @@ create type annotation_type as enum(
   'Other'
 );
 create table annotations (
-  "tweet_id" text references tweets(id) not null,
+  "tweet_id" text references tweets(id) deferrable not null,
   "normalized_text" text not null,
   "probability" numeric not null,
   "type" annotation_type not null,
@@ -87,7 +87,7 @@ create table annotations (
 );
 create type tag_type as enum('cashtag', 'hashtag');
 create table tags (
-  "tweet_id" text references tweets(id) not null,
+  "tweet_id" text references tweets(id) deferrable not null,
   "tag" text not null,
   "type" tag_type not null,
   "start" integer not null,
