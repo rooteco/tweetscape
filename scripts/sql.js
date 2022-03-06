@@ -27,14 +27,31 @@ async function insertRef(r, t, db) {
 async function insertRefs(refs, t, db) {
   if (!refs?.length) return;
   log.trace(`Inserting ${refs.length} refs from tweet (${t.id})...`);
-  const values = refs.map((r) => [r.id, t.id, r.type]);
+  const values = refs.map((r) => [
+    `'${r.id}'`,
+    `'${t.id}'`,
+    `'${r.type}'::ref_type`,
+  ]);
+  // Handle edge-case where the referenced tweet has been deleted.
+  // @see {@link https://twitter.com/tesla_raj/status/1499155524377407490}
   const query = format(
     `
+    WITH data (
+      "referenced_tweet_id",
+      "referencer_tweet_id",
+      "type"
+    ) AS (VALUES %s)
     INSERT INTO refs (
       "referenced_tweet_id",
       "referencer_tweet_id",
       "type"
-    ) VALUES %L ON CONFLICT ON CONSTRAINT refs_pkey DO NOTHING;
+    ) SELECT
+      data."referenced_tweet_id",
+      data."referencer_tweet_id",
+      data."type"
+    FROM data WHERE EXISTS (
+      SELECT 1 FROM tweets WHERE tweets.id = data.referenced_tweet_id
+    ) ON CONFLICT ON CONSTRAINT refs_pkey DO NOTHING;
     `,
     values
   );
@@ -387,7 +404,6 @@ async function insertURLs(urls, t, db) {
     `,
     linkValues
   );
-  log.trace(`Link query for tweet (${t.id}): ${linkQuery}`);
   let links, values, query;
   try {
     links = await db.query(linkQuery);

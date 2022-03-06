@@ -23,7 +23,7 @@ async function data(topic, start, end, db) {
   const arr = Array(Math.ceil(Number(total) / 50)).fill(null);
   await Promise.all(
     arr.map(async (_, pg) => {
-      if (pg > 0) return;
+      if (pg !== 2) return;
       const { influencers } = pg === 0 ? data : await getInfluencers(topic, pg);
       await insertInfluencers(influencers, db);
       log.info(`Fetching tweets from ${influencers.length} timelines...`);
@@ -83,7 +83,7 @@ if (require.main === module) {
     try {
       log.info('Beginning database transaction...');
       await db.query('BEGIN');
-      await db.query('SET CONSTRAINTS ALL DEFERRED');
+      await db.query('SET CONSTRAINTS ALL IMMEDIATE');
       await data('tesla', start, end, db);
       log.info('Committing database transaction...');
       await db.query('COMMIT');
