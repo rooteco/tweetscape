@@ -62,6 +62,30 @@ create table urls (
   "end" integer not null,
   primary key ("tweet_id", "link_id")
 );
+
+create view articles as
+select
+  links.*,
+  coalesce(attention_score, 0) as attention_score,
+  coalesce(tweets, '[]'::json) as tweets
+from links
+  left outer join (
+    select 
+      tweets.link_id, 
+      sum(tweets.attention_score) as attention_score,
+      json_agg(tweets.*) as tweets
+    from (
+      select urls.link_id, tweets.* from urls inner join (
+        select 
+          tweets.*,
+          influencers.attention_score,
+          to_json(influencers.*) as author 
+        from tweets inner join influencers on tweets.author_id = influencers.id
+      ) as tweets on tweets.id = urls.tweet_id
+    ) as tweets group by tweets.link_id
+  ) as tweets on tweets.link_id = links.id
+order by attention_score desc;
+
 create table mentions (
   "tweet_id" text references tweets(id) deferrable not null,
   "influencer_id" text references influencers(id) deferrable not null,
