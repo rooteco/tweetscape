@@ -66,18 +66,23 @@ create table urls (
 create view articles as
 select
   links.*,
+  coalesce(insider_score, 0) as insider_score,
   coalesce(attention_score, 0) as attention_score,
+  coalesce(tweets_count, 0) as tweets_count,
   coalesce(tweets, '[]'::json) as tweets
 from links
   left outer join (
     select 
-      tweets.link_id, 
+      tweets.link_id,
+      sum(tweets.insider_score) as insider_score,
       sum(tweets.attention_score) as attention_score,
+      count(tweets) as tweets_count,
       json_agg(tweets.*) as tweets
     from (
       select urls.link_id, tweets.* from urls inner join (
         select 
           tweets.*,
+          influencers.insider_score,
           influencers.attention_score,
           to_json(influencers.*) as author 
         from tweets inner join influencers on tweets.author_id = influencers.id
