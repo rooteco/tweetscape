@@ -17,6 +17,8 @@ const {
   insertMention,
   insertURL,
   insertTweet,
+  insertInfluencer,
+  insertUser,
 } = require('./sql');
 const { caps, fetchFromCache, log } = require('./utils');
 
@@ -39,17 +41,22 @@ const twitter = new Bottleneck({
   reservoir: 1500,
   reservoirRefreshInterval: 15 * 60 * 1000,
   reservoirRefreshAmount: 1500,
+  trackDoneStatus: true,
 });
 const fetchFromTwitter = twitter.wrap(fetchFromCache);
 
-async function getInfluencers(t, pg = 0) {
-  log.debug(`Fetching influencers (${pg}) for topic (${t})...`);
-  const url =
-    `https://api.borg.id/influence/clusters/${caps(t)}/influencers?` +
-    `page=${pg}&sort_by=score&sort_direction=desc&influence_type=all`;
-  const headers = { authorization: `Token ${process.env.HIVE_TOKEN}` };
-  return (await fetchFromCache(url, { headers })).json();
-}
+const TWEET_FIELDS = [
+  'created_at',
+  'entities',
+  'author_id',
+  'public_metrics',
+  'referenced_tweets',
+];
+const EXPANSIONS = [
+  'referenced_tweets.id',
+  'referenced_tweets.id.author_id',
+  'entities.mentions.username',
+];
 
 async function getTweets(
   id,
@@ -64,9 +71,8 @@ async function getTweets(
     `${token ? `(${token}) ` : ''}by influencer (${id})...`;
   log.debug(msg);
   const url =
-    `https://api.twitter.com/2/users/${id}/tweets?tweet.fields=created_at,` +
-    `entities,author_id,public_metrics,referenced_tweets&` +
-    `expansions=referenced_tweets.id,referenced_tweets.id.author_id&` +
+    `https://api.twitter.com/2/users/${id}/tweets?` +
+    `tweet.fields=${TWEET_FIELDS.join()}&expansions=${EXPANSIONS.join()}&` +
     `start_time=${start.toISOString()}&end_time=${end.toISOString()}&` +
     `max_results=100${token ? `&pagination_token=${token}` : ''}` +
     `${lastTweetId ? `&since_id=${lastTweetId}` : ''}`;
@@ -81,6 +87,15 @@ async function getTweets(
   return getTweets(id, start, end, lastTweetId, data.meta.next_token, tweets);
 }
 
+async function getInfluencers(t, pg = 0) {
+  log.debug(`Fetching influencers (${pg}) for topic (${t})...`);
+  const url =
+    `https://api.borg.id/influence/clusters/${caps(t)}/influencers?` +
+    `page=${pg}&sort_by=score&sort_direction=desc&influence_type=all`;
+  const headers = { authorization: `Token ${process.env.HIVE_TOKEN}` };
+  return (await fetchFromCache(url, { headers })).json();
+}
+
 async function data(topic, start, end, db) {
   const { total, ...data } = await getInfluencers(topic, 0);
   // 1. Fetch all 10-15K influencers from Hive in parallel (pages of 100).
@@ -93,112 +108,51 @@ async function data(topic, start, end, db) {
       // 2. Fetch the last day of tweets from each influencer's timeline.
       log.info(`Fetching tweets from ${influencers.length} timelines...`);
       await Promise.all(
-        influencers.map(async (i) => {
+        influencers.map(async (i, idx) => {
           // 3. Store each influencer in PostgreSQL database.
           const s = i.social_account.social_account;
           log.debug(`Selecting last tweet for ${s.name} (${s.id})...`);
-          const res = await db.query(
-            `
-            SELECT id FROM tweets WHERE author_id = $1
-            ORDER BY created_at DESC LIMIT 1
-            `,
-            [s.id]
-          );
-          let lastTweetId = '';
-          if (res.rows[0]) {
-            lastTweetId = res.rows[0].twitter_id;
-          } else {
-            log.debug(`Inserting influencer ${s.name} (${s.id})...`);
-            const values = [
-              s.id,
-              i.id,
-              i.attention_score,
-              i.attention_score_change_week,
-              i.insider_score,
-              // some dev on the hive.one team is british and spells with an "s"
-              i.organisation_rank ? Number(i.organisation_rank) : null,
-              i.personal_rank ? Number(i.personal_rank) : null,
-              Number(i.rank),
-              new Date(s.created_at),
-              Number(s.followers_count ?? 0),
-              Number(s.following_count ?? 0),
-              s.name,
-              s.profile_image_url,
-              s.screen_name,
-              Number(s.tweets_count),
-              new Date(s.updated_at),
-            ];
-            try {
-              await db.query(
-                `
-                INSERT INTO influencers (
-                  id,
-                  hive_id,
-                  attention_score,
-                  attention_score_change_week,
-                  insider_score,
-                  organization_rank,
-                  personal_rank,
-                  rank,
-                  created_at,
-                  followers_count,
-                  following_count,
-                  tweets_count,
-                  name,
-                  username,
-                  profile_image_url,
-                  updated_at
-                ) VALUES (
-                  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-                ) ON CONFLICT (id) DO UPDATE SET (
-                  id,
-                  hive_id,
-                  attention_score,
-                  attention_score_change_week,
-                  insider_score,
-                  organization_rank,
-                  personal_rank,
-                  rank,
-                  created_at,
-                  followers_count,
-                  following_count,
-                  tweets_count,
-                  name,
-                  username,
-                  profile_image_url,
-                  updated_at
-                ) = ROW (excluded.*) WHERE influencers IS DISTINCT FROM excluded;
-                `,
-                values
-              );
-            } catch (e) {
-              log.error(`Error inserting ${s.name} (${s.id}): ${e.stack}`);
-              log.debug(`${s.name}: ${JSON.stringify(values, null, 2)}`);
-              throw e;
-            }
-          }
+          // TODO: This is messed up by referenced tweets.
+          //const res = await db.query(
+          //`
+          //SELECT id FROM tweets WHERE author_id = $1
+          //ORDER BY created_at DESC LIMIT 1
+          //`,
+          //[s.id]
+          //);
+          //let lastTweetId = '';
+          //if (res.rows[0]) {
+          //lastTweetId = res.rows[0].id;
+          //log.debug(`Found ${s.name}'s last tweet: ${lastTweetId}`);
+          //}
+          await insertInfluencer(i, s, db);
           // 4. Store each tweet in PostgreSQL database.
-          const tweets = (await getTweets(s.id, start, end, lastTweetId))
-            .reduce((a, b) => [...a, ...(b.data ?? [])], [])
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+          const data = await getTweets(s.id, start, end);
+          const users = data.reduce(
+            (a, b) => [...a, ...(b.includes?.users ?? [])],
+            []
+          );
+          await Promise.all(users.map((u) => insertUser(u, db)));
+          const referencedTweets = data.reduce(
+            (a, b) => [...a, ...(b.includes?.tweets ?? [])],
+            []
+          );
+          await Promise.all(referencedTweets.map((t) => insertTweet(t, db)));
+          const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
           log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
           await Promise.all(
             tweets.map(async (t) => {
               await insertTweet(t, db);
-              await Promise.all([
-                ...t.entities?.urls?.map((u) => insertURL(u, t, db)),
-                ...t.entities?.mentions?.map((m) => insertMention(m, t, db)),
-                ...t.entities?.annotations?.map((a) =>
-                  insertAnnotation(a, t, db)
-                ),
-                ...t.entities?.hashtags?.map((h) =>
-                  insertTag(h, t, db, 'hashtag')
-                ),
-                ...t.entities?.cashtags?.map((h) =>
-                  insertTag(h, t, db, 'cashtag')
-                ),
-                ...t.referenced_tweets.map((r) => insertRef(r, t, db)),
-              ]);
+              const entities = t.entities ?? {};
+              const promises = [
+                entities.urls?.map((u) => insertURL(u, t, db)),
+                entities.mentions?.map((m) => insertMention(m, t, db)),
+                entities.annotations?.map((a) => insertAnnotation(a, t, db)),
+                entities.hashtags?.map((h) => insertTag(h, t, db, 'hashtag')),
+                entities.cashtags?.map((h) => insertTag(h, t, db, 'cashtag')),
+                t.referenced_tweets?.map((r) => insertRef(r, t, db)),
+              ];
+              await Promise.all(promises.flat());
             })
           );
         })
@@ -222,21 +176,24 @@ if (require.main === module) {
     const intervalId = setInterval(() => {
       const c = twitter.counts();
       const msg =
-        `RECEIVED: ${c.RECEIVED} - QUEUED: ${c.QUEUED} - ` +
-        `RUNNING: ${c.RUNNING} - EXECUTING: ${c.EXECUTING} - DONE: ${c.DONE}`;
+        `Twitter API calls: ${c.RECEIVED} received, ${c.QUEUED} queued, ` +
+        `${c.RUNNING} running, ${c.EXECUTING} executing, ${c.DONE} done.`;
       log.debug(msg);
     }, 2500);
     try {
+      log.info('Beginning database transaction...');
       await db.query('BEGIN');
       await data('tesla', start, end, db);
+      log.info('Committing database transaction...');
       await db.query('COMMIT');
     } catch (e) {
-      log.info(`Caught error (${e.message}), rolling back transaction...`);
+      log.warn(`Rolling back database transaction (${e.message})...`);
       await db.query('ROLLBACK');
       throw e;
     } finally {
-      db.release();
+      log.info('Releasing database connection...');
       clearInterval(intervalId);
+      await db.release();
     }
   })().catch((e) => log.error(`Caught error: ${e.stack}`));
 }
