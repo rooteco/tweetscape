@@ -3,25 +3,38 @@ create schema public;
 grant all on schema public to postgres;
 grant all on schema public to public;
 
+create table clusters (
+  "id" text unique not null primary key, 
+  "name" text unique not null,
+  "slug" text unique not null check ("slug" = lower("name")),
+  "active" boolean not null default false,
+  "created_at" timestamptz not null,
+  "updated_at" timestamptz not null
+);
 create domain url as text check (value ~ '^https?:\/\/\S+$');
 create table influencers (
   "id" text unique not null primary key,
-  "hive_id" text unique,
   "name" text not null,
   "username" text not null,
   "profile_image_url" url,
-  "attention_score" numeric,
-  "attention_score_change_week" numeric,
-  "insider_score" numeric,
-  "organization_rank" integer,
-  "personal_rank" integer,
-  "rank" integer,
   "followers_count" integer,
   "following_count" integer,
   "tweets_count" integer,
-  "created_at" timestamptz,
-  "updated_at" timestamptz
+  "created_at" timestamptz not null,
+  "updated_at" timestamptz not null
 );
+create table scores (
+  "id" text unique not null primary key,
+  "influencer_id" text references influencers(id) deferrable not null,
+  "cluster_id" text references clusters(id) deferrable not null,
+  "attention_score" numeric not null,
+  "attention_score_change_week" numeric not null,
+  "insider_score" numeric not null,
+  "organization_rank" integer,
+  "personal_rank" integer,
+  "rank" integer not null,
+  "created_at" timestamptz not null
+); 
 create table tweets (
   "id" text unique not null primary key,
   "author_id" text references influencers(id) deferrable not null,
@@ -39,58 +52,6 @@ create table refs (
   "type" ref_type not null,
   primary key ("referenced_tweet_id", "referencer_tweet_id")
 );
-create type image as (
-  "url" url,
-  "width" integer,
-  "height" integer
-);
-create table links (
-  "id" bigint generated always as identity primary key,
-  "url" url unique not null,
-  "expanded_url" url unique not null,
-  "display_url" text not null,
-  "images" image[],
-  "status" integer,
-  "title" text,
-  "description" text,
-  "unwound_url" url 
-);
-create table urls (
-  "tweet_id" text references tweets(id) deferrable not null,
-  "link_id" bigint references links(id) deferrable not null,
-  "start" integer not null,
-  "end" integer not null,
-  primary key ("tweet_id", "link_id")
-);
-
-create view articles as
-select
-  links.*,
-  coalesce(insider_score, 0) as insider_score,
-  coalesce(attention_score, 0) as attention_score,
-  coalesce(tweets_count, 0) as tweets_count,
-  coalesce(tweets, '[]'::json) as tweets
-from links
-  left outer join (
-    select 
-      tweets.link_id,
-      sum(tweets.insider_score) as insider_score,
-      sum(tweets.attention_score) as attention_score,
-      count(tweets) as tweets_count,
-      json_agg(tweets.*) as tweets
-    from (
-      select urls.link_id, tweets.* from urls inner join (
-        select 
-          tweets.*,
-          influencers.insider_score,
-          influencers.attention_score,
-          to_json(influencers.*) as author 
-        from tweets inner join influencers on tweets.author_id = influencers.id
-      ) as tweets on tweets.id = urls.tweet_id
-    ) as tweets group by tweets.link_id
-  ) as tweets on tweets.link_id = links.id
-order by attention_score desc;
-
 create table mentions (
   "tweet_id" text references tweets(id) deferrable not null,
   "influencer_id" text references influencers(id) deferrable not null,
@@ -123,3 +84,52 @@ create table tags (
   "end" integer not null,
   primary key ("tweet_id", "tag", "type")
 );
+create type image as (
+  "url" url,
+  "width" integer,
+  "height" integer
+);
+create table links (
+  "id" bigint generated always as identity primary key,
+  "url" url unique not null,
+  "expanded_url" url unique not null,
+  "display_url" text not null,
+  "images" image[],
+  "status" integer,
+  "title" text,
+  "description" text,
+  "unwound_url" url 
+);
+create table urls (
+  "tweet_id" text references tweets(id) deferrable not null,
+  "link_id" bigint references links(id) deferrable not null,
+  "start" integer not null,
+  "end" integer not null,
+  primary key ("tweet_id", "link_id")
+);
+create view articles as
+  select
+    links.*,
+    clusters.id as cluster_id,
+    clusters.name as cluster_name,
+    clusters.slug as cluster_slug,
+    sum(tweets.insider_score) as insider_score,
+    sum(tweets.attention_score) as attention_score,
+    json_agg(tweets.*) as tweets
+  from links
+    inner join urls on urls.link_id = links.id
+    inner join (
+      select
+        tweets.*,
+        scores.cluster_id,
+        scores.attention_score,
+        scores.insider_score,
+        to_json(influencers.*) as author,
+        to_json(scores.*) as score
+      from tweets
+        inner join influencers on tweets.author_id = influencers.id
+        inner join scores on scores.influencer_id = influencers.id
+    ) as tweets on tweets.id = urls.tweet_id
+    inner join clusters on tweets.cluster_id = clusters.id
+  group by links.id, clusters.id
+order by attention_score desc;
