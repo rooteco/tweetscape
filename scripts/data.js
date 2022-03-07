@@ -23,7 +23,7 @@ async function data(c, start, end, db) {
   const arr = Array(Math.ceil(Number(total) / 50)).fill(null);
   await Promise.all(
     arr.map(async (_, pg) => {
-      if (pg !== 2) return;
+      if (pg !== 3) return;
       const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
       await insertInfluencers(influencers, c, db);
       log.info(`Fetching tweets from ${influencers.length} timelines...`);
