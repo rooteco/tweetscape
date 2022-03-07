@@ -301,7 +301,7 @@ async function insertTweets(tweets, db) {
   }
 }
 
-async function insertInfluencers(influencers, db) {
+async function insertInfluencers(influencers, c, db) {
   if (!influencers?.length) return;
   log.debug(`Inserting ${influencers.length} influencers...`);
   const values = influencers.map((i) => {
@@ -309,17 +309,9 @@ async function insertInfluencers(influencers, db) {
     log.trace(`Inserting influencer ${s.name} (${s.id})...`);
     return [
       s.id,
-      i.id,
       s.name,
       s.screen_name,
       s.profile_image_url,
-      i.attention_score,
-      i.attention_score_change_week,
-      i.insider_score,
-      // some dev on the hive.one team is british and spells with an "s"
-      i.organisation_rank ? Number(i.organisation_rank) : null,
-      i.personal_rank ? Number(i.personal_rank) : null,
-      Number(i.rank),
       Number(s.followers_count ?? 0),
       Number(s.following_count ?? 0),
       Number(s.tweets_count),
@@ -327,20 +319,29 @@ async function insertInfluencers(influencers, db) {
       new Date(s.updated_at),
     ];
   });
+  const scores = influencers.map((i) => {
+    log.trace(`Inserting influencer (${s.id}) ${c.name} score (${i.id})...`);
+    return [
+      i.id,
+      s.id,
+      c.id,
+      i.attention_score,
+      i.attention_score_change_week,
+      i.insider_score,
+      // some dev on the hive.one team is british and spells with an "s"
+      i.organisation_rank ? Number(i.organisation_rank) : null,
+      i.personal_rank ? Number(i.personal_rank) : null,
+      Number(i.rank),
+      new Date(i.created_at),
+    ];
+  });
   const query = format(
     `
     INSERT INTO influencers (
       "id",
-      "hive_id",
       "name",
       "username",
       "profile_image_url",
-      "attention_score",
-      "attention_score_change_week",
-      "insider_score",
-      "organization_rank",
-      "personal_rank",
-      "rank",
       "followers_count",
       "following_count",
       "tweets_count",
@@ -348,24 +349,42 @@ async function insertInfluencers(influencers, db) {
       "updated_at"
     ) VALUES %L ON CONFLICT (id) DO UPDATE SET (
       "id",
-      "hive_id",
       "name",
       "username",
       "profile_image_url",
-      "attention_score",
-      "attention_score_change_week",
-      "insider_score",
-      "organization_rank",
-      "personal_rank",
-      "rank",
       "followers_count",
       "following_count",
       "tweets_count",
       "created_at",
       "updated_at"
     ) = ROW (excluded.*) WHERE influencers IS DISTINCT FROM excluded;
+
+    INSERT INTO scores (
+      "id",
+      "influencer_id",
+      "cluster_id",
+      "attention_score",
+      "attention_score_change_week",
+      "insider_score",
+      "organization_rank",
+      "personal_rank",
+      "rank",
+      "created_at"
+    ) VALUES %L ON CONFLICT (id) DO UPDATE SET (
+      "id",
+      "influencer_id",
+      "cluster_id",
+      "attention_score",
+      "attention_score_change_week",
+      "insider_score",
+      "organization_rank",
+      "personal_rank",
+      "rank",
+      "created_at"
+    ) = ROW (excluded.*) WHERE scores IS DISTINCT FROM excluded;
     `,
-    values
+    values,
+    scores
   );
   try {
     await db.query(query);
@@ -373,6 +392,7 @@ async function insertInfluencers(influencers, db) {
     if (e.message.includes('current transaction is aborted')) return;
     log.error(`Error inserting ${influencers.length} influencers: ${e.stack}`);
     log.debug(`Influencers: ${JSON.stringify(values, null, 2)}`);
+    log.debug(`Scores: ${JSON.stringify(scores, null, 2)}`);
     log.debug(`Query: ${query}`);
     throw e;
   }

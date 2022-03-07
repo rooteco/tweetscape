@@ -4,7 +4,7 @@ const Bottleneck = require('bottleneck');
 const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
-const { caps, fetchFromCache, log } = require('./utils');
+const { fetchFromCache, log } = require('./utils');
 
 // follow the next.js convention for loading `.env` files.
 // @see {@link https://nextjs.org/docs/basic-features/environment-variables}
@@ -71,10 +71,10 @@ async function getTweets(
   return getTweets(id, start, end, lastTweetId, data.meta.next_token, tweets);
 }
 
-async function getInfluencers(t, pg = 0) {
-  log.debug(`Fetching influencers (${pg}) for topic (${t})...`);
+async function getInfluencers(c, pg = 0) {
+  log.debug(`Fetching influencers (${pg}) for ${c.name} (${c.id})...`);
   const url =
-    `https://api.borg.id/influence/clusters/${caps(t)}/influencers?` +
+    `https://api.borg.id/influence/clusters/${c.name}/influencers?` +
     `page=${pg}&sort_by=score&sort_direction=desc&influence_type=all`;
   const headers = { authorization: `Token ${process.env.HIVE_TOKEN}` };
   return (await fetchFromCache(url, { headers })).json();

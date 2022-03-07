@@ -17,15 +17,15 @@ const {
 const { pool, twitter, getTweets, getInfluencers } = require('./shared');
 const { log } = require('./utils');
 
-async function data(topic, start, end, db) {
-  const { total, ...data } = await getInfluencers(topic, 0);
+async function data(c, start, end, db) {
+  const { total, ...data } = await getInfluencers(c, 0);
   log.info(`Fetching ${total} influencers from Hive (in pages of 100)...`);
   const arr = Array(Math.ceil(Number(total) / 50)).fill(null);
   await Promise.all(
     arr.map(async (_, pg) => {
       if (pg !== 2) return;
-      const { influencers } = pg === 0 ? data : await getInfluencers(topic, pg);
-      await insertInfluencers(influencers, db);
+      const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
+      await insertInfluencers(influencers, c, db);
       log.info(`Fetching tweets from ${influencers.length} timelines...`);
       await Promise.all(
         influencers.map(async (i) => {
@@ -84,7 +84,7 @@ if (require.main === module) {
       log.info('Beginning database transaction...');
       await db.query('BEGIN');
       await db.query('SET CONSTRAINTS ALL IMMEDIATE');
-      await data('tesla', start, end, db);
+      await data({ id: '2300535630', name: 'Tesla' }, start, end, db);
       log.info('Committing database transaction...');
       await db.query('COMMIT');
     } catch (e) {

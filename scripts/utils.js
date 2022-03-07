@@ -38,7 +38,6 @@ class Logger {
 }
 
 const log = new Logger(LogLevel.Trace);
-const caps = (str) => `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
 const fetchFromCache = (...args) => fetch(...args);
 
-module.exports = { caps, decode, fetchFromCache, log };
+module.exports = { decode, fetchFromCache, log };
