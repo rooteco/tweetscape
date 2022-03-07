@@ -320,6 +320,7 @@ async function insertInfluencers(influencers, c, db) {
     ];
   });
   const scores = influencers.map((i) => {
+    const s = i.social_account.social_account;
     log.trace(`Inserting influencer (${s.id}) ${c.name} score (${i.id})...`);
     return [
       i.id,
