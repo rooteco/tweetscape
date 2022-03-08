@@ -12,8 +12,19 @@ import {
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import cn from 'classnames';
 
+import type { Cluster } from '~/db.server';
 import { log } from '~/utils.server';
+import { pool } from '~/db.server';
 import styles from '~/styles/app.css';
+
+export const loader: LoaderFunction = async () => {
+  log.info('Fetching clusters...');
+  const db = await pool.connect();
+  const data = await db.query('select * from clusters');
+  log.trace(`Clusters: ${JSON.stringify(data.rows, null, 2)}`);
+  log.info(`Fetched ${data.rows.length} clusters.`);
+  return data.rows as Cluster[];
+};
 
 export const links: LinksFunction = () => [
   {
@@ -46,36 +57,8 @@ export const meta: MetaFunction = () => ({
   title: 'Tweetscape: The Supercharged Twitter Feed',
 });
 
-interface Cluster {
-  active: boolean;
-  created_at: string;
-  id: string;
-  name: string;
-  updated_at: string;
-}
-
-interface Topic {
-  id: string;
-  name: string;
-}
-
-export const loader: LoaderFunction = async () => {
-  log.info('Fetching clusters...');
-  const hive = await fetch('https://api.borg.id/influence/clusters', {
-    headers: { authorization: `Token ${process.env.HIVE_TOKEN}` },
-    cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
-  });
-  const { clusters } = (await hive.json()) as { clusters: Cluster[] };
-  const topics: Topic[] = clusters.map((c) => ({
-    id: c.name.toLowerCase().split(' ').join('-'),
-    name: c.name,
-  }));
-  log.debug(`Topics: ${topics.map((t) => `${t.name} (${t.id})`).join(', ')}`);
-  return topics;
-};
-
 export default function App() {
-  const topics = useLoaderData<Topic[]>();
+  const clusters = useLoaderData<Cluster[]>();
   const { pathname } = useLocation();
   return (
     <html lang='en'>
@@ -89,12 +72,12 @@ export default function App() {
         <header className='py-4 mb-6 border-b-2 border-black whitespace-no-wrap flex justify-between items-end'>
           <h1 className='font-serif font-semibold text-6xl'>tweetscape</h1>
           <nav className='font-serif font-semibold text-lg'>
-            {topics
-              .map(({ name, id }) => (
+            {clusters
+              .map(({ id, name, slug }) => (
                 <Link
                   key={id}
                   className={cn('lowercase', {
-                    underline: pathname === `/${id}`,
+                    underline: pathname === `/${slug}`,
                   })}
                   to={`/${id}`}
                 >

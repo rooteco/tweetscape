@@ -2,17 +2,25 @@ import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 import { useLoaderData } from 'remix';
 
-import { decode, log } from '~/utils.server';
 import type { Article } from '~/db.server';
+import { log } from '~/utils.server';
 import { pool } from '~/db.server';
 
 export const loader: LoaderFunction = async ({ params }) => {
   invariant(params.cluster, 'expected params.cluster');
+  log.info(`Fetching articles for ${params.cluster}...`);
   const db = await pool.connect();
   const data = await db.query(
-    `select * from articles where cluster_slug = '${params.cluster}'`
+    `
+    select * from articles 
+    where cluster_slug = '${params.cluster}'
+    and expanded_url !~ '^https?:\\/\\/twitter\\.com' 
+    order by attention_score desc
+    limit 20;
+    `
   );
-  log.debug(`Data: ${JSON.stringify(data, null, 2)}`);
+  log.trace(`Articles: ${JSON.stringify(data, null, 2)}`);
+  log.info(`Fetched ${data.rows.length} articles for ${params.cluster}.`);
   return data.rows as Article[];
 };
 
@@ -36,11 +44,9 @@ export default function Index() {
                 rel='noopener noreferrer'
               >
                 {article.title ||
-                  `${decode(
-                    article.expanded_url
-                      .replace(/^https?:\/\/(www\.)?/, '')
-                      .substr(0, 50)
-                  )}…`}
+                  `${article.expanded_url
+                    .replace(/^https?:\/\/(www\.)?/, '')
+                    .substr(0, 50)}…`}
               </a>{' '}
               <span className='text-sm'>
                 (

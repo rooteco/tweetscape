@@ -1,5 +1,14 @@
 import { Pool } from 'pg';
 
+export interface Cluster {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface Link {
   id: number;
   url: string;
