@@ -117,19 +117,24 @@ create view articles as
     sum(tweets.attention_score) as attention_score,
     json_agg(tweets.*) as tweets
   from links
-    inner join urls on urls.link_id = links.id
     inner join (
-      select
-        tweets.*,
-        scores.cluster_id,
-        scores.attention_score,
-        scores.insider_score,
-        to_json(influencers.*) as author,
-        to_json(scores.*) as score
-      from tweets
-        inner join influencers on tweets.author_id = influencers.id
-        inner join scores on scores.influencer_id = influencers.id
-    ) as tweets on tweets.id = urls.tweet_id
-    inner join clusters on tweets.cluster_id = clusters.id
+      select distinct on (tweets.author_id, urls.link_id)
+        urls.link_id as link_id,
+        tweets.*
+      from urls
+        inner join (
+          select 
+            tweets.*,
+            scores.cluster_id as cluster_id,
+            scores.insider_score as insider_score,
+            scores.attention_score as attention_score,
+            to_json(influencers.*) as author,
+            to_json(scores.*) as score
+          from tweets
+            inner join influencers on influencers.id = tweets.author_id
+            inner join scores on scores.influencer_id = influencers.id
+        ) as tweets on tweets.id = urls.tweet_id
+    ) as tweets on tweets.link_id = links.id
+    inner join clusters on clusters.id = tweets.cluster_id
   group by links.id, clusters.id
 order by attention_score desc;
