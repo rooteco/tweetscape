@@ -3350,6 +3350,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"html5parser@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "html5parser@npm:2.0.2"
+  dependencies:
+    tslib: ^2.2.0
+  checksum: a651c915756deb8ec4007257b38d75ab375ee01718ffbd037d237e585852564c9d660efed51ed278e64f3f24ceb712e45085cbb82786b93a92dc21a7b36c3eeb
+  languageName: node
+  linkType: hard
+
 "http-cache-semantics@npm:^4.0.0, http-cache-semantics@npm:^4.1.0":
   version: 4.1.0
   resolution: "http-cache-semantics@npm:4.1.0"
@@ -6906,6 +6915,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:^2.2.0":
+  version: 2.3.1
+  resolution: "tslib@npm:2.3.1"
+  checksum: de17a98d4614481f7fcb5cd53ffc1aaf8654313be0291e1bfaee4b4bb31a20494b7d218ff2e15017883e8ea9626599b3b0e0229c18383ba9dce89da2adf15cb9
+  languageName: node
+  linkType: hard
+
 "tsutils@npm:^3.21.0":
   version: 3.21.0
   resolution: "tsutils@npm:3.21.0"
@@ -6959,6 +6975,7 @@ __metadata:
     eslint-plugin-react: ^7.29.3
     eslint-plugin-react-hooks: ^4.3.0
     html-entities: ^2.3.2
+    html5parser: ^2.0.2
     husky: ^7.0.4
     node-fetch: ^3.2.2
     pg: ^8.7.3
