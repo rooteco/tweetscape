@@ -20,8 +20,8 @@ create table influencers (
   "followers_count" integer,
   "following_count" integer,
   "tweets_count" integer,
-  "created_at" timestamptz not null,
-  "updated_at" timestamptz not null
+  "created_at" timestamptz,
+  "updated_at" timestamptz
 );
 create table scores (
   "id" text unique not null primary key,
