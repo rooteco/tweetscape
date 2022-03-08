@@ -3,8 +3,9 @@ import path from 'path';
 import Bottleneck from 'bottleneck';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import fetch from 'node-fetch';
 
-import { fetchFromCache, log } from './utils';
+import { log } from './utils';
 
 // follow the next.js convention for loading `.env` files.
 // @see {@link https://nextjs.org/docs/basic-features/environment-variables}
@@ -27,7 +28,7 @@ export const twitter = new Bottleneck({
   reservoirRefreshAmount: 1500,
   trackDoneStatus: true,
 });
-const fetchFromTwitter = twitter.wrap(fetchFromCache);
+const fetchFromTwitter = twitter.wrap(fetch);
 
 const TWEET_FIELDS = [
   'created_at',
@@ -77,5 +78,5 @@ export async function getInfluencers(c, pg = 0) {
     `https://api.borg.id/influence/clusters/${c.name}/influencers?` +
     `page=${pg}&sort_by=score&sort_direction=desc&influence_type=all`;
   const headers = { authorization: `Token ${process.env.HIVE_TOKEN}` };
-  return (await fetchFromCache(url, { headers })).json();
+  return (await fetch(url, { headers })).json();
 }

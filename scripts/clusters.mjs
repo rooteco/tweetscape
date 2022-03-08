@@ -1,14 +1,15 @@
+import fetch from 'node-fetch';
 import format from 'pg-format';
 
+import { log } from './utils';
 import { pool } from './shared';
-import { fetchFromCache, log } from './utils';
 
 (async () => {
   const db = await pool.connect();
   log.info('Fetching clusters...');
   const url = 'https://api.borg.id/influence/clusters';
   const headers = { authorization: `Token ${process.env.HIVE_TOKEN}` };
-  const data = await (await fetchFromCache(url, { headers })).json();
+  const data = await (await fetch(url, { headers })).json();
   log.debug(`Data: ${JSON.stringify(data, null, 2)}`);
   log.info(`Inserting ${data.clusters.length} clusters...`);
   const query = format(

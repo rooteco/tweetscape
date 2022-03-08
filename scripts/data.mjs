@@ -3,7 +3,6 @@
 // i do this instead of simply using twitter's api directly as a postgresql
 // database doesn't have any rate limits and can be deployed on fly to be close
 // to our serverless deployments (and thus very fast to query).
-
 import {
   insertRefs,
   insertTags,
@@ -23,7 +22,7 @@ async function data(c, start, end, db) {
   const arr = Array(Math.ceil(Number(total) / 50)).fill(null);
   await Promise.all(
     arr.map(async (_, pg) => {
-      if (pg !== 5) return;
+      if (pg !== 6) return;
       const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
       await insertInfluencers(influencers, c, db);
       log.info(`Fetching tweets from ${influencers.length} timelines...`);
