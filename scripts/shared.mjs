@@ -1,27 +1,29 @@
-import path from 'path';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 import Bottleneck from 'bottleneck';
-import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
+import pg from 'pg';
 
-import { log } from './utils';
+import { log } from './utils.mjs';
 
 // follow the next.js convention for loading `.env` files.
 // @see {@link https://nextjs.org/docs/basic-features/environment-variables}
+const dir = dirname(fileURLToPath(import.meta.url));
 const env = process.env.NODE_ENV ?? 'development';
 [
-  path.resolve(__dirname, `../.env.${env}.local`),
-  path.resolve(__dirname, '../.env.local'),
-  path.resolve(__dirname, `../.env.${env}`),
-  path.resolve(__dirname, '../.env'),
+  resolve(dir, `../.env.${env}.local`),
+  resolve(dir, '../.env.local'),
+  resolve(dir, `../.env.${env}`),
+  resolve(dir, '../.env'),
 ].forEach((dotfile) => {
   log.info(`Loaded env from ${dotfile}`);
   dotenv.config({ path: dotfile });
 });
 
 // twitter api rate limit: max 1500 timeline API requests per 15 mins per app.
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 export const twitter = new Bottleneck({
   reservoir: 1500,
   reservoirRefreshInterval: 15 * 60 * 1000,

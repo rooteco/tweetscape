@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
 import format from 'pg-format';
 
-import { log } from './utils';
-import { pool } from './shared';
+import { log } from './utils.mjs';
+import { pool } from './shared.mjs';
 
 (async () => {
   const db = await pool.connect();

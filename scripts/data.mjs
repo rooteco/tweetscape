@@ -12,9 +12,9 @@ import {
   insertTweets,
   insertInfluencers,
   insertUsers,
-} from './sql';
-import { pool, twitter, getTweets, getInfluencers } from './shared';
-import { log } from './utils';
+} from './sql.mjs';
+import { pool, twitter, getTweets, getInfluencers } from './shared.mjs';
+import { log } from './utils.mjs';
 
 async function data(c, start, end, db) {
   const { total, ...data } = await getInfluencers(c, 0);

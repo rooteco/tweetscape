@@ -1,6 +1,6 @@
 import format from 'pg-format';
 
-import { log } from './utils';
+import { log } from './utils.mjs';
 
 export async function insertRefs(refs, t, db) {
   if (!refs?.length) return;
