@@ -1,5 +1,4 @@
-const { decode } = require('html-entities');
-const { fetch } = require('@miniflare/core');
+export { decode } from 'html-entities';
 
 const LogLevel = {
   Trace: 0,
@@ -37,7 +36,4 @@ class Logger {
   }
 }
 
-const log = new Logger(LogLevel.Trace);
-const fetchFromCache = (...args) => fetch(...args);
-
-module.exports = { decode, fetchFromCache, log };
+export const log = new Logger(LogLevel.Trace);

@@ -1,10 +1,10 @@
-const path = require('path');
+import path from 'path';
 
-const Bottleneck = require('bottleneck');
-const { Pool } = require('pg');
-const dotenv = require('dotenv');
+import Bottleneck from 'bottleneck';
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
 
-const { fetchFromCache, log } = require('./utils');
+import { fetchFromCache, log } from './utils';
 
 // follow the next.js convention for loading `.env` files.
 // @see {@link https://nextjs.org/docs/basic-features/environment-variables}
@@ -20,8 +20,8 @@ const env = process.env.NODE_ENV ?? 'development';
 });
 
 // twitter api rate limit: max 1500 timeline API requests per 15 mins per app.
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const twitter = new Bottleneck({
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const twitter = new Bottleneck({
   reservoir: 1500,
   reservoirRefreshInterval: 15 * 60 * 1000,
   reservoirRefreshAmount: 1500,
@@ -42,7 +42,7 @@ const EXPANSIONS = [
   'entities.mentions.username',
 ];
 
-async function getTweets(
+export async function getTweets(
   id,
   start,
   end,
@@ -71,7 +71,7 @@ async function getTweets(
   return getTweets(id, start, end, lastTweetId, data.meta.next_token, tweets);
 }
 
-async function getInfluencers(c, pg = 0) {
+export async function getInfluencers(c, pg = 0) {
   log.debug(`Fetching influencers (${pg}) for ${c.name} (${c.id})...`);
   const url =
     `https://api.borg.id/influence/clusters/${c.name}/influencers?` +
@@ -79,5 +79,3 @@ async function getInfluencers(c, pg = 0) {
   const headers = { authorization: `Token ${process.env.HIVE_TOKEN}` };
   return (await fetchFromCache(url, { headers })).json();
 }
-
-module.exports = { pool, twitter, getTweets, getInfluencers };

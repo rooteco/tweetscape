@@ -1,8 +1,8 @@
-const format = require('pg-format');
+import format from 'pg-format';
 
-const { log } = require('./utils');
+import { log } from './utils';
 
-async function insertRefs(refs, t, db) {
+export async function insertRefs(refs, t, db) {
   if (!refs?.length) return;
   log.trace(`Inserting ${refs.length} refs from tweet (${t.id})...`);
   const values = refs.map((r) => [
@@ -44,7 +44,7 @@ async function insertRefs(refs, t, db) {
   }
 }
 
-async function insertTags(hashtags, t, db, type = 'hashtag') {
+export async function insertTags(hashtags, t, db, type = 'hashtag') {
   if (!hashtags?.length) return;
   log.trace(`Inserting ${hashtags.length} ${type}s from tweet (${t.id})...`);
   const values = hashtags.map((h) => [t.id, h.tag, type, h.start, h.end]);
@@ -71,7 +71,7 @@ async function insertTags(hashtags, t, db, type = 'hashtag') {
   }
 }
 
-async function insertAnnotations(annotations, t, db) {
+export async function insertAnnotations(annotations, t, db) {
   if (!annotations?.length) return;
   log.trace(`Inserting ${annotations.length} annotations...`);
   const values = annotations.map((a) => [
@@ -106,7 +106,7 @@ async function insertAnnotations(annotations, t, db) {
   }
 }
 
-async function insertMentions(mentions, t, db) {
+export async function insertMentions(mentions, t, db) {
   if (!mentions?.length) return;
   log.trace(`Inserting ${mentions.length} mentions from tweet (${t.id})...`);
   const values = mentions.map((m) => [
@@ -155,7 +155,7 @@ async function insertMentions(mentions, t, db) {
   }
 }
 
-async function insertURLs(urls, t, db) {
+export async function insertURLs(urls, t, db) {
   if (!urls?.length) return;
   log.trace(`Inserting ${urls.length} urls from tweet (${t.id})...`);
   // Filter out duplicates as the `DO UPDATE` can only act once on a single row.
@@ -259,7 +259,7 @@ async function insertURLs(urls, t, db) {
   }
 }
 
-async function insertTweets(tweets, db) {
+export async function insertTweets(tweets, db) {
   if (!tweets?.length) return;
   log.debug(`Inserting ${tweets.length} tweets...`);
   const values = tweets.map((t) => {
@@ -301,7 +301,7 @@ async function insertTweets(tweets, db) {
   }
 }
 
-async function insertInfluencers(influencers, c, db) {
+export async function insertInfluencers(influencers, c, db) {
   if (!influencers?.length) return;
   log.debug(`Inserting ${influencers.length} influencers...`);
   const values = influencers.map((i) => {
@@ -399,7 +399,7 @@ async function insertInfluencers(influencers, c, db) {
   }
 }
 
-async function insertUsers(users, db) {
+export async function insertUsers(users, db) {
   if (!users?.length) return;
   log.debug(`Inserting ${users.length} users...`);
   const values = users.map((u) => {
@@ -426,14 +426,3 @@ async function insertUsers(users, db) {
     throw e;
   }
 }
-
-module.exports = {
-  insertRefs,
-  insertTags,
-  insertAnnotations,
-  insertMentions,
-  insertURLs,
-  insertTweets,
-  insertInfluencers,
-  insertUsers,
-};
