@@ -9,7 +9,8 @@ create table clusters (
   "slug" text unique not null check ("slug" = lower("name")),
   "active" boolean not null default false,
   "created_at" timestamptz not null,
-  "updated_at" timestamptz not null
+  "updated_at" timestamptz not null,
+  "visible" boolean not null default false
 );
 create domain url as text check (value ~ '^https?:\/\/\S+$');
 create table influencers (
