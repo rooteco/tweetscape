@@ -33,28 +33,9 @@ export class Logger {
 }
 
 export const log = new Logger(
-  ENV === 'development' ? LogLevel.Debug : LogLevel.Info
+  process.env.ENV === 'development' ? LogLevel.Debug : LogLevel.Info
 );
 
 export function caps(str: string): string {
   return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
-}
-
-export async function fetchFromCache(
-  url: string,
-  init?: RequestInit
-): Promise<Response> {
-  const cacheKey = new Request(new URL(url).toString(), init);
-  const cache = caches.default;
-  let res = await cache.match(cacheKey);
-  if (!res) {
-    log.trace(`Cache miss for: ${url}`);
-    res = await fetch(cacheKey);
-    res = new Response(res.body, res);
-    res.headers.append('Cache-Control', `s-maxage=${24 * 60 * 60}`);
-    await cache.put(cacheKey, res.clone());
-  } else {
-    log.trace(`Cache hit for: ${url}`);
-  }
-  return res;
 }
