@@ -18,11 +18,10 @@ import { pool } from '~/db.server';
 import styles from '~/styles/app.css';
 
 export const loader: LoaderFunction = async () => {
-  log.info('Fetching clusters...');
-  const db = await pool.connect();
-  const data = await db.query('select * from clusters');
+  log.info('Fetching visible clusters...');
+  const data = await pool.query('select * from clusters where visible = true');
   log.trace(`Clusters: ${JSON.stringify(data.rows, null, 2)}`);
-  log.info(`Fetched ${data.rows.length} clusters.`);
+  log.info(`Fetched ${data.rows.length} visible clusters.`);
   return data.rows as Cluster[];
 };
 

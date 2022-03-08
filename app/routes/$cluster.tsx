@@ -9,8 +9,7 @@ import { pool } from '~/db.server';
 export const loader: LoaderFunction = async ({ params }) => {
   invariant(params.cluster, 'expected params.cluster');
   log.info(`Fetching articles for ${params.cluster}...`);
-  const db = await pool.connect();
-  const data = await db.query(
+  const data = await pool.query(
     `
     select * from articles 
     where cluster_slug = '${params.cluster}'
