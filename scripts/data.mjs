@@ -63,9 +63,9 @@ async function data(c, start, end, db) {
         log.info(`Committing database transaction (${pg})...`);
         await db.query('COMMIT');
       } catch (e) {
-        log.warn(`Rolling back database transaction (${pg}) (${e.message})...`);
+        log.error(`Error with database transaction (${pg}): ${e.stack}`);
+        log.warn(`Rolling back database transaction (${pg})...`);
         await db.query('ROLLBACK');
-        throw e;
       }
     })
   );
