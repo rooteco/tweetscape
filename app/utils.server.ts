@@ -33,7 +33,7 @@ export class Logger {
 }
 
 export const log = new Logger(
-  process.env.ENV === 'development' ? LogLevel.Debug : LogLevel.Info
+  process.env.NODE_ENV === 'development' ? LogLevel.Debug : LogLevel.Info
 );
 
 export function caps(str: string): string {
