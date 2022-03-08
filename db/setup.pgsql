@@ -28,7 +28,7 @@ create table scores (
   "influencer_id" text references influencers(id) deferrable not null,
   "cluster_id" text references clusters(id) deferrable not null,
   "attention_score" numeric not null,
-  "attention_score_change_week" numeric not null,
+  "attention_score_change_week" numeric,
   "insider_score" numeric not null,
   "organization_rank" integer,
   "personal_rank" integer,
