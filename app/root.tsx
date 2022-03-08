@@ -79,7 +79,7 @@ export default function App() {
                   className={cn('lowercase', {
                     underline: pathname === `/${slug}`,
                   })}
-                  to={`/${id}`}
+                  to={`/${slug}`}
                 >
                   {name}
                 </Link>
