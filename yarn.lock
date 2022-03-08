@@ -471,14 +471,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/pg-format@npm:^1":
+"@types/pg-format@npm:^1.0.2":
   version: 1.0.2
   resolution: "@types/pg-format@npm:1.0.2"
   checksum: 1638dc13fef4aa947a959188d5d539039dd772254f83b7299823839fc761e6fee089129c0f2b3c3a9bdd631eee4cc443663698c35bafd101de3658b0511a13d8
   languageName: node
   linkType: hard
 
-"@types/pg@npm:^8":
+"@types/pg@npm:^8.6.5":
   version: 8.6.5
   resolution: "@types/pg@npm:8.6.5"
   dependencies:
@@ -532,7 +532,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/sharp@npm:^0":
+"@types/sharp@npm:^0.29.5":
   version: 0.29.5
   resolution: "@types/sharp@npm:0.29.5"
   dependencies:
@@ -6894,11 +6894,11 @@ __metadata:
     "@remix-run/node": ^1.2.3
     "@remix-run/react": ^1.2.3
     "@remix-run/serve": ^1.2.3
-    "@types/pg": ^8
-    "@types/pg-format": ^1
+    "@types/pg": ^8.6.5
+    "@types/pg-format": ^1.0.2
     "@types/react": ^17.0.39
     "@types/react-dom": ^17.0.13
-    "@types/sharp": ^0
+    "@types/sharp": ^0.29.5
     "@typescript-eslint/eslint-plugin": ^5.14.0
     "@typescript-eslint/parser": ^5.14.0
     autoprefixer: ^10.4.2
@@ -6920,7 +6920,6 @@ __metadata:
     eslint-plugin-react-hooks: ^4.3.0
     html-entities: ^2.3.2
     husky: ^7.0.4
-    nanoid: ^3.3.1
     pg: ^8.7.3
     pg-format: ^1.0.4
     postcss: ^8.4.8
