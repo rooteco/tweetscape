@@ -159,6 +159,59 @@ $ psql postgres://tweetscape:<pwd-from-env-file>@localhost:5432/tweetscape
 $ yarn dev
 ```
 
+### Commit Message Format
+
+I have very precise rules over how Git commit messages must be formatted.
+This format leads to **easier to read commit history**.
+Please refer to the following documentation for more info:
+
+- [Conventional Commit Messages](https://www.conventionalcommits.org/en/v1.0.0/)
+- [Angular's Commit Message Format](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#-commit-message-format)
+- [Udacity's Commit Message Style Guide](http://udacity.github.io/git-styleguide/)
+
+#### Commit Message Header
+
+Commit messages that do not adhere to the following commit style will not be merged into `develop`:
+
+```
+<type>(<scope>): <short summary>
+  │       │             │
+  │       │             └─⫸ Summary in present tense. Not capitalized. No period at the end.
+  │       │
+  │       └─⫸ Commit Scope: The page, API route, or component modified.
+  │
+  └─⫸ Commit Type: ci|docs|feat|fix|perf|refactor|test|deps|chore
+```
+
+The `<type>` and `<summary>` fields are mandatory, the `(<scope>)` field is optional.
+
+##### Type
+
+Must be one of the following:
+
+- **ci**: Changes to our CI configuration files and scripts.
+- **docs**: Documentation only changes.
+- **feat**: A new feature.
+- **fix**: A bug fix.
+- **perf**: A code change that improves performance.
+- **refactor**: A code change that neither fixes a bug nor adds a feature.
+- **test**: Adding missing tests or correcting existing tests.
+- **deps**: A change in dependencies.
+- **chore**: A code change in utility scripts, build configurations, etc.
+
+##### Scope
+
+The scope should refer to the page, API route, or component modified.
+This can be flexible however (e.g. the scope for a `docs:` commit may be the `README`).
+
+##### Summary
+
+Use the summary field to provide a succinct description of the change:
+
+- Use the imperative, present tense: "change" not "changed" nor "changes".
+- Don't capitalize the first letter.
+- No dot (.) at the end.
+
 ## How it works
 
 ### High level
