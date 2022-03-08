@@ -67,7 +67,7 @@ export default function Index() {
               {article.description ||
                 'No appropriate description meta tag found in article html; perhaps they did something weird like put their tag names in all caps 🤷.'}
             </p>
-            <div className='text-sm text-stone-600 lowercase flex items-center mt-1.5 ml-2'>
+            <div className='text-sm text-stone-600 flex items-center mt-1.5 ml-2'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
                 {article.tweets.map(
                   (tweet) =>
@@ -97,8 +97,8 @@ export default function Index() {
                 rel='noopener noreferrer'
                 target='_blank'
               >
-                {article.tweets.length} insider
-                {article.tweets.length > 1 && 's'} tweeted
+                {article.tweets.length} tweet
+                {article.tweets.length > 1 && 's'}
               </a>
               <span className='mx-1'>•</span>
               <span>
