@@ -7,10 +7,10 @@ import type { Article } from '~/db.server';
 import { pool } from '~/db.server';
 
 export const loader: LoaderFunction = async ({ params }) => {
-  invariant(params.topic, 'expected params.topic');
+  invariant(params.cluster, 'expected params.cluster');
   const db = await pool.connect();
   const data = await db.query(
-    `select * from articles where cluster_slug = '${params.topic}'`
+    `select * from articles where cluster_slug = '${params.cluster}'`
   );
   log.debug(`Data: ${JSON.stringify(data, null, 2)}`);
   return data.rows as Article[];
