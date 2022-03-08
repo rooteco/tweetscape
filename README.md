@@ -8,7 +8,8 @@ Learn more [here](https://www.roote.co/tweetscape).
 
 ### Project Structure
 
-This repository is a [React](https://reactjs.org) app built in [Typescript](https://typescriptlang.org) with [Remix](https://remix.run):
+This repository is a [React](https://reactjs.org) app built in [Typescript](https://typescriptlang.org) with [Remix](https://remix.run), [TailwindCSS](https://tailwindcss), and [PostgreSQL](https://www.postgresql.org).
+Both the Remix app and PostgreSQL database are deployed worldwide as edge-based, clustered applications on [Fly](https://fly.io):
 
 ```
 .
@@ -62,16 +63,16 @@ This repository is a [React](https://reactjs.org) app built in [Typescript](http
 10 directories, 66 files
 ```
 
-The `app/` directory contains all of the front-end [Remix](https://remix.run) components, server-side business logic (files suffixed with `.server.ts` will only be included in the server-side bundle), and pages.
-The `public/` directory contains publicly visible assets (e.g. fonts, pictures, favicons, etc).
-The `scripts/` directory defines a set of Node.js scripts used to seed our PostgreSQL database with data from Twitter's and Hive's APIs.
-The `db/` directory contains `.pgsql` scripts that define our database schema. Use them with care (i.e. don't accidentally reset the production database).
-The `styles/` directory contains the entry point for the [TailwindCSS](https://tailwindcss.com) compiler (which outputs `app/styles/app.css` which you shouldn't ever edit manually).
-And, of course, the root directory contains a number of configuration files (for [ESLint](https://eslint.org), [Prettier](https://prettier.io), [Tailwind](https://tailwindcss.com), [Fly](https://fly.io), a [`Dockerfile`](https://docs.docker.com/engine/reference/builder) for [Fly deployments](https://fly.io/docs/getting-started/dockerfile), etc).
+- The `app/` directory contains all of the front-end [Remix](https://remix.run) components, server-side business logic (files suffixed with `.server.ts` will only be included in the server-side bundle), and pages.
+- The `public/` directory contains publicly visible assets (e.g. fonts, pictures, favicons, etc).
+- The `scripts/` directory defines a set of Node.js scripts used to seed our PostgreSQL database with data from Twitter's and Hive's APIs.
+- The `db/` directory contains `.pgsql` scripts that define our database schema. Use them with care (i.e. don't accidentally reset the production database).
+- The `styles/` directory contains the entry point for the [TailwindCSS](https://tailwindcss.com) compiler (which outputs `app/styles/app.css` which you shouldn't ever edit manually).
+- And, of course, the root directory contains a number of configuration files (for [ESLint](https://eslint.org), [Prettier](https://prettier.io), [Tailwind](https://tailwindcss.com), [Fly](https://fly.io), a [`Dockerfile`](https://docs.docker.com/engine/reference/builder) for [Fly deployments](https://fly.io/docs/getting-started/dockerfile), etc).
 
 ### Database Types
 
-I could've used an ORM like [Prisma](https://www.prisma.io) to automatically generate Typescript type definitions and my PostgreSQL database schema at the same time, but I like being able to use the full power of both languages separately, so I've redefined my datatypes twice—once in SQL (see `db/setup.pgsql`) and once in Typescript (see `app/db.server.ts`).
+I could've used an ORM like [Prisma](https://www.prisma.io) to automatically generate Typescript type definitions and my PostgreSQL database schema at the same time, but I like being able to use the full power of both languages separately, so I've redefined my data types twice: once in SQL (`db/setup.pgsql`) and once in Typescript (`app/db.server.ts`).
 
 The data structures that I chose and the property names that I chose come directly from [Twitter's API](https://developer.twitter.com/en/docs/twitter-api/data-dictionary/object-model/tweet) and [Hive's API](https://www.notion.so/API-Docs-69fe2f3d624843fcb0b44658b135161b).
 I aimed to be as unopinionated as possible when storing their data; I stored everything that was returned in—what I think is—a perfectly normalized PostgreSQL schema.
