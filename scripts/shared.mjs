@@ -57,7 +57,9 @@ export async function getTweets(
 ) {
   const msg =
     `Fetching tweets (${start.toDateString()}–${end.toDateString()}) ` +
-    `${token ? `(${token}) ` : ''}by influencer (${id})...`;
+    `${
+      token ? `(${token}) ` : ''
+    }by influencer (https://twitter.com/i/user/${id})...`;
   log.debug(msg);
   const url =
     `https://api.twitter.com/2/users/${id}/tweets?` +
@@ -68,9 +70,21 @@ export async function getTweets(
   const headers = { authorization: `Bearer ${process.env.TWITTER_TOKEN}` };
   const res = await fetchFromTwitter(url, { headers });
   const data = await res.json();
-  if (data.errors && data.title && data.detail && data.type)
-    log.error(`${data.title}: ${data.detail} (${data.type})`);
-  log.debug(`Fetched ${data.meta?.result_count} tweets by influencer (${id}).`);
+  if (data.errors && data.errors[0])
+    log.error(
+      `Error fetching tweets by influencer (https://twitter.com/i/user/${id}): ${data.errors[0].title}: ${data.errors[0].detail} (${data.errors[0].type})`
+    );
+  if (data.meta?.result_count === undefined)
+    log.debug(
+      `Fetched no tweets by influencer (https://twitter.com/i/user/${id}): ${JSON.stringify(
+        data,
+        null,
+        2
+      )}`
+    );
+  log.debug(
+    `Fetched ${data.meta?.result_count} tweets by influencer (https://twitter.com/i/user/${id}).`
+  );
   tweets.push(data);
   if (!data.meta?.next_token) return tweets;
   return getTweets(id, start, end, lastTweetId, data.meta.next_token, tweets);
