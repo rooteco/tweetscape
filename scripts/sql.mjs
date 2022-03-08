@@ -307,11 +307,13 @@ export async function insertInfluencers(influencers, c, db) {
   const values = influencers.map((i) => {
     const s = i.social_account.social_account;
     log.trace(`Inserting influencer ${s.name} (${s.id})...`);
+    // the name and profile_image_url are null when the user has been blocked by
+    // twitter for violating their terms (@see https://twitter.com/lc_hodl2)
     return [
       s.id,
-      s.name,
+      s.name ?? '',
       s.screen_name,
-      s.profile_image_url,
+      s.profile_image_url ?? 'https://tweetscape.co/pics/placeholder.png',
       Number(s.followers_count ?? 0),
       Number(s.following_count ?? 0),
       Number(s.tweets_count ?? 0),

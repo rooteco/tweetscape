@@ -90,7 +90,7 @@ async function data(c, start, end, db) {
     log.debug(msg);
   }, 2500);
   try {
-    await data({ id: '2209261', name: 'Ethereum' }, start, end, db);
+    await data({ id: '2209259', name: 'Bitcoin' }, start, end, db);
   } catch (e) {
     throw e;
   } finally {
