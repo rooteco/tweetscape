@@ -9,7 +9,6 @@
   "sideEffects": false,
   "main": "build/index.js",
   "scripts": {
-    "postinstall": "remix setup node",
     "build:remix": "cross-env NODE_ENV=production remix build",
     "build:css": "tailwindcss -m -i ./styles/app.css -o app/styles/app.css",
     "build": "yarn build:css && yarn build:remix",
@@ -19,7 +18,10 @@
     "start": "cross-env NODE_ENV=production remix-serve build",
     "deploy": "fly deploy --remote-only",
     "lint": "eslint --ext .js,.ts,.jsx,.tsx app",
-    "style": "pretty-quick"
+    "style": "pretty-quick",
+    "postinstall": "concurrently yarn:setup:install-sharp yarn:setup:remix",
+    "setup:install-sharp": "(cd ./node_modules/sharp && yarn run install)",
+    "setup:remix": "remix setup node"
   },
   "dependencies": {
     "@remix-run/node": "^1.2.3",
