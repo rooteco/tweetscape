@@ -62,7 +62,7 @@ interface Topic {
 export const loader: LoaderFunction = async () => {
   log.info('Fetching clusters...');
   const hive = await fetch('https://api.borg.id/influence/clusters', {
-    headers: { authorization: `Token ${HIVE_TOKEN}` },
+    headers: { authorization: `Token ${process.env.HIVE_TOKEN}` },
     cf: { cacheTtl: 24 * 60 * 60, cacheEverything: true },
   });
   const { clusters } = (await hive.json()) as { clusters: Cluster[] };
