@@ -73,7 +73,7 @@ export default function Index() {
                   (tweet) =>
                     tweet.author && (
                       <a
-                        className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-white border-2 border-stone-200 -mr-2 first:mr-0 overflow-hidden'
+                        className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-white border-2 border-white -mr-2 first:mr-0 overflow-hidden'
                         href={`https://twitter.com/${tweet.author.username}/status/${tweet.id}`}
                         rel='noopener noreferrer'
                         target='_blank'
