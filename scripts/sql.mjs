@@ -314,7 +314,7 @@ export async function insertInfluencers(influencers, c, db) {
       s.profile_image_url,
       Number(s.followers_count ?? 0),
       Number(s.following_count ?? 0),
-      Number(s.tweets_count),
+      Number(s.tweets_count ?? 0),
       new Date(s.created_at),
       new Date(s.updated_at),
     ];

@@ -36,4 +36,4 @@ class Logger {
   }
 }
 
-export const log = new Logger(LogLevel.Trace);
+export const log = new Logger(LogLevel.Debug);

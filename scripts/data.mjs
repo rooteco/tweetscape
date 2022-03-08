@@ -18,44 +18,55 @@ import { log } from './utils.mjs';
 
 async function data(c, start, end, db) {
   const { total, ...data } = await getInfluencers(c, 0);
-  log.info(`Fetching ${total} influencers from Hive (in pages of 100)...`);
+  log.info(`Fetching ${total} influencers from Hive (in pages of 50)...`);
   const arr = Array(Math.ceil(Number(total) / 50)).fill(null);
   await Promise.all(
     arr.map(async (_, pg) => {
-      if (pg !== 6) return;
-      const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
-      await insertInfluencers(influencers, c, db);
-      log.info(`Fetching tweets from ${influencers.length} timelines...`);
-      await Promise.all(
-        influencers.map(async (i) => {
-          const { id } = i.social_account.social_account;
-          const data = await getTweets(id, start, end);
-          const users = data.reduce(
-            (a, b) => [...a, ...(b.includes?.users ?? [])],
-            []
-          );
-          await insertUsers(users, db);
-          const referencedTweets = data.reduce(
-            (a, b) => [...a, ...(b.includes?.tweets ?? [])],
-            []
-          );
-          await insertTweets(referencedTweets, db);
-          const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
-          await insertTweets(tweets, db);
-          await Promise.all(
-            tweets
-              .map((t) => [
-                insertURLs(t.entities?.urls ?? [], t, db),
-                insertMentions(t.entities?.mentions ?? [], t, db),
-                insertAnnotations(t.entities?.annotations ?? [], t, db),
-                insertTags(t.entities?.hashtags ?? [], t, db, 'hashtag'),
-                insertTags(t.entities?.cashtags ?? [], t, db, 'cashtag'),
-                insertRefs(t.referenced_tweets ?? [], t, db),
-              ])
-              .flat()
-          );
-        })
-      );
+      if (pg >= 1000 / 50) return;
+      try {
+        log.info(`Beginning database transaction (${pg})...`);
+        await db.query('BEGIN');
+        await db.query('SET CONSTRAINTS ALL IMMEDIATE');
+        const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
+        await insertInfluencers(influencers, c, db);
+        log.info(`Fetching tweets from ${influencers.length} timelines...`);
+        await Promise.all(
+          influencers.map(async (i) => {
+            const { id } = i.social_account.social_account;
+            const data = await getTweets(id, start, end);
+            const users = data.reduce(
+              (a, b) => [...a, ...(b.includes?.users ?? [])],
+              []
+            );
+            await insertUsers(users, db);
+            const referencedTweets = data.reduce(
+              (a, b) => [...a, ...(b.includes?.tweets ?? [])],
+              []
+            );
+            await insertTweets(referencedTweets, db);
+            const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
+            await insertTweets(tweets, db);
+            await Promise.all(
+              tweets
+                .map((t) => [
+                  insertURLs(t.entities?.urls ?? [], t, db),
+                  insertMentions(t.entities?.mentions ?? [], t, db),
+                  insertAnnotations(t.entities?.annotations ?? [], t, db),
+                  insertTags(t.entities?.hashtags ?? [], t, db, 'hashtag'),
+                  insertTags(t.entities?.cashtags ?? [], t, db, 'cashtag'),
+                  insertRefs(t.referenced_tweets ?? [], t, db),
+                ])
+                .flat()
+            );
+          })
+        );
+        log.info(`Committing database transaction (${pg})...`);
+        await db.query('COMMIT');
+      } catch (e) {
+        log.warn(`Rolling back database transaction (${pg}) (${e.message})...`);
+        await db.query('ROLLBACK');
+        throw e;
+      }
     })
   );
 }
@@ -66,7 +77,7 @@ async function data(c, start, end, db) {
   // hive - 11 clusters, each with ~10-15K influencers.
   // thus, i only fetch the last day's worth of tweets from each influencer.
   const n = new Date();
-  const start = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 6);
+  const start = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1);
   const end = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
   // note: we don't try/catch this because if connecting throws an exception
   // we don't need to dispose of the client (it will be undefined)
@@ -79,15 +90,8 @@ async function data(c, start, end, db) {
     log.debug(msg);
   }, 2500);
   try {
-    log.info('Beginning database transaction...');
-    await db.query('BEGIN');
-    await db.query('SET CONSTRAINTS ALL IMMEDIATE');
-    await data({ id: '2300535630', name: 'Tesla' }, start, end, db);
-    log.info('Committing database transaction...');
-    await db.query('COMMIT');
+    await data({ id: '2209261', name: 'Ethereum' }, start, end, db);
   } catch (e) {
-    log.warn(`Rolling back database transaction (${e.message})...`);
-    await db.query('ROLLBACK');
     throw e;
   } finally {
     log.info('Releasing database connection...');
