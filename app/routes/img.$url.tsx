@@ -1,45 +1,141 @@
+import { PassThrough } from 'stream';
+import type { Readable } from 'stream';
+import { createHash } from 'crypto';
+import fs from 'fs';
+import fsp from 'fs/promises';
+import https from 'https';
+import path from 'path';
+
 import type { LoaderFunction } from 'remix';
-import invariant from 'tiny-invariant';
+import type { Request as NodeRequest } from '@remix-run/node';
+import { Response as NodeResponse } from '@remix-run/node';
+import sharp from 'sharp';
 
-export const loader: LoaderFunction = async ({ request, params }) => {
-  // Cloudflare-specific options are in the cf object.
-  // @see https://developers.cloudflare.com/images/image-resizing/resize-with-workers/#an-example-worker
-  const options: { cf: RequestInitCfProperties } = { cf: {} };
+import { log } from '~/utils.server';
 
-  // Copy parameters from query string to request options.
-  // You can implement various different parameters here.
-  options.cf.image = {};
-  options.cf.image.fit = 'cover';
-  options.cf.image.width = 20;
-  options.cf.image.height = 20;
-  options.cf.image.quality = 50;
+const badImageBase64 =
+  'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
-  // Your Worker is responsible for automatic format negotiation. Check the Accept header.
-  const accept = request.headers.get('Accept') ?? '';
-  if (/image\/avif/.test(accept)) {
-    options.cf.image.format = 'avif';
-  } else if (/image\/webp/.test(accept)) {
-    options.cf.image.format = 'webp';
+function badImageResponse() {
+  const buffer = Buffer.from(badImageBase64, 'base64');
+  return new Response(buffer, {
+    status: 500,
+    headers: {
+      'Cache-Control': 'max-age=0',
+      'Content-Type': 'image/gif;base64',
+      'Content-Length': buffer.length.toFixed(0),
+    },
+  });
+}
+
+function getIntOrNull(value: string | null) {
+  return value === null ? null : Number.parseInt(value, 10);
+}
+
+export const loader: LoaderFunction = async ({ params, request }) => {
+  const url = new URL(request.url);
+
+  const src = new URL(params.url).href;
+  if (!src) return badImageResponse();
+
+  const width = getIntOrNull(url.searchParams.get('width'));
+  const height = getIntOrNull(url.searchParams.get('height'));
+  const fit = url.searchParams.get('fit') || 'cover';
+
+  const hash = createHash('sha256');
+  hash.update('v1');
+  hash.update(request.method);
+  hash.update(request.url);
+  hash.update(src);
+  hash.update(width?.toString() || '0');
+  hash.update(height?.toString() || '0');
+  hash.update(fit);
+  const key = hash.digest('hex');
+  const cachedFile = path.resolve(path.join('.cache/images', `${key}.webp`));
+
+  try {
+    const exists = await fsp
+      .stat(cachedFile)
+      .then((s) => s.isFile())
+      .catch(() => false);
+
+    if (exists) {
+      const fileStream = fs.createReadStream(cachedFile);
+
+      return new NodeResponse(fileStream, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/webp',
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        },
+      }) as unknown as Response;
+    }
+
+    log.info(`Cache skipped for: ${src}`);
+  } catch (e) {
+    log.error((e as Error).stack);
   }
 
-  // Get URL of the original (full size) image to resize.
-  // You could adjust the URL here, e.g., prefix it with a fixed address of your server,
-  // so that user-visible URLs are shorter and cleaner.
-  invariant(params.url, 'expected params.url');
-  const { hostname, pathname } = new URL(params.url);
+  try {
+    const imageBody: Readable | undefined;
+    const status = 200;
 
-  // Optionally, only allow URLs with JPEG, PNG, GIF, or WebP file extensions.
-  // @see https://developers.cloudflare.com/images/url-format#supported-formats-and-limitations
-  if (!/\.(jpe?g|png|gif|webp)$/i.test(pathname))
-    return new Response('Disallowed file extension', { status: 400 });
+    if (src.startsWith('/') && (src.length === 1 || src[1] !== '/')) {
+      imageBody = fs.createReadStream(path.resolve('public', src.slice(1)));
+    } else {
+      const imgRequest = new Request(src.toString()) as unknown as NodeRequest;
+      imgRequest.agent = new https.Agent({
+        rejectUnauthorized: false,
+      });
+      const imageResponse = await fetch(imgRequest as unknown as Request);
+      imageBody = imageResponse.body as unknown as PassThrough;
+      status = imageResponse.status;
+    }
 
-  // Only accept Twitter profile images.
-  if (hostname !== 'pbs.twimg.com')
-    return new Response('Must use pbs.twimg.com images', { status: 403 });
+    if (!imageBody) {
+      return badImageResponse();
+    }
 
-  // Build a request that passes through request headers.
-  const imageRequest = new Request(params.url, { headers: request.headers });
+    const sharpInstance = sharp();
+    sharpInstance.on('error', (e) => {
+      log.error(e.stack);
+    });
 
-  // Returning fetch() with resizing options will pass through response with the resized image.
-  return fetch(imageRequest, options);
+    if (width || height) {
+      sharpInstance.resize(width, height, { fit });
+    }
+    sharpInstance.webp({ reductionEffort: 6 });
+
+    const imageManipulationStream = imageBody.pipe(sharpInstance);
+
+    await fsp
+      .mkdir(path.dirname(cachedFile), { recursive: true })
+      .catch(() => {});
+    const cacheFileStream = fs.createWriteStream(cachedFile);
+
+    await new Promise<void>((resolve) => {
+      imageManipulationStream.pipe(cacheFileStream);
+      imageManipulationStream.on('end', () => {
+        resolve();
+        imageBody.destroy();
+      });
+      imageManipulationStream.on('error', () => {
+        imageBody.destroy();
+        void fsp.rm(cachedFile).catch(() => {});
+      });
+    });
+
+    const fileStream = fs.createReadStream(cachedFile);
+
+    return new NodeResponse(fileStream, {
+      status,
+      headers: {
+        'Content-Type': 'image/webp',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+    }) as unknown as Response;
+  } catch (e) {
+    log.error((e as Error).stack);
+    return badImageResponse();
+  }
 };
