@@ -1,5 +1,29 @@
 <h1 align='center'>Tweetscape: The Supercharged Twitter Feed</h1>
 
+<p align='center'>
+  <a aria-label='Release version' href='https://github.com/nicholaschiang/tweetscape/releases'>
+    <img src='https://img.shields.io/github/v/release/nicholaschiang/tweetscape?style=flat-square&labelColor=000000'>
+  </a>
+  <a aria-label='Website status' href='https://tweetscape.co'>
+    <img src='https://img.shields.io/website?down_color=lightgrey&down_message=down&up_color=brightgreen&up_message=up&url=https%3A%2F%2Ftweetscape.co&style=flat-square&labelColor=000000'>
+  </a>
+  <a aria-label='Build status' href='https://github.com/nicholaschiang/tweetscape/actions'>
+    <img src='https://img.shields.io/github/workflow/status/nicholaschiang/tweetscape/Build?style=flat-square&labelColor=000000'>
+  </a>
+  <a aria-label='Integration tests' href='https://dashboard.cypress.io/projects/u2qr64/runs'>
+    <img src='https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/u2qr64/develop&style=flat-square&labelColor=000000'>
+  </a>
+  <a aria-label='Coverage status' href='https://codecov.io/gh/nicholaschiang/tweetscape'>
+    <img src='https://img.shields.io/codecov/c/gh/nicholaschiang/tweetscape?style=flat-square&labelColor=000000'>
+  </a>
+  <a aria-label='Dependencies' href='https://depfu.com/repos/github/nicholaschiang/tweetscape'>
+    <img src='https://img.shields.io/depfu/dependencies/github/nicholaschiang/tweetscape?style=flat-square&labelColor=000000'>
+  </a>
+  <a aria-label='Maintainability' href='https://codeclimate.com/github/nicholaschiang/tweetscape'>
+    <img src='https://img.shields.io/codeclimate/maintainability/nicholaschiang/tweetscape?style=flat-square&labelColor=000000'>
+  </a>
+</p>
+
 Tweetscape surfaces the best "insider" information—and the conversation around it—as shared by the smartest people in a given topic (e.g. ETH, BTC, NFTs, or Tesla) on Twitter.
 Tweetscape curates article links shared by the most reputable accounts on Twitter for a number of topics (e.g. ETH, BTC, NFTs, or Tesla).
 Learn more [here](https://www.roote.co/tweetscape).
