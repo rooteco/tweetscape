@@ -72,7 +72,7 @@ export default function Index() {
             )}
             <div className='text-sm text-stone-600 flex items-center mt-1.5 ml-2'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
-                {article.tweets.map(
+                {article.tweets.slice(0, 25).map(
                   (tweet) =>
                     tweet.author && (
                       <a
