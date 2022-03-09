@@ -1,5 +1,3 @@
-export { decode } from 'html-entities';
-
 export enum LogLevel {
   Trace,
   Debug,
