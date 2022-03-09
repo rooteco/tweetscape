@@ -23,6 +23,10 @@ export const loader: LoaderFunction = async ({ params }) => {
   return data.rows as Article[];
 };
 
+function substr(str: string, len: number): string {
+  return `${str.substr(0, len).trim()}${str.length > len ? '…' : ''}`;
+}
+
 export default function Index() {
   const articles = useLoaderData<Article[]>();
   return (
@@ -43,9 +47,10 @@ export default function Index() {
                 rel='noopener noreferrer'
               >
                 {article.title ||
-                  `${article.expanded_url
-                    .replace(/^https?:\/\/(www\.)?/, '')
-                    .substr(0, 50)}…`}
+                  substr(
+                    article.expanded_url.replace(/^https?:\/\/(www\.)?/, ''),
+                    50
+                  )}
               </a>{' '}
               <span className='text-sm'>
                 (
@@ -62,10 +67,9 @@ export default function Index() {
                 )
               </span>
             </div>
-            <p className='text-sm ml-2'>
-              {article.description ||
-                'No appropriate description meta tag found in article html; perhaps they did something weird like put their tag names in all caps 🤷.'}
-            </p>
+            {article.description && (
+              <p className='text-sm ml-2'>{substr(article.description, 375)}</p>
+            )}
             <div className='text-sm text-stone-600 flex items-center mt-1.5 ml-2'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
                 {article.tweets.map(
