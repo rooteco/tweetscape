@@ -5,7 +5,7 @@ import Bottleneck from 'bottleneck';
 import fetch from 'node-fetch';
 import format from 'pg-format';
 
-import { log } from './utils.mjs';
+import { decode, log } from './utils.mjs';
 import { pool } from './shared.mjs';
 
 const scheduler = new Bottleneck({
@@ -15,24 +15,19 @@ const scheduler = new Bottleneck({
 });
 const fetched = scheduler.wrap(fetch);
 
-(async () => {
-  log.info('Fetching links without metadata...');
+async function metadata(cluster = 'tesla') {
+  log.info(`Fetching the top 20 articles for ${cluster}...`);
   const { rows } = await pool.query(
     `
-    SELECT * FROM links 
-    WHERE title IS null 
-    AND expanded_url !~ '^https?:\\/\\/twitter\\.com'
+    select * from articles 
+    where cluster_slug = '${cluster}'
+    and expanded_url !~ '^https?:\\/\\/twitter\\.com' 
+    order by attention_score desc
+    limit 20;
     `
   );
   log.info(`Fetching ${rows.length} link metadata...`);
   const values = [];
-  const intervalId = setInterval(() => {
-    const c = scheduler.counts();
-    const msg =
-      `Fetch calls: ${c.RECEIVED} received, ${c.QUEUED} queued, ` +
-      `${c.RUNNING} running, ${c.EXECUTING} executing, ${c.DONE} done.`;
-    log.debug(msg);
-  }, 2500);
   await Promise.all(
     rows.map(async (row, idx) => {
       const url = row.expanded_url;
@@ -70,8 +65,8 @@ const fetched = scheduler.wrap(fetch);
         });
         values.push([
           res.status,
-          format.literal(ogTitle || title || null),
-          format.literal(ogDescription || description || null),
+          format.literal(decode(ogTitle || title) || null),
+          format.literal(decode(ogDescription || description) || null),
           format.literal(res.headers.location ?? url),
           row.id,
         ]);
@@ -80,6 +75,7 @@ const fetched = scheduler.wrap(fetch);
       }
     })
   );
+  if (!values.length) return log.info(`Skipping updates for ${cluster}...`);
   log.trace(`Values: ${JSON.stringify(values, null, 2)}`);
   const query = format(
     `
@@ -94,7 +90,22 @@ const fetched = scheduler.wrap(fetch);
     values
   );
   log.trace(`Query: ${query}`);
-  log.info(`Updating ${values.length} links...`);
+  log.info(`Updating ${values.length} links for ${cluster}...`);
   await pool.query(query);
+}
+
+(async () => {
+  log.info('Fetching clusters...');
+  const { rows } = await pool.query('select * from clusters');
+  log.info(`Fetching link metadata for ${rows.length} clusters...`);
+  const intervalId = setInterval(() => {
+    const c = scheduler.counts();
+    const msg =
+      `Fetch calls: ${c.RECEIVED} received, ${c.QUEUED} queued, ` +
+      `${c.RUNNING} running, ${c.EXECUTING} executing, ${c.DONE} done.`;
+    log.debug(msg);
+  }, 2500);
+  await Promise.all(rows.map((r) => metadata(r.slug)));
   clearInterval(intervalId);
+  log.info(`Fetched link metadata for ${rows.length} clusters.`);
 })().catch((e) => log.error(`Caught error: ${e.stack}`));
