@@ -36,17 +36,20 @@ export default function Cluster() {
   const { articles, locale } = useLoaderData<LoaderData>();
   return (
     <main>
-      <ol className='list-decimal text-sm ml-6 mr-4'>
+      <ol className='text-sm'>
         {!articles.length && (
-          <div className='font-serif -ml-2 border rounded text-stone-600 border-stone-400 border-dashed text-lg text-center p-6 my-12 flex items-center justify-center min-h-[85vh]'>
+          <div className='border rounded text-stone-600 border-stone-400 border-dashed text-lg text-center p-6 my-12 flex items-center justify-center min-h-[85vh]'>
             no articles to show
           </div>
         )}
         {articles.map((article) => (
-          <li key={article.id} className='my-4'>
-            <div className='ml-2'>
+          <li
+            key={article.id}
+            className='my-8 first-of-type:mt-0 last-of-type:mb-0'
+          >
+            <div>
               <a
-                className='font-serif font-semibold hover:underline text-base'
+                className='font-semibold hover:underline text-base'
                 href={article.expanded_url}
                 target='_blank'
                 rel='noopener noreferrer'
@@ -73,29 +76,32 @@ export default function Cluster() {
               </span>
             </div>
             {article.description && (
-              <p className='text-sm ml-2'>{substr(article.description, 375)}</p>
+              <p className='text-sm'>{substr(article.description, 300)}</p>
             )}
-            <div className='text-sm text-stone-600 flex items-center mt-1.5 ml-2'>
+            <div className='text-sm text-stone-600 flex items-center mt-1.5'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
-                {article.tweets.slice(0, 25).map(
-                  (tweet) =>
-                    tweet.author && (
-                      <a
-                        className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-white border-2 border-white -mr-2 first:mr-0 overflow-hidden'
-                        href={`https://twitter.com/${tweet.author.username}/status/${tweet.id}`}
-                        rel='noopener noreferrer'
-                        target='_blank'
-                        key={tweet.id}
-                      >
-                        <img
-                          src={`/img/${encodeURIComponent(
-                            tweet.author.profile_image_url
-                          )}`}
-                          alt=''
-                        />
-                      </a>
-                    )
-                )}
+                {article.tweets
+                  .sort((a, b) => b.score.rank - a.score.rank)
+                  .slice(0, 10)
+                  .map(
+                    (tweet) =>
+                      tweet.author && (
+                        <a
+                          className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-white border-2 border-white -mr-2 first:mr-0 overflow-hidden'
+                          href={`https://hive.one/p/${tweet.author.username}`}
+                          rel='noopener noreferrer'
+                          target='_blank'
+                          key={tweet.id}
+                        >
+                          <img
+                            src={`/img/${encodeURIComponent(
+                              tweet.author.profile_image_url
+                            )}`}
+                            alt=''
+                          />
+                        </a>
+                      )
+                  )}
               </span>
               <a
                 className='ml-1 hover:underline cursor-pointer'
@@ -108,14 +114,14 @@ export default function Cluster() {
                 {article.tweets.length} tweet
                 {article.tweets.length > 1 && 's'}
               </a>
-              <span className='mx-1'>•</span>
+              <span className='mx-1'>·</span>
               <span>
                 {new Date(article.tweets[0].created_at).toLocaleString(locale, {
                   month: 'short',
                   day: 'numeric',
                 })}
               </span>
-              <span className='mx-1'>•</span>
+              <span className='mx-1'>·</span>
               <span>
                 {new Date(article.tweets[0].created_at).toLocaleString(locale, {
                   hour: 'numeric',

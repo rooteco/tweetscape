@@ -31,27 +31,34 @@ export const loader: LoaderFunction = async () => {
 export const links: LinksFunction = () => [
   {
     rel: 'preload',
-    href: '/fonts/sans.woff2',
+    href: '/fonts/inter-latin.woff2',
     as: 'font',
     type: 'font/woff2',
     crossOrigin: 'anonymous',
   },
   {
     rel: 'preload',
-    href: '/fonts/serif-latin-400.woff2',
+    href: '/fonts/inter-latin-ext.woff2',
     as: 'font',
     type: 'font/woff2',
     crossOrigin: 'anonymous',
   },
   {
     rel: 'preload',
-    href: '/fonts/serif-latin-600.woff2',
+    href: '/fonts/literata-latin.woff2',
     as: 'font',
     type: 'font/woff2',
     crossOrigin: 'anonymous',
   },
-  { rel: 'stylesheet', href: '/fonts/serif.css' },
-  { rel: 'stylesheet', href: '/fonts/sans.css' },
+  {
+    rel: 'preload',
+    href: '/fonts/literata-latin-ext.woff2',
+    as: 'font',
+    type: 'font/woff2',
+    crossOrigin: 'anonymous',
+  },
+  { rel: 'stylesheet', href: '/fonts/inter.css' },
+  { rel: 'stylesheet', href: '/fonts/literata.css' },
   { rel: 'stylesheet', href: styles },
 ];
 
@@ -80,10 +87,12 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className='selection:bg-amber-100 w-full px-4 xl:px-0 max-w-screen-xl mx-auto my-4'>
+      <body className='selection:bg-amber-100 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4'>
         <header className='py-4 mb-6 border-b-2 border-black whitespace-no-wrap flex justify-between items-end'>
-          <h1 className='font-serif font-semibold text-6xl'>tweetscape</h1>
-          <nav className='font-serif font-semibold text-lg'>
+          <h1 className='font-extrabold tracking-tighter -mb-1 text-4xl'>
+            tweetscape
+          </h1>
+          <nav className='font-semibold text-sm'>
             {clusters
               .map(({ id, name, slug }) => (
                 <Link
@@ -107,7 +116,7 @@ export default function App() {
         </header>
         <Outlet />
         <footer className='py-4 mt-10 border-t-2 border-black whitespace-no-wrap flex justify-end items-end'>
-          <p className='font-serif text-sm text-center md:text-right'>
+          <p className='text-sm text-center md:text-right'>
             all content copyright{' '}
             <a
               className='underline'
