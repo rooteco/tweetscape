@@ -5,7 +5,10 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'promise'],
   parserOptions: {
-    project: [path.resolve(__dirname, 'tsconfig.json')],
+    project: [
+      path.resolve(__dirname, 'tsconfig.json'),
+      path.resolve(__dirname, 'cypress/tsconfig.json'),
+    ],
   },
   extends: [
     'airbnb',
@@ -158,7 +161,7 @@ module.exports = {
     'import/order': [
       'error',
       {
-        groups: [
+        'groups': [
           'builtin',
           'external',
           'internal',
@@ -166,7 +169,7 @@ module.exports = {
           'sibling',
           'index',
         ],
-        pathGroups: [
+        'pathGroups': [
           {
             pattern: 'pages/**',
             group: 'internal',
@@ -203,7 +206,7 @@ module.exports = {
             position: 'after',
           },
         ],
-        pathGroupsExcludedImportTypes: ['builtin'],
+        'pathGroupsExcludedImportTypes': ['builtin'],
         'newlines-between': 'always',
       },
     ],
