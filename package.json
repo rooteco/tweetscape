@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@remix-run/dev": "^1.2.3",
-    "@types/nprogress": "^0",
+    "@types/nprogress": "^0.2.0",
     "@types/pg": "^8.6.5",
     "@types/pg-format": "^1.0.2",
     "@types/react": "^17.0.39",
