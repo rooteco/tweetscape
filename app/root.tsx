@@ -103,7 +103,7 @@ export default function App() {
       </head>
       <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
-        <header className='py-4 mb-8 border-b-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-between items-end'>
+        <header className='py-4 border-b-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-between items-end'>
           <h1 className='font-extrabold tracking-tighter text-4xl'>
             tweetscape.co
           </h1>
