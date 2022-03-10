@@ -38,7 +38,7 @@ export default function Cluster() {
     <main>
       <ol className='text-sm'>
         {!articles.length && (
-          <div className='border rounded text-stone-600 border-stone-400 border-dashed text-lg text-center p-6 my-12 flex items-center justify-center min-h-[85vh]'>
+          <div className='border uppercase rounded text-slate-400 border-slate-300 dark:text-slate-600 dark:border-slate-700 border-dashed text-center font-normal p-6 my-12 flex items-center justify-center min-h-[95vh]'>
             no articles to show
           </div>
         )}
@@ -75,7 +75,7 @@ export default function Cluster() {
             {article.description && (
               <p className='text-sm'>{substr(article.description, 300)}</p>
             )}
-            <div className='text-sm text-stone-600 flex items-center mt-1.5'>
+            <div className='text-sm text-slate-500 flex items-center mt-1.5'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
                 {article.tweets
                   .sort((a, b) => b.score.rank - a.score.rank)
@@ -84,7 +84,7 @@ export default function Cluster() {
                     (tweet) =>
                       tweet.author && (
                         <a
-                          className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-white border-2 border-white -mr-2 first:mr-0 overflow-hidden'
+                          className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-900 -mr-2 first:mr-0 overflow-hidden'
                           href={`https://hive.one/p/${tweet.author.username}`}
                           rel='noopener noreferrer'
                           target='_blank'
