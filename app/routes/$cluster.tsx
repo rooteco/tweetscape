@@ -75,7 +75,7 @@ export default function Cluster() {
             {article.description && (
               <p className='text-sm'>{substr(article.description, 300)}</p>
             )}
-            <div className='text-sm text-slate-500 flex items-center mt-1.5'>
+            <div className='text-sm text-slate-500 dark:text-slate-400 flex items-center mt-1.5'>
               <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
                 {article.tweets
                   .sort((a, b) => b.score.rank - a.score.rank)

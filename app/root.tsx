@@ -25,8 +25,10 @@ const THEMES = ['sync', 'dark', 'light'];
 const THEME_SNIPPET = `
   if (localStorage.theme === 'dark')
     document.documentElement.classList.add('dark');
-  if (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) 
-    document.documentElement.classList.add('dark');
+  if (!localStorage.theme || localStorage.theme === 'sync') {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) 
+      document.documentElement.classList.add('dark');
+  }
   `;
 
 export const loader: LoaderFunction = async () => {
@@ -114,7 +116,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className='selection:bg-amber-100 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
+      <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <header className='py-4 mb-8 border-b-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-between items-end'>
           <h1 className='font-extrabold tracking-tighter text-4xl'>
