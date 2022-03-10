@@ -1,6 +1,6 @@
 import { createCookie } from 'remix';
 
-export const topic = createCookie('topic', {
+export const cluster = createCookie('cluster', {
   path: '/',
   sameSite: 'lax',
   httpOnly: true,

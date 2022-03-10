@@ -1,10 +1,11 @@
+import { json, useLoaderData } from 'remix';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
-import { useLoaderData } from 'remix';
 
 import { lang, log } from '~/utils.server';
 import type { Article } from '~/db.server';
 import ArticleItem from '~/components/article';
+import { cluster } from '~/cookies.server';
 import { pool } from '~/db.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
@@ -26,7 +27,10 @@ export const loader: LoaderFunction = async ({
   );
   log.trace(`Articles: ${JSON.stringify(data, null, 2)}`);
   log.info(`Fetched ${data.rows.length} articles for ${params.cluster}.`);
-  return { articles: data.rows as Article[], locale: lang(request) };
+  return json(
+    { articles: data.rows as Article[], locale: lang(request) },
+    { headers: { 'Set-Cookie': cluster.serialize(params.cluster) } }
+  );
 };
 
 export default function Cluster() {
