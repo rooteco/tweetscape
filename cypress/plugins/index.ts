@@ -1,6 +1,5 @@
 import path from 'path';
 
-import codecov from '@cypress/code-coverage/task';
 import dotenv from 'dotenv';
 
 // Follow the Next.js convention for loading `.env` files.
@@ -19,6 +18,5 @@ export default function plugins(
   on: Cypress.PluginEvents,
   config: Cypress.PluginConfigOptions
 ): Cypress.ConfigOptions {
-  codecov(on, config);
   return { ...config, env: { ...config.env, ...env } };
 }
