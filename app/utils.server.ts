@@ -1,3 +1,12 @@
+import { parse } from 'accept-language-parser';
+
+export function lang(request: Request): string {
+  const langs = parse((request.headers['Accept-Language'] as string) ?? '');
+  return langs.length
+    ? `${langs[0].code}${langs[0].region ? `-${langs[0].region}` : ''}`
+    : 'en-US';
+}
+
 export enum LogLevel {
   Trace,
   Debug,
