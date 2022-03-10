@@ -89,8 +89,8 @@ export default function App() {
       </head>
       <body className='selection:bg-amber-100 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4'>
         <header className='py-4 mb-6 border-b-2 border-black whitespace-no-wrap flex justify-between items-end'>
-          <h1 className='font-extrabold tracking-tighter -mb-1 text-4xl'>
-            tweetscape
+          <h1 className='font-extrabold tracking-tighter text-4xl'>
+            tweetscape.co
           </h1>
           <nav className='font-semibold text-sm'>
             {clusters
