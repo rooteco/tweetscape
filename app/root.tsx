@@ -11,14 +11,23 @@ import {
   useTransition,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
+import { useEffect, useState } from 'react';
 import NProgress from 'nprogress';
 import cn from 'classnames';
-import { useEffect } from 'react';
 
 import type { Cluster } from '~/db.server';
 import { log } from '~/utils.server';
 import { pool } from '~/db.server';
 import styles from '~/styles/app.css';
+
+type Theme = 'sync' | 'dark' | 'light';
+const THEMES = ['sync', 'dark', 'light'];
+const THEME_SNIPPET = `
+  if (localStorage.theme === 'dark')
+    document.documentElement.classList.add('dark');
+  if (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) 
+    document.documentElement.classList.add('dark');
+  `;
 
 export const loader: LoaderFunction = async () => {
   log.info('Fetching visible clusters...');
@@ -79,6 +88,24 @@ export default function App() {
   const clusters = useLoaderData<Cluster[]>();
   const { pathname } = useLocation();
 
+  const [theme, setTheme] = useState<Theme>();
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else if (theme === 'sync') {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.classList.add('dark');
+    }
+  }, [theme]);
+  useEffect(() => {
+    setTheme((prev) => (localStorage.getItem('theme') as Theme) ?? prev);
+  }, []);
+  useEffect(() => {
+    if (theme) localStorage.setItem('theme', theme);
+  }, [theme]);
+
   return (
     <html lang='en'>
       <head>
@@ -88,6 +115,7 @@ export default function App() {
         <Links />
       </head>
       <body className='selection:bg-amber-100 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <header className='py-4 mb-8 border-b-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-between items-end'>
           <h1 className='font-extrabold tracking-tighter text-4xl'>
             tweetscape.co
@@ -112,6 +140,19 @@ export default function App() {
                   {b}
                 </>
               ))}
+            {' · '}
+            <button
+              type='button'
+              className='font-semibold text-sm w-[32.25px]'
+              aria-pressed={theme === 'sync' ? 'mixed' : theme === 'dark'}
+              onClick={() =>
+                setTheme(
+                  (prev) => THEMES[(THEMES.indexOf(prev) + 1) % THEMES.length]
+                )
+              }
+            >
+              {THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]}
+            </button>
           </nav>
         </header>
         <Outlet />
