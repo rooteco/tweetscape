@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
 import cn from 'classnames';
 import { useLoaderData } from 'remix';
+import { useState } from 'react';
 
 import type { Article } from '~/db.server';
 import type { LoaderData } from '~/routes/$cluster';
@@ -17,12 +17,9 @@ export default function ArticleItem({
 }: Article) {
   const { locale } = useLoaderData<LoaderData>();
   const [hidden, setHidden] = useState(true);
-  const date = useMemo(
-    () =>
-      tweets.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0]
-        .created_at,
-    [tweets]
-  );
+  const date = tweets.sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at)
+  )[0].created_at;
   return (
     <li className='my-8'>
       <div>
