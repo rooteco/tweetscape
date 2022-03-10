@@ -43,10 +43,7 @@ export default function Cluster() {
           </div>
         )}
         {articles.map((article) => (
-          <li
-            key={article.id}
-            className='my-8 first-of-type:mt-0 last-of-type:mb-0'
-          >
+          <li key={article.id} className='my-8'>
             <div>
               <a
                 className='font-semibold hover:underline text-base'
