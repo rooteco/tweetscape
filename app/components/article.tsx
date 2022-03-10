@@ -11,6 +11,7 @@ function substr(str: string, len: number): string {
 
 export default function ArticleItem({
   expanded_url,
+  attention_score,
   title,
   description,
   tweets,
@@ -80,6 +81,15 @@ export default function ArticleItem({
           {tweets.length} tweet
           {tweets.length > 1 && 's'}
         </button>
+        <span className='mx-1'>·</span>
+        <a
+          className='hover:underline'
+          href='https://borgcollective.notion.site/FAQ-5434e4695d60456cb481acb98bb88b18'
+          target='_blank'
+          rel='noopener noreferrer'
+        >
+          {Math.round(attention_score)} points
+        </a>
         <span className='mx-1'>·</span>
         <span>
           {new Date(date).toLocaleString(locale, {
