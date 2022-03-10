@@ -13,9 +13,6 @@
   <a aria-label='Integration tests' href='https://dashboard.cypress.io/projects/u2qr64/runs'>
     <img src='https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/u2qr64/develop&style=flat-square&labelColor=000000'>
   </a>
-  <a aria-label='Coverage status' href='https://codecov.io/gh/nicholaschiang/tweetscape'>
-    <img src='https://img.shields.io/codecov/c/gh/nicholaschiang/tweetscape?style=flat-square&labelColor=000000'>
-  </a>
   <a aria-label='Dependencies' href='https://depfu.com/repos/github/nicholaschiang/tweetscape'>
     <img src='https://img.shields.io/depfu/dependencies/github/nicholaschiang/tweetscape?style=flat-square&labelColor=000000'>
   </a>

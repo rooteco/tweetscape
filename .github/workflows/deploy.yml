@@ -1,7 +1,9 @@
-name: Build
+name: Deploy
 
 on:
   push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -25,3 +27,8 @@ jobs:
           NODE_ENV: production
           COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - uses: superfly/flyctl-actions@master
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        with:
+          args: 'deploy'
