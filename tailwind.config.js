@@ -3,7 +3,6 @@ module.exports = {
   content: ['./app/**/*.{js,ts,jsx,tsx}'],
   theme: {
     fontFamily: {
-      serif: ['Literata', 'Georgia', 'serif'],
       sans: [
         'Inter',
         '-apple-system',

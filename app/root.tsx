@@ -54,22 +54,7 @@ export const links: LinksFunction = () => [
     type: 'font/woff2',
     crossOrigin: 'anonymous',
   },
-  {
-    rel: 'preload',
-    href: '/fonts/literata-latin.woff2',
-    as: 'font',
-    type: 'font/woff2',
-    crossOrigin: 'anonymous',
-  },
-  {
-    rel: 'preload',
-    href: '/fonts/literata-latin-ext.woff2',
-    as: 'font',
-    type: 'font/woff2',
-    crossOrigin: 'anonymous',
-  },
   { rel: 'stylesheet', href: '/fonts/inter.css' },
-  { rel: 'stylesheet', href: '/fonts/literata.css' },
   { rel: 'stylesheet', href: styles },
 ];
 
