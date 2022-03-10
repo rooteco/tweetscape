@@ -46,7 +46,7 @@ export default function ArticleItem({
         </span>
       </div>
       {description && <p className='text-sm'>{substr(description, 300)}</p>}
-      <div className='text-sm text-slate-500 dark:text-slate-400 flex items-center mt-1.5'>
+      <div className='text-sm text-slate-600 dark:text-slate-400 flex items-center mt-1.5'>
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
           {tweets
             .sort((a, b) => b.score.rank - a.score.rank)
@@ -54,7 +54,7 @@ export default function ArticleItem({
             .map(({ id, author }) => (
               <a
                 className='inline-block cursor-pointer duration-75 hover:transition hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-900 -mr-2 first:mr-0 overflow-hidden'
-                href={`https://hive.one/p/${author.username}`}
+                href={`https://twitter.com/${author.username}/status/${id}`}
                 rel='noopener noreferrer'
                 target='_blank'
                 key={id}
@@ -160,19 +160,15 @@ export default function ArticleItem({
                     target='_blank'
                     rel='noopener noreferrer'
                   >
-                    <span>
-                      {new Date(created_at).toLocaleString(locale, {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                    <span className='mx-1'>·</span>
-                    <span>
-                      {new Date(created_at).toLocaleString(locale, {
-                        hour: 'numeric',
-                        minute: 'numeric',
-                      })}
-                    </span>
+                    {new Date(created_at).toLocaleString(locale, {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                    {' · '}
+                    {new Date(created_at).toLocaleString(locale, {
+                      hour: 'numeric',
+                      minute: 'numeric',
+                    })}
                   </a>
                 </p>
               </div>
