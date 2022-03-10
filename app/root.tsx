@@ -8,9 +8,12 @@ import {
   ScrollRestoration,
   useLoaderData,
   useLocation,
+  useTransition,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
+import NProgress from 'nprogress';
 import cn from 'classnames';
+import { useEffect } from 'react';
 
 import type { Cluster } from '~/db.server';
 import { log } from '~/utils.server';
@@ -57,8 +60,18 @@ export const meta: MetaFunction = () => ({
 });
 
 export default function App() {
+  const transition = useTransition();
+  useEffect(() => {
+    // when the state is idle then we can to complete the progress bar
+    if (transition.state === 'idle') NProgress.done();
+    // and when it's something else it means it's either submitting a form or
+    // waiting for the loaders of the next location so we start it
+    else NProgress.start();
+  }, [transition.state]);
+
   const clusters = useLoaderData<Cluster[]>();
   const { pathname } = useLocation();
+
   return (
     <html lang='en'>
       <head>
