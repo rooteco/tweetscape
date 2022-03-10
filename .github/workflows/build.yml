@@ -9,7 +9,6 @@ env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
   CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
-  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
 jobs:
   build:
