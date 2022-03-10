@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "isolatedModules": false,
+    "lib": ["dom", "esnext"],
+    "types": ["cypress", "@percy/cypress", "node"]
+  },
+  "include": ["**/*.ts"]
+}
