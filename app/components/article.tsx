@@ -32,8 +32,10 @@ export default function ArticleItem({
           target='_blank'
           rel='noopener noreferrer'
         >
-          {title ||
-            substr(expanded_url.replace(/^https?:\/\/(www\.)?/, ''), 50)}
+          {substr(
+            title || expanded_url.replace(/^https?:\/\/(www\.)?/, ''),
+            100
+          )}
         </a>{' '}
         <span className='text-sm'>
           (
