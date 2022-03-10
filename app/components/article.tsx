@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
 import cn from 'classnames';
 import { useLoaderData } from 'remix';
+import { useState } from 'react';
 
 import type { Article } from '~/db.server';
 import type { LoaderData } from '~/routes/$cluster';
@@ -11,18 +11,16 @@ function substr(str: string, len: number): string {
 
 export default function ArticleItem({
   expanded_url,
+  attention_score,
   title,
   description,
   tweets,
 }: Article) {
   const { locale } = useLoaderData<LoaderData>();
   const [hidden, setHidden] = useState(true);
-  const date = useMemo(
-    () =>
-      tweets.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0]
-        .created_at,
-    [tweets]
-  );
+  const date = tweets.sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at)
+  )[0].created_at;
   return (
     <li className='my-8'>
       <div>
@@ -83,6 +81,15 @@ export default function ArticleItem({
           {tweets.length} tweet
           {tweets.length > 1 && 's'}
         </button>
+        <span className='mx-1'>·</span>
+        <a
+          className='hover:underline'
+          href='https://borgcollective.notion.site/FAQ-5434e4695d60456cb481acb98bb88b18'
+          target='_blank'
+          rel='noopener noreferrer'
+        >
+          {Math.round(attention_score)} points
+        </a>
         <span className='mx-1'>·</span>
         <span>
           {new Date(date).toLocaleString(locale, {
