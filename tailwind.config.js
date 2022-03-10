@@ -2,8 +2,21 @@ module.exports = {
   content: ['./app/**/*.{js,ts,jsx,tsx}'],
   theme: {
     fontFamily: {
-      serif: ['Source Serif Pro', 'Georgia', 'serif'],
-      sans: ['Synonym', 'system-ui', 'sans-serif'],
+      serif: ['Literata', 'Georgia', 'serif'],
+      sans: [
+        'Inter',
+        '-apple-system',
+        'BlinkMacSystemFont',
+        'Segoe UI',
+        'Roboto',
+        'Oxygen',
+        'Ubuntu',
+        'Cantarell',
+        'Fira Sans',
+        'Droid Sans',
+        'Helvetica Neue',
+        'sans-serif',
+      ],
     },
     extend: {
       colors: {
