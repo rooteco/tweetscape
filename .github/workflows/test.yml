@@ -29,7 +29,7 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         with:
-          args: 'proxy 5432 -a tweetscape-db'
+          args: 'proxy 5432 -a tweetscape-db &'
       - run: yarn start & yarn wait-on http-get://localhost:3000
         env:
           NODE_ENV: test
