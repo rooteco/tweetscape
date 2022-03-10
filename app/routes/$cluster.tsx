@@ -5,8 +5,8 @@ import invariant from 'tiny-invariant';
 import { lang, log } from '~/utils.server';
 import type { Article } from '~/db.server';
 import ArticleItem from '~/components/article';
+import { cluster } from '~/cookies.server';
 import { pool } from '~/db.server';
-import { topic } from '~/cookies.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
 
@@ -29,7 +29,7 @@ export const loader: LoaderFunction = async ({
   log.info(`Fetched ${data.rows.length} articles for ${params.cluster}.`);
   return json(
     { articles: data.rows as Article[], locale: lang(request) },
-    { headers: { 'Set-Cookie': topic.serialize(params.cluster) } }
+    { headers: { 'Set-Cookie': cluster.serialize(params.cluster) } }
   );
 };
 
