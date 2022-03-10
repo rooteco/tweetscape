@@ -21,7 +21,7 @@ jobs:
             .next/cache
             node_modules
           key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-      - run: yarn install --immutable
+      - run: yarn install --immutable --immutable-cache
       - run: yarn build
         env:
           NODE_ENV: production
