@@ -29,7 +29,7 @@ export const loader: LoaderFunction = async ({
   log.info(`Fetched ${data.rows.length} articles for ${params.cluster}.`);
   return json(
     { articles: data.rows as Article[], locale: lang(request) },
-    { headers: { 'Set-Cookie': cluster.serialize(params.cluster) } }
+    { headers: { 'Set-Cookie': await cluster.serialize(params.cluster) } }
   );
 };
 
