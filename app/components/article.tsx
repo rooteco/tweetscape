@@ -1,4 +1,6 @@
+import cn from 'classnames';
 import { useLoaderData } from 'remix';
+import { useState } from 'react';
 
 import type { Article } from '~/db.server';
 import type { LoaderData } from '~/routes/$cluster';
@@ -14,6 +16,7 @@ export default function ArticleItem({
   tweets,
 }: Article) {
   const { locale } = useLoaderData<LoaderData>();
+  const [hidden, setHidden] = useState(true);
   return (
     <li className='my-8'>
       <div>
@@ -63,17 +66,15 @@ export default function ArticleItem({
               </a>
             ))}
         </span>
-        <a
+        <button
+          type='button'
+          aria-pressed={!hidden}
           className='ml-1 hover:underline cursor-pointer'
-          href={`https://twitter.com/search?q=${encodeURIComponent(
-            expanded_url
-          )}`}
-          rel='noopener noreferrer'
-          target='_blank'
+          onClick={() => setHidden((prev) => !prev)}
         >
           {tweets.length} tweet
           {tweets.length > 1 && 's'}
-        </a>
+        </button>
         <span className='mx-1'>·</span>
         <span>
           {new Date(tweets[0].created_at).toLocaleString(locale, {
@@ -88,6 +89,95 @@ export default function ArticleItem({
             minute: 'numeric',
           })}
         </span>
+      </div>
+      <div
+        className={cn(
+          'mt-2.5 pb-2.5 flex flex-wrap overflow-auto border-b border-black dark:border-white max-h-96',
+          { hidden }
+        )}
+      >
+        {tweets
+          .sort((a, b) => b.score.rank - a.score.rank)
+          .map(({ id, author, score, text, created_at }) => (
+            <div key={id} className='flex p-2 w-full sm:w-1/2'>
+              <div className='flex-grow rounded border border-slate-900 dark:border-white py-3 px-4'>
+                <div className='flex items-center justify-between w-full'>
+                  <div className='flex'>
+                    <a
+                      className='hover:underline font-bold'
+                      href={`https://hive.one/p/${author.username}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      {author.username}
+                    </a>
+                    <a
+                      className='mx-2 inline-flex justify-center items-center'
+                      href={`https://twitter.com/${author.username}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <svg
+                        className='fill-current h-3'
+                        viewBox='328 355 335 276'
+                        xmlns='http://www.w3.org/2000/svg'
+                      >
+                        <path
+                          d='
+                          M 630, 425
+                          A 195, 195 0 0 1 331, 600
+                          A 142, 142 0 0 0 428, 570
+                          A  70,  70 0 0 1 370, 523
+                          A  70,  70 0 0 0 401, 521
+                          A  70,  70 0 0 1 344, 455
+                          A  70,  70 0 0 0 372, 460
+                          A  70,  70 0 0 1 354, 370
+                          A 195, 195 0 0 0 495, 442
+                          A  67,  67 0 0 1 611, 380
+                          A 117, 117 0 0 0 654, 363
+                          A  65,  65 0 0 1 623, 401
+                          A 117, 117 0 0 0 662, 390
+                          A  65,  65 0 0 1 630, 425
+                          Z'
+                        />
+                      </svg>
+                    </a>
+                  </div>
+                  <a
+                    className='hover:underline block font-bold text-xs'
+                    href={`https://hive.one/p/${author.username}`}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    {score.attention_score.toFixed(2)} points
+                  </a>
+                </div>
+                <p className='mt-3 text-xs text-justify'>
+                  {text}
+                  <a
+                    className='hover:underline font-bold text-xs ml-2'
+                    href={`https://twitter.com/${author.username}/status/${id}`}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    <span>
+                      {new Date(created_at).toLocaleString(locale, {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                    <span className='mx-1'>·</span>
+                    <span>
+                      {new Date(created_at).toLocaleString(locale, {
+                        hour: 'numeric',
+                        minute: 'numeric',
+                      })}
+                    </span>
+                  </a>
+                </p>
+              </div>
+            </div>
+          ))}
       </div>
     </li>
   );
