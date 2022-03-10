@@ -1,2 +1,3 @@
 python-dotenv
 tweepy
+beautifulsoup4
