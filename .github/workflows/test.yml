@@ -3,13 +3,6 @@ name: Test
 on:
   push:
 
-env:
-  NODE_ENV: test
-  COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
-  CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -28,8 +21,23 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
       - run: yarn install --immutable
       - run: yarn build
+        env:
+          NODE_ENV: test
+          COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - uses: superfly/flyctl-actions@master
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        with:
+          args: 'proxy 5432 -a tweetscape-db'
       - run: yarn start & yarn wait-on http-get://localhost:3000
+        env:
+          NODE_ENV: test
+          COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - run: yarn start:cy --record --parallel --headless --group firefox -b firefox
-      - run: yarn start:cy --record --parallel --headless --group chrome -b chrome
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
       - uses: codecov/codecov-action@v1
         if: ${{ success() || failure() }}

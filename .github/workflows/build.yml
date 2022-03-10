@@ -3,13 +3,6 @@ name: Build
 on:
   push:
 
-env:
-  NODE_ENV: test
-  COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
-  CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,3 +21,7 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
       - run: yarn install --immutable
       - run: yarn build
+        env:
+          NODE_ENV: production
+          COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
