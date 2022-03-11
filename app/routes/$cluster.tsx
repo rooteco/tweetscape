@@ -10,12 +10,10 @@ import { cluster } from '~/cookies.server';
 import { pool } from '~/db.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
-export type Sort = 'attention_score' | 'tweets_count';
 
-export const loader: LoaderFunction = async ({
-  params,
-  request,
-}): Promise<LoaderData> => {
+type Sort = 'attention_score' | 'tweets_count';
+
+export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.cluster, 'expected params.cluster');
   log.info(`Fetching articles for ${params.cluster}...`);
   const url = new URL(request.url);
@@ -33,7 +31,7 @@ export const loader: LoaderFunction = async ({
   );
   log.trace(`Articles: ${JSON.stringify(data, null, 2)}`);
   log.info(`Fetched ${data.rows.length} articles for ${params.cluster}.`);
-  return json(
+  return json<LoaderData>(
     { articles: data.rows as Article[], locale: lang(request) },
     { headers: { 'Set-Cookie': await cluster.serialize(params.cluster) } }
   );
