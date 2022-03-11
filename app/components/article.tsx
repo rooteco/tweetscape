@@ -18,9 +18,9 @@ export default function ArticleItem({
 }: Article) {
   const { locale } = useLoaderData<LoaderData>();
   const [hidden, setHidden] = useState(true);
-  const date = tweets.sort(
+  const earliestTweet = tweets.sort(
     (a, b) => new Date(a.created_at) - new Date(b.created_at)
-  )[0].created_at;
+  )[0];
   return (
     <li className='my-8'>
       <div>
@@ -91,19 +91,22 @@ export default function ArticleItem({
           {Math.round(attention_score)} points
         </a>
         <span className='mx-1'>·</span>
-        <span>
-          {new Date(date).toLocaleString(locale, {
+        <a
+          className='hover:underline'
+          href={`https://twitter.com/${earliestTweet.author.username}/status/${earliestTweet.id}`}
+          target='_blank'
+          rel='noopener noreferrer'
+        >
+          {new Date(earliestTweet.created_at).toLocaleString(locale, {
             month: 'short',
             day: 'numeric',
           })}
-        </span>
-        <span className='mx-1'>·</span>
-        <span>
-          {new Date(date).toLocaleString(locale, {
+          {' · '}
+          {new Date(earliestTweet.created_at).toLocaleString(locale, {
             hour: 'numeric',
             minute: 'numeric',
           })}
-        </span>
+        </a>
       </div>
       <div
         className={cn(
