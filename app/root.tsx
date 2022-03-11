@@ -144,7 +144,7 @@ export default function App() {
         </header>
         <Outlet />
         <footer className='py-4 mt-10 border-t-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-end items-end'>
-          <p className='text-sm text-center md:text-right'>
+          <p className='text-xs text-center md:text-right'>
             all content copyright{' '}
             <a
               className='underline'
