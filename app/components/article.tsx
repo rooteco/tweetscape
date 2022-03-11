@@ -1,6 +1,6 @@
+import { useMemo, useState } from 'react';
 import cn from 'classnames';
 import { useLoaderData } from 'remix';
-import { useState } from 'react';
 
 import type { Article } from '~/db.server';
 import type { LoaderData } from '~/routes/$cluster';
@@ -8,6 +8,8 @@ import type { LoaderData } from '~/routes/$cluster';
 function substr(str: string, len: number): string {
   return `${str.substr(0, len).trim()}${str.length > len ? '…' : ''}`;
 }
+
+type Sort = 'attention_score' | 'retweet_count' | 'latest' | 'earliest';
 
 export default function ArticleItem({
   expanded_url,
@@ -18,9 +20,16 @@ export default function ArticleItem({
 }: Article) {
   const { locale } = useLoaderData<LoaderData>();
   const [hidden, setHidden] = useState(true);
-  const earliestTweet = tweets.sort(
-    (a, b) => new Date(a.created_at) - new Date(b.created_at)
-  )[0];
+  const earliestTweet = useMemo(() => Array.from(tweets).sort(
+    (a, b) => new Date(a.created_at).valueOf() - new Date(b.created_at).valueOf()
+  )[0], [tweets]);
+  const [sort, setSort] = useState<Sort>('attention_score');
+  const sorted = useMemo(() => Array.from(tweets).sort((a, b) => {
+    if (sort === 'retweet_count') return b.retweet_count - a.retweet_count;
+    if (sort === 'latest') return new Date(b.created_at).valueOf() - new Date(a.created_at).valueOf();
+    if (sort === 'earliest') return new Date(a.created_at).valueOf() - new Date(b.created_at).valueOf();
+    return b.score.attention_score - a.score.attention_score;
+  }), [sort, tweets]);
   return (
     <li className='my-8'>
       <div>
@@ -54,8 +63,8 @@ export default function ArticleItem({
       {description && <p className='text-sm'>{substr(description, 300)}</p>}
       <div className='text-sm text-slate-600 dark:text-slate-400 flex items-center mt-1.5'>
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
-          {tweets
-            .sort((a, b) => b.score.rank - a.score.rank)
+          {Array.from(tweets)
+            .sort((a, b) => b.score.attention_score - a.score.attention_score)
             .slice(0, 10)
             .map(({ id, author }) => (
               <a
@@ -66,7 +75,7 @@ export default function ArticleItem({
                 key={id}
               >
                 <img
-                  src={`/img/${encodeURIComponent(author.profile_image_url)}`}
+                  src={`/img/${encodeURIComponent(author.profile_image_url ?? '')}`}
                   alt=''
                 />
               </a>
@@ -109,18 +118,61 @@ export default function ArticleItem({
         </a>
       </div>
       <div
-        className={cn(
-          'mt-2.5 pb-2.5 flex flex-wrap overflow-auto border-b border-black dark:border-white max-h-96',
-          { hidden }
-        )}
+        className={cn('border-b border-black dark:border-white', { hidden })}
       >
-        {tweets
-          .sort((a, b) => b.score.rank - a.score.rank)
-          .map(({ id, author, score, text, created_at }) => (
-            <div key={id} className='flex p-2 w-full sm:w-1/2'>
+        <nav className='text-xs my-2.5'>
+          <svg
+            className='fill-current h-4 w-4 mr-1.5 inline-block'
+            xmlns='http://www.w3.org/2000/svg'
+            height='24'
+            viewBox='0 0 24 24'
+            width='24'
+          >
+            <path d='M0 0h24v24H0z' fill='none' />
+            <path d='M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z' />
+          </svg>
+          <button
+            type='button'
+            aria-pressed={sort === 'attention_score'}
+            className={cn({ underline: sort === 'attention_score' })}
+            onClick={() => setSort('attention_score')}
+          >
+            attention score 
+          </button>
+          {' · '}
+          <button
+            type='button'
+            aria-pressed={sort === 'retweet_count'}
+            className={cn({ underline: sort === 'retweet_count' })}
+            onClick={() => setSort('retweet_count')}
+          >
+            retweet count 
+          </button>
+          {' · '}
+          <button
+            type='button'
+            aria-pressed={sort === 'latest'}
+            className={cn({ underline: sort === 'latest' })}
+            onClick={() => setSort('latest')}
+          >
+            latest 
+          </button>
+          {' · '}
+          <button
+            type='button'
+            aria-pressed={sort === 'earliest'}
+            className={cn({ underline: sort === 'earliest' })}
+            onClick={() => setSort('earliest')}
+          >
+            earliest 
+          </button>
+        </nav>
+        <ul className='pb-2.5 flex flex-wrap overflow-auto max-h-96'> 
+          {sorted.map(({ id, author, score, text, created_at }, idx) => (
+            <li key={id} order={idx} className='flex p-2 w-full sm:w-1/2'>
               <div className='flex-grow rounded border border-slate-900 dark:border-white py-3 px-4'>
                 <div className='flex items-center justify-between w-full'>
-                  <div className='flex'>
+                  <div>
                     <a
                       className='hover:underline font-bold'
                       href={`https://hive.one/p/${author.username}`}
@@ -161,14 +213,18 @@ export default function ArticleItem({
                       </svg>
                     </a>
                   </div>
-                  <a
-                    className='hover:underline block font-bold text-xs'
-                    href={`https://hive.one/p/${author.username}`}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {score.attention_score.toFixed(2)} points
-                  </a>
+                  <div className='font-bold text-xs'>
+                    <a
+                      className='hover:underline'
+                    <a
+                      className='hover:underline'
+                      href={`https://hive.one/p/${author.username}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      {score.attention_score.toFixed(2)} points 
+                    </a>
+                  </div>
                 </div>
                 <p className='mt-3 text-xs text-justify'>
                   {text}
@@ -190,8 +246,9 @@ export default function ArticleItem({
                   </a>
                 </p>
               </div>
-            </div>
+            </li>
           ))}
+        </ul>
       </div>
     </li>
   );

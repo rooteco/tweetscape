@@ -1,5 +1,9 @@
 import { Pool } from 'pg';
 
+// It's safer to make these all strings so that I always wrap them in the
+// front-end code that receives the JSON-ified versions of all these datatypes.
+type Date = string; 
+
 export interface Cluster {
   id: string;
   name: string;
