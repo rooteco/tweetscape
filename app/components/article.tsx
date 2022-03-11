@@ -20,16 +20,31 @@ export default function ArticleItem({
 }: Article) {
   const { locale } = useLoaderData<LoaderData>();
   const [hidden, setHidden] = useState(true);
-  const earliestTweet = useMemo(() => Array.from(tweets).sort(
-    (a, b) => new Date(a.created_at).valueOf() - new Date(b.created_at).valueOf()
-  )[0], [tweets]);
+  const earliestTweet = useMemo(
+    () =>
+      Array.from(tweets).sort(
+        (a, b) =>
+          new Date(a.created_at).valueOf() - new Date(b.created_at).valueOf()
+      )[0],
+    [tweets]
+  );
   const [sort, setSort] = useState<Sort>('attention_score');
-  const sorted = useMemo(() => Array.from(tweets).sort((a, b) => {
-    if (sort === 'retweet_count') return b.retweet_count - a.retweet_count;
-    if (sort === 'latest') return new Date(b.created_at).valueOf() - new Date(a.created_at).valueOf();
-    if (sort === 'earliest') return new Date(a.created_at).valueOf() - new Date(b.created_at).valueOf();
-    return b.score.attention_score - a.score.attention_score;
-  }), [sort, tweets]);
+  const sorted = useMemo(
+    () =>
+      Array.from(tweets).sort((a, b) => {
+        if (sort === 'retweet_count') return b.retweet_count - a.retweet_count;
+        if (sort === 'latest')
+          return (
+            new Date(b.created_at).valueOf() - new Date(a.created_at).valueOf()
+          );
+        if (sort === 'earliest')
+          return (
+            new Date(a.created_at).valueOf() - new Date(b.created_at).valueOf()
+          );
+        return b.score.attention_score - a.score.attention_score;
+      }),
+    [sort, tweets]
+  );
   return (
     <li className='my-8'>
       <div>
@@ -75,7 +90,9 @@ export default function ArticleItem({
                 key={id}
               >
                 <img
-                  src={`/img/${encodeURIComponent(author.profile_image_url ?? '')}`}
+                  src={`/img/${encodeURIComponent(
+                    author.profile_image_url ?? ''
+                  )}`}
                   alt=''
                 />
               </a>
@@ -137,7 +154,7 @@ export default function ArticleItem({
             className={cn({ underline: sort === 'attention_score' })}
             onClick={() => setSort('attention_score')}
           >
-            attention score 
+            attention score
           </button>
           {' · '}
           <button
@@ -146,7 +163,7 @@ export default function ArticleItem({
             className={cn({ underline: sort === 'retweet_count' })}
             onClick={() => setSort('retweet_count')}
           >
-            retweet count 
+            retweet count
           </button>
           {' · '}
           <button
@@ -155,7 +172,7 @@ export default function ArticleItem({
             className={cn({ underline: sort === 'latest' })}
             onClick={() => setSort('latest')}
           >
-            latest 
+            latest
           </button>
           {' · '}
           <button
@@ -164,36 +181,37 @@ export default function ArticleItem({
             className={cn({ underline: sort === 'earliest' })}
             onClick={() => setSort('earliest')}
           >
-            earliest 
+            earliest
           </button>
         </nav>
-        <ul className='pb-2.5 flex flex-wrap overflow-auto max-h-96'> 
-          {sorted.map(({ id, author, score, text, created_at }, idx) => (
-            <li key={id} order={idx} className='flex p-2 w-full sm:w-1/2'>
-              <div className='flex-grow rounded border border-slate-900 dark:border-white py-3 px-4'>
-                <div className='flex items-center justify-between w-full'>
-                  <div>
-                    <a
-                      className='hover:underline font-bold'
-                      href={`https://hive.one/p/${author.username}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
-                      {author.username}
-                    </a>
-                    <a
-                      className='mx-2 inline-flex justify-center items-center'
-                      href={`https://twitter.com/${author.username}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
-                      <svg
-                        className='fill-current h-3'
-                        viewBox='328 355 335 276'
-                        xmlns='http://www.w3.org/2000/svg'
+        <ul className='pb-2.5 flex flex-wrap overflow-auto max-h-96'>
+          {sorted.map(
+            ({ id, author, score, text, created_at, retweet_count }, idx) => (
+              <li key={id} order={idx} className='flex p-2 w-full sm:w-1/2'>
+                <div className='flex-grow rounded border border-slate-900 dark:border-white py-3 px-4'>
+                  <div className='flex items-center justify-between w-full'>
+                    <div>
+                      <a
+                        className='hover:underline font-bold'
+                        href={`https://hive.one/p/${author.username}`}
+                        target='_blank'
+                        rel='noopener noreferrer'
                       >
-                        <path
-                          d='
+                        {author.username}
+                      </a>
+                      <a
+                        className='mx-2 inline-flex justify-center items-center'
+                        href={`https://twitter.com/${author.username}`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        <svg
+                          className='fill-current h-3'
+                          viewBox='328 355 335 276'
+                          xmlns='http://www.w3.org/2000/svg'
+                        >
+                          <path
+                            d='
                           M 630, 425
                           A 195, 195 0 0 1 331, 600
                           A 142, 142 0 0 0 428, 570
@@ -209,45 +227,45 @@ export default function ArticleItem({
                           A 117, 117 0 0 0 662, 390
                           A  65,  65 0 0 1 630, 425
                           Z'
-                        />
-                      </svg>
-                    </a>
+                          />
+                        </svg>
+                      </a>
+                    </div>
+                    <div className='text-xs text-slate-600 dark:text-slate-400'>
+                      <span>{retweet_count} retweets</span>
+                      <span className='mx-1'>·</span>
+                      <a
+                        className='hover:underline'
+                        href={`https://hive.one/p/${author.username}`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        {Math.round(score.attention_score)} points
+                      </a>
+                      <span className='mx-1'>·</span>
+                      <a
+                        className='hover:underline'
+                        href={`https://twitter.com/${author.username}/status/${id}`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        {new Date(created_at).toLocaleString(locale, {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                        {' · '}
+                        {new Date(created_at).toLocaleString(locale, {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                        })}
+                      </a>
+                    </div>
                   </div>
-                  <div className='font-bold text-xs'>
-                    <a
-                      className='hover:underline'
-                    <a
-                      className='hover:underline'
-                      href={`https://hive.one/p/${author.username}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
-                      {score.attention_score.toFixed(2)} points 
-                    </a>
-                  </div>
+                  <p className='mt-3 text-xs text-justify'>{text}</p>
                 </div>
-                <p className='mt-3 text-xs text-justify'>
-                  {text}
-                  <a
-                    className='hover:underline font-bold text-xs ml-2'
-                    href={`https://twitter.com/${author.username}/status/${id}`}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {new Date(created_at).toLocaleString(locale, {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                    {' · '}
-                    {new Date(created_at).toLocaleString(locale, {
-                      hour: 'numeric',
-                      minute: 'numeric',
-                    })}
-                  </a>
-                </p>
-              </div>
-            </li>
-          ))}
+              </li>
+            )
+          )}
         </ul>
       </div>
     </li>
