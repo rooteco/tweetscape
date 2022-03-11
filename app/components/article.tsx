@@ -86,7 +86,7 @@ export default function ArticleItem({
           )
         </span>
       </div>
-      {description && <p className='text-sm'>{substr(description, 300)}</p>}
+      {description && <p className='text-sm'>{substr(description, 285)}</p>}
       <div className='text-sm text-slate-600 dark:text-slate-400 flex items-center mt-1.5'>
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
           {Array.from(tweets)
