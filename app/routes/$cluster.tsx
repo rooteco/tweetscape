@@ -12,22 +12,59 @@ import { pool } from '~/db.server';
 export type LoaderData = { articles: Article[]; locale: string };
 
 type Sort = 'attention_score' | 'tweets_count';
+type Filter = 'show_retweets' | 'hide_retweets';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.cluster, 'expected params.cluster');
   log.info(`Fetching articles for ${params.cluster}...`);
   const url = new URL(request.url);
-  const sort = (url.searchParams.get('sort') as Sort) ?? 'attention_score';
+  const sort = (url.searchParams.get('sort') ?? 'attention_score') as Sort;
+  const filter = (url.searchParams.get('filter') ?? 'hide_retweets') as Filter;
   const data = await pool.query(
     `
-      select * from articles 
-      where cluster_slug = '${params.cluster}'
-      and expanded_url !~ '^https?:\\/\\/twitter\\.com' 
-      order by ${
-        sort === 'tweets_count' ? 'json_array_length(tweets)' : sort
-      } desc
-      limit 20;
-      `
+    select * from (
+      select
+        links.*,
+        clusters.id as cluster_id,
+        clusters.name as cluster_name,
+        clusters.slug as cluster_slug,
+        sum(tweets.insider_score) as insider_score,
+        sum(tweets.attention_score) as attention_score,
+        json_agg(tweets.*) as tweets
+      from links
+        inner join (
+          select distinct on (tweets.author_id, urls.link_id)
+            urls.link_id as link_id,
+            tweets.*
+          from urls
+            inner join (
+              select 
+                tweets.*,
+                scores.cluster_id as cluster_id,
+                scores.insider_score as insider_score,
+                scores.attention_score as attention_score,
+                to_json(influencers.*) as author,
+                to_json(scores.*) as score
+              from tweets
+                inner join influencers on influencers.id = tweets.author_id
+                inner join scores on scores.influencer_id = influencers.id
+              ${
+                filter === 'hide_retweets'
+                  ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
+                  : ''
+              }
+            ) as tweets on tweets.id = urls.tweet_id
+        ) as tweets on tweets.link_id = links.id
+        inner join clusters on clusters.id = tweets.cluster_id
+      group by links.id, clusters.id
+    ) as articles where cluster_slug = '${
+      params.cluster
+    }' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
+    order by ${
+      sort === 'tweets_count' ? 'json_array_length(tweets)' : sort
+    } desc
+    limit 20;
+    `
   );
   log.trace(`Articles: ${JSON.stringify(data, null, 2)}`);
   log.info(`Fetched ${data.rows.length} articles for ${params.cluster}.`);
@@ -40,7 +77,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 export default function Cluster() {
   const { articles } = useLoaderData<LoaderData>();
   const [searchParams] = useSearchParams();
-  const sort = searchParams.get('sort');
+  const sort = (searchParams.get('sort') ?? 'attention_score') as Sort;
+  const filter = (searchParams.get('filter') ?? 'hide_retweets') as Filter;
   return (
     <main>
       <nav className='text-xs mt-2'>
@@ -55,17 +93,40 @@ export default function Cluster() {
           <path d='M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z' />
         </svg>
         <Link
-          className={cn({ underline: !sort || sort === 'attention_score' })}
-          to='?sort=attention_score'
+          className={cn({ underline: sort === 'attention_score' })}
+          to={`?filter=${filter}&sort=attention_score`}
         >
           attention score
         </Link>
         {' · '}
         <Link
           className={cn({ underline: sort === 'tweets_count' })}
-          to='?sort=tweets_count'
+          to={`?filter=${filter}&sort=tweets_count`}
         >
           tweets count
+        </Link>
+        <svg
+          className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block'
+          xmlns='http://www.w3.org/2000/svg'
+          height='24'
+          viewBox='0 0 24 24'
+          width='24'
+        >
+          <path d='M0 0h24v24H0z' fill='none' />
+          <path d='M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z' />
+        </svg>
+        <Link
+          className={cn({ underline: filter === 'hide_retweets' })}
+          to={`?filter=hide_retweets&sort=${sort}`}
+        >
+          hide retweets
+        </Link>
+        {' · '}
+        <Link
+          className={cn({ underline: filter === 'show_retweets' })}
+          to={`?filter=show_retweets&sort=${sort}`}
+        >
+          show retweets
         </Link>
       </nav>
       <ol className='text-sm'>

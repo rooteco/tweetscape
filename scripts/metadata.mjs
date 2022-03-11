@@ -15,18 +15,60 @@ const scheduler = new Bottleneck({
 });
 const fetched = scheduler.wrap(fetch);
 
-async function metadata(cluster = 'tesla', db) {
+const SORTS = ['attention_score', 'tweets_count'];
+const FILTERS = ['show_retweets', 'hide_retweets'];
+
+async function metadata(cluster, sort, filter, db) {
   try {
-    log.info(`Beginning database transaction (${cluster})...`);
+    log.info(
+      `Beginning database transaction (${cluster}; ${sort}; ${filter})...`
+    );
     await db.query('BEGIN');
     await db.query('SET CONSTRAINTS ALL IMMEDIATE');
-    log.info(`Fetching the top 20 articles for ${cluster}...`);
+    log.info(
+      `Fetching the top 20 articles for ${cluster} (sorted by ${sort}; ${filter})...`
+    );
     const { rows } = await db.query(
       `
-      select * from articles 
-      where cluster_slug = '${cluster}'
-      and expanded_url !~ '^https?:\\/\\/twitter\\.com' 
-      order by attention_score desc
+      select * from (
+        select
+          links.*,
+          clusters.id as cluster_id,
+          clusters.name as cluster_name,
+          clusters.slug as cluster_slug,
+          sum(tweets.insider_score) as insider_score,
+          sum(tweets.attention_score) as attention_score,
+          json_agg(tweets.*) as tweets
+        from links
+          inner join (
+            select distinct on (tweets.author_id, urls.link_id)
+              urls.link_id as link_id,
+              tweets.*
+            from urls
+              inner join (
+                select 
+                  tweets.*,
+                  scores.cluster_id as cluster_id,
+                  scores.insider_score as insider_score,
+                  scores.attention_score as attention_score,
+                  to_json(influencers.*) as author,
+                  to_json(scores.*) as score
+                from tweets
+                  inner join influencers on influencers.id = tweets.author_id
+                  inner join scores on scores.influencer_id = influencers.id
+                ${
+                  filter === 'hide_retweets'
+                    ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
+                    : ''
+                }
+              ) as tweets on tweets.id = urls.tweet_id
+          ) as tweets on tweets.link_id = links.id
+          inner join clusters on clusters.id = tweets.cluster_id
+        group by links.id, clusters.id
+      ) as articles where (title is null or description is null) and cluster_slug = '${cluster}' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
+      order by ${
+        sort === 'tweets_count' ? 'json_array_length(tweets)' : sort
+      } desc
       limit 20;
       `
     );
@@ -120,7 +162,13 @@ async function metadata(cluster = 'tesla', db) {
         `${c.RUNNING} running, ${c.EXECUTING} executing, ${c.DONE} done.`;
       log.debug(msg);
     }, 2500);
-    await Promise.all(rows.map((r) => metadata(r.slug, db)));
+    for await (const { slug } of rows) {
+      for await (const sort of SORTS) {
+        for await (const filter of FILTERS) {
+          await metadata(slug, sort, filter, db);
+        }
+      }
+    }
     clearInterval(intervalId);
     log.info(`Fetched link metadata for ${rows.length} clusters.`);
   } catch (e) {

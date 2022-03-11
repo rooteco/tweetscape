@@ -1,6 +1,6 @@
+import { useLoaderData, useSearchParams } from 'remix';
 import { useMemo, useState } from 'react';
 import cn from 'classnames';
-import { useLoaderData } from 'remix';
 
 import type { Article } from '~/db.server';
 import type { LoaderData } from '~/routes/$cluster';
@@ -10,6 +10,7 @@ function substr(str: string, len: number): string {
 }
 
 type Sort = 'attention_score' | 'retweet_count' | 'latest' | 'earliest';
+type Filter = 'show_retweets' | 'hide_retweets';
 
 export default function ArticleItem({
   expanded_url,
@@ -29,21 +30,31 @@ export default function ArticleItem({
     [tweets]
   );
   const [sort, setSort] = useState<Sort>('attention_score');
-  const sorted = useMemo(
+  const [searchParams] = useSearchParams();
+  const searchParamsFilter = searchParams.get('filter') ?? 'hide_retweets';
+  const [filter, setFilter] = useState<Filter>(searchParamsFilter as Filter);
+  const results = useMemo(
     () =>
-      Array.from(tweets).sort((a, b) => {
-        if (sort === 'retweet_count') return b.retweet_count - a.retweet_count;
-        if (sort === 'latest')
-          return (
-            new Date(b.created_at).valueOf() - new Date(a.created_at).valueOf()
-          );
-        if (sort === 'earliest')
-          return (
-            new Date(a.created_at).valueOf() - new Date(b.created_at).valueOf()
-          );
-        return b.score.attention_score - a.score.attention_score;
-      }),
-    [sort, tweets]
+      Array.from(tweets)
+        .filter(
+          (t) => filter === 'show_retweets' || !/^RT @\w+\b:/.test(t.text)
+        )
+        .sort((a, b) => {
+          if (sort === 'retweet_count')
+            return b.retweet_count - a.retweet_count;
+          if (sort === 'latest')
+            return (
+              new Date(b.created_at).valueOf() -
+              new Date(a.created_at).valueOf()
+            );
+          if (sort === 'earliest')
+            return (
+              new Date(a.created_at).valueOf() -
+              new Date(b.created_at).valueOf()
+            );
+          return b.score.attention_score - a.score.attention_score;
+        }),
+    [sort, filter, tweets]
   );
   return (
     <li className='my-8'>
@@ -75,12 +86,13 @@ export default function ArticleItem({
           )
         </span>
       </div>
-      {description && <p className='text-sm'>{substr(description, 300)}</p>}
+      {description && <p className='text-sm'>{substr(description, 285)}</p>}
       <div className='text-sm text-slate-600 dark:text-slate-400 flex items-center mt-1.5'>
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
           {Array.from(tweets)
             .sort((a, b) => b.score.attention_score - a.score.attention_score)
             .slice(0, 10)
+            .reverse()
             .map(({ id, author }) => (
               <a
                 className='inline-block cursor-pointer duration-75 transition-transform hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-900 -mr-2 first:mr-0 overflow-hidden'
@@ -183,9 +195,44 @@ export default function ArticleItem({
           >
             earliest
           </button>
+          <svg
+            className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block'
+            xmlns='http://www.w3.org/2000/svg'
+            height='24'
+            viewBox='0 0 24 24'
+            width='24'
+          >
+            <path d='M0 0h24v24H0z' fill='none' />
+            <path d='M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z' />
+          </svg>
+          <button
+            type='button'
+            aria-pressed={filter === 'hide_retweets'}
+            className={cn({ underline: filter === 'hide_retweets' })}
+            onClick={() => setFilter('hide_retweets')}
+          >
+            hide retweets
+          </button>
+          {' · '}
+          <button
+            type='button'
+            disabled={searchParamsFilter === 'hide_retweets'}
+            aria-pressed={filter === 'show_retweets'}
+            className={cn('disabled:cursor-not-allowed', {
+              underline: filter === 'show_retweets',
+            })}
+            onClick={() => setFilter('show_retweets')}
+            title={
+              searchParamsFilter === 'hide_retweets'
+                ? 'Cannot show retweets when filtering them out at the article level; click "show tweets" at the top level (below the "tweetscape.co" logo) to use this filter.'
+                : undefined
+            }
+          >
+            show retweets
+          </button>
         </nav>
         <ul className='pb-2.5 flex flex-wrap overflow-auto max-h-96'>
-          {sorted.map(
+          {results.map(
             ({ id, author, score, text, created_at, retweet_count }, idx) => (
               <li key={id} order={idx} className='flex p-2 w-full sm:w-1/2'>
                 <div className='flex-grow rounded border border-slate-900 dark:border-white py-3 px-4'>
