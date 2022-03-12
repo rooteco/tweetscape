@@ -102,6 +102,7 @@ export default function TweetItem({
               linkAttributeBlock(entity, attrs) {
                 attrs.target = '_blank';
                 attrs.rel = 'noopener noreferrer';
+                attrs.class = 'hover:underline';
               },
             }),
           }}
