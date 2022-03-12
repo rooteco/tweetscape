@@ -2,9 +2,8 @@ import { Link, json, useLoaderData, useSearchParams } from 'remix';
 import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
-import twitter from 'twitter-text';
 
-import { lang, log } from '~/utils.server';
+import { autoLink, lang, log } from '~/utils.server';
 import type { Article } from '~/db.server';
 import ArticleItem from '~/components/article';
 import { cluster } from '~/cookies.server';
@@ -64,7 +63,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const articles = data.rows as Article[];
   articles.forEach((article) =>
     article.tweets.forEach((tweet) => {
-      tweet.html = twitter.autoLink(tweet.text, {
+      tweet.html = autoLink(tweet.text, {
         linkAttributeBlock(entity, attrs) {
           attrs.target = '_blank';
           attrs.rel = 'noopener noreferrer';
