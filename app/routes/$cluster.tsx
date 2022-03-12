@@ -6,6 +6,8 @@ import invariant from 'tiny-invariant';
 import { autoLink, lang, log } from '~/utils.server';
 import type { Article } from '~/db.server';
 import ArticleItem from '~/components/article';
+import FilterIcon from '~/icons/filter';
+import SortIcon from '~/icons/sort';
 import { cluster } from '~/cookies.server';
 import { pool } from '~/db.server';
 
@@ -86,16 +88,7 @@ export default function Cluster() {
   return (
     <main>
       <nav className='text-xs mt-2'>
-        <svg
-          className='fill-current h-4 w-4 mr-1.5 inline-block'
-          xmlns='http://www.w3.org/2000/svg'
-          height='24'
-          viewBox='0 0 24 24'
-          width='24'
-        >
-          <path d='M0 0h24v24H0z' fill='none' />
-          <path d='M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z' />
-        </svg>
+        <SortIcon />
         <Link
           className={cn({ underline: sort === 'attention_score' })}
           to={`?filter=${filter}&sort=attention_score`}
@@ -109,16 +102,7 @@ export default function Cluster() {
         >
           tweets count
         </Link>
-        <svg
-          className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block'
-          xmlns='http://www.w3.org/2000/svg'
-          height='24'
-          viewBox='0 0 24 24'
-          width='24'
-        >
-          <path d='M0 0h24v24H0z' fill='none' />
-          <path d='M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z' />
-        </svg>
+        <FilterIcon />
         <Link
           className={cn({ underline: filter === 'hide_retweets' })}
           to={`?filter=hide_retweets&sort=${sort}`}

@@ -3,7 +3,9 @@ import { useMemo, useState } from 'react';
 import cn from 'classnames';
 
 import type { Article } from '~/db.server';
+import FilterIcon from '~/icons/filter';
 import type { LoaderData } from '~/routes/$cluster';
+import SortIcon from '~/icons/sort';
 import TweetItem from '~/components/tweet';
 
 function substr(str: string, len: number): string {
@@ -153,16 +155,7 @@ export default function ArticleItem({
         className={cn('border-b border-black dark:border-white', { hidden })}
       >
         <nav className='text-xs my-2.5'>
-          <svg
-            className='fill-current h-4 w-4 mr-1.5 inline-block'
-            xmlns='http://www.w3.org/2000/svg'
-            height='24'
-            viewBox='0 0 24 24'
-            width='24'
-          >
-            <path d='M0 0h24v24H0z' fill='none' />
-            <path d='M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z' />
-          </svg>
+          <SortIcon />
           <button
             type='button'
             aria-pressed={sort === 'attention_score'}
@@ -198,16 +191,7 @@ export default function ArticleItem({
           >
             earliest
           </button>
-          <svg
-            className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block'
-            xmlns='http://www.w3.org/2000/svg'
-            height='24'
-            viewBox='0 0 24 24'
-            width='24'
-          >
-            <path d='M0 0h24v24H0z' fill='none' />
-            <path d='M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z' />
-          </svg>
+          <FilterIcon />
           <button
             type='button'
             aria-pressed={filter === 'hide_retweets'}
