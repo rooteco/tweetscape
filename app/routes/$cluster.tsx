@@ -20,49 +20,41 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const url = new URL(request.url);
   const sort = (url.searchParams.get('sort') ?? 'attention_score') as Sort;
   const filter = (url.searchParams.get('filter') ?? 'hide_retweets') as Filter;
+  /* prettier-ignore */
   const data = await pool.query(
     `
-    select * from (
-      select
-        links.*,
-        clusters.id as cluster_id,
-        clusters.name as cluster_name,
-        clusters.slug as cluster_slug,
-        sum(tweets.insider_score) as insider_score,
-        sum(tweets.attention_score) as attention_score,
-        json_agg(tweets.*) as tweets
-      from links
-        inner join (
-          select distinct on (tweets.author_id, urls.link_id)
-            urls.link_id as link_id,
-            tweets.*
-          from urls
-            inner join (
-              select 
-                tweets.*,
-                scores.cluster_id as cluster_id,
-                scores.insider_score as insider_score,
-                scores.attention_score as attention_score,
-                to_json(influencers.*) as author,
-                to_json(scores.*) as score
-              from tweets
-                inner join influencers on influencers.id = tweets.author_id
-                inner join scores on scores.influencer_id = influencers.id
-              ${
-                filter === 'hide_retweets'
-                  ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
-                  : ''
-              }
-            ) as tweets on tweets.id = urls.tweet_id
-        ) as tweets on tweets.link_id = links.id
-        inner join clusters on clusters.id = tweets.cluster_id
-      group by links.id, clusters.id
-    ) as articles where cluster_slug = '${
-      params.cluster
-    }' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
-    order by ${
-      sort === 'tweets_count' ? 'json_array_length(tweets)' : sort
-    } desc
+    select
+      links.*,
+      clusters.id as cluster_id,
+      clusters.name as cluster_name,
+      clusters.slug as cluster_slug,
+      sum(tweets.insider_score) as insider_score,
+      sum(tweets.attention_score) as attention_score,
+      json_agg(tweets.*) as tweets
+    from links
+      inner join (
+        select distinct on (urls.link_id, tweets.author_id, tweets.cluster_id)
+          urls.link_id as link_id,
+          tweets.*
+        from urls
+          inner join (
+            select 
+              tweets.*,
+              scores.cluster_id as cluster_id,
+              scores.insider_score as insider_score,
+              scores.attention_score as attention_score,
+              to_json(influencers.*) as author,
+              to_json(scores.*) as score
+            from tweets
+              inner join influencers on influencers.id = tweets.author_id
+              inner join scores on scores.influencer_id = influencers.id
+            ${filter === 'hide_retweets' ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
+          ) as tweets on tweets.id = urls.tweet_id
+      ) as tweets on tweets.link_id = links.id
+      inner join clusters on clusters.id = tweets.cluster_id
+    where clusters.slug = '${params.cluster}' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
+    group by links.id, clusters.id
+    order by ${sort === 'tweets_count' ? 'json_array_length(tweets)' : sort} desc
     limit 20;
     `
   );
