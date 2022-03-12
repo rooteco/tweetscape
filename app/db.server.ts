@@ -29,6 +29,7 @@ export interface Tweet {
   id: string;
   author_id: string;
   text: string;
+  html?: string;
   retweet_count: number;
   reply_count: number;
   like_count: number;
