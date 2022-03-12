@@ -11,7 +11,7 @@ import {
   useTransition,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import NProgress from 'nprogress';
 import cn from 'classnames';
 
@@ -21,7 +21,7 @@ import { pool } from '~/db.server';
 import styles from '~/styles/app.css';
 
 type Theme = 'sync' | 'dark' | 'light';
-const THEMES = ['sync', 'dark', 'light'];
+const THEMES: Theme[] = ['sync', 'dark', 'light'];
 const THEME_SNIPPET = `
   if (localStorage.theme === 'dark')
     document.documentElement.classList.add('dark');
@@ -92,6 +92,10 @@ export default function App() {
   useEffect(() => {
     if (theme) localStorage.setItem('theme', theme);
   }, [theme]);
+  const nextTheme = useMemo(
+    () => THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length],
+    [theme]
+  );
 
   return (
     <html lang='en'>
@@ -132,14 +136,28 @@ export default function App() {
               type='button'
               className='font-semibold text-sm w-[32.25px]'
               aria-pressed={theme === 'sync' ? 'mixed' : theme === 'dark'}
-              onClick={() =>
-                setTheme(
-                  (prev) => THEMES[(THEMES.indexOf(prev) + 1) % THEMES.length]
-                )
-              }
+              onClick={() => setTheme(nextTheme)}
             >
-              {THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]}
+              {nextTheme}
             </button>
+            {' · '}
+            <a
+              href='https://github.com/nicholaschiang/tweetscape'
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              github
+              <svg
+                className='fill-current h-4 w-4 inline-block ml-1'
+                xmlns='http://www.w3.org/2000/svg'
+                height='24'
+                viewBox='0 0 24 24'
+                width='24'
+              >
+                <path d='M0 0h24v24H0z' fill='none' />
+                <path d='M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z' />
+              </svg>
+            </a>
           </nav>
         </header>
         <Outlet />
@@ -177,11 +195,11 @@ export default function App() {
             ·{' '}
             <a
               className='underline'
-              href='https://github.com/nicholaschiang/tweetscape'
+              href='https://twitter.com/TweetscapeHQ'
               target='_blank'
               rel='noopener noreferrer'
             >
-              github
+              twitter
             </a>
           </p>
         </footer>
