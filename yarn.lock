@@ -6511,14 +6511,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^3.2.2":
-  version: 3.2.2
-  resolution: "node-fetch@npm:3.2.2"
+"node-fetch@npm:^3.2.3":
+  version: 3.2.3
+  resolution: "node-fetch@npm:3.2.3"
   dependencies:
     data-uri-to-buffer: ^4.0.0
     fetch-blob: ^3.1.4
     formdata-polyfill: ^4.0.10
-  checksum: 03920e3ea8ad0122c3bad3dbd1ed005773d3623ed84eebab03c9660d49721ddbc1b2d2f28a006924c258e15a1abc26a976bbfa169fa7e52cd0c7d89f227c2307
+  checksum: 6f702b2683d6e1c097e99888bedaac4625d6895f2a8a60573a2bc04916f5577ea61d274f26e308c08cfb724b23d45de7d3514c14b59e0293e9809c66c88ac12c
   languageName: node
   linkType: hard
 
@@ -9025,7 +9025,7 @@ __metadata:
     html-entities: ^2.3.2
     html5parser: ^2.0.2
     husky: ^7.0.4
-    node-fetch: ^3.2.2
+    node-fetch: ^3.2.3
     nprogress: ^0.2.0
     pg: ^8.7.3
     pg-format: ^1.0.4
