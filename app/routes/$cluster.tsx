@@ -46,12 +46,14 @@ export const loader: LoaderFunction = async ({ params, request }) => {
               to_json(influencers.*) as author,
               to_json(scores.*) as score,
               json_agg(mentions.*) as mentions,
-              json_agg(tags.*) as tags
+              json_agg(tags.*) as tags,
+              json_agg(urls.*) as urls
             from tweets
               inner join influencers on influencers.id = tweets.author_id
               inner join scores on scores.influencer_id = influencers.id
               left outer join mentions on mentions.tweet_id = tweets.id
               left outer join tags on tags.tweet_id = tweets.id
+              left outer join urls on urls.tweet_id = tweets.id
             ${filter === 'hide_retweets' ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
             group by tweets.id, scores.id, influencers.id
           ) as tweets on tweets.id = urls.tweet_id

@@ -1,3 +1,4 @@
+import twitter from 'twitter-text';
 import { useLoaderData } from 'remix';
 
 import type { Influencer, Score, Tweet } from '~/db.server';
@@ -94,7 +95,17 @@ export default function TweetItem({
             </a>
           </div>
         </div>
-        <p className='mt-3 text-xs text-justify'>{text}</p>
+        <p
+          className='mt-3 text-xs text-justify'
+          dangerouslySetInnerHTML={{
+            __html: twitter.autoLink(text, {
+              linkAttributeBlock(entity, attrs) {
+                attrs.target = '_blank';
+                attrs.rel = 'noopener noreferrer';
+              },
+            }),
+          }}
+        />
       </div>
     </li>
   );

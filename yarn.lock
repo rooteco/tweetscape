@@ -42,7 +42,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.10.2, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.7.6":
+"@babel/runtime@npm:^7.10.2, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.3.1, @babel/runtime@npm:^7.7.6":
   version: 7.17.2
   resolution: "@babel/runtime@npm:7.17.2"
   dependencies:
@@ -691,6 +691,13 @@ __metadata:
   version: 2.3.3
   resolution: "@types/sizzle@npm:2.3.3"
   checksum: 586a9fb1f6ff3e325e0f2cc1596a460615f0bc8a28f6e276ac9b509401039dd242fa8b34496d3a30c52f5b495873922d09a9e76c50c2ab2bcc70ba3fb9c4e160
+  languageName: node
+  linkType: hard
+
+"@types/twitter-text@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "@types/twitter-text@npm:3.1.1"
+  checksum: c29f9bc8302c5a0c00b167e844bb1f76f89751791f55793ba9887757771efbbed7abbdefea3923f7e96d82537bc5114ea8cece53b8374b62778a15e325059254
   languageName: node
   linkType: hard
 
@@ -2175,6 +2182,13 @@ __metadata:
   version: 3.21.1
   resolution: "core-js-pure@npm:3.21.1"
   checksum: 00a5dff599b7fb0b30746a638b9d0edbdc0df24ed1580ca56be595fbe3c78c375d37fc4e1bff23627109229702c9ee8ea2587a66b8280eb33b85160aa4e401e9
+  languageName: node
+  linkType: hard
+
+"core-js@npm:^2.5.0":
+  version: 2.6.12
+  resolution: "core-js@npm:2.6.12"
+  checksum: 44fa9934a85f8c78d61e0c8b7b22436330471ffe59ec5076fe7f324d6e8cf7f824b14b1c81ca73608b13bdb0fef035bd820989bf059767ad6fa13123bb8bd016
   languageName: node
   linkType: hard
 
@@ -7467,6 +7481,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"punycode@npm:1.4.1":
+  version: 1.4.1
+  resolution: "punycode@npm:1.4.1"
+  checksum: fa6e698cb53db45e4628559e557ddaf554103d2a96a1d62892c8f4032cd3bc8871796cae9eabc1bc700e2b6677611521ce5bb1d9a27700086039965d0cf34518
+  languageName: node
+  linkType: hard
+
 "punycode@npm:^2.1.0, punycode@npm:^2.1.1":
   version: 2.1.1
   resolution: "punycode@npm:2.1.1"
@@ -8979,6 +9000,7 @@ __metadata:
     "@types/react": ^17.0.39
     "@types/react-dom": ^17.0.13
     "@types/sharp": ^0.29.5
+    "@types/twitter-text": ^3.1.1
     "@typescript-eslint/eslint-plugin": ^5.14.0
     "@typescript-eslint/parser": ^5.14.0
     accept-language-parser: ^1.5.0
@@ -9017,10 +9039,30 @@ __metadata:
     sharp: ^0.30.2
     tailwindcss: ^3.0.23
     tiny-invariant: ^1.2.0
+    twitter-text: ^3.1.0
     typescript: ^4.6.2
     wait-on: ^6.0.1
   languageName: unknown
   linkType: soft
+
+"twemoji-parser@npm:^11.0.2":
+  version: 11.0.2
+  resolution: "twemoji-parser@npm:11.0.2"
+  checksum: 79075c6512253f17713f236c4853dccdcc9c5a6c2d15b0109c02d684402a21ccdd80352e490cdf76072fe2c09c7c288e501ed41185ebef69df69fe355f9b7c37
+  languageName: node
+  linkType: hard
+
+"twitter-text@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "twitter-text@npm:3.1.0"
+  dependencies:
+    "@babel/runtime": ^7.3.1
+    core-js: ^2.5.0
+    punycode: 1.4.1
+    twemoji-parser: ^11.0.2
+  checksum: 1ba9481f292bd34f7b73fbec60f7705061c1054a899f26e060d74dd473c9dbcad81247a1e25174c43c4a6c4f2957d1b46d55353bdcfc5e9c195ac07ee0e8631f
+  languageName: node
+  linkType: hard
 
 "type-check@npm:^0.4.0, type-check@npm:~0.4.0":
   version: 0.4.0

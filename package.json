@@ -39,7 +39,8 @@
     "react-dom": "^17.0.2",
     "remix": "^1.2.3",
     "sharp": "^0.30.2",
-    "tiny-invariant": "^1.2.0"
+    "tiny-invariant": "^1.2.0",
+    "twitter-text": "^3.1.0"
   },
   "devDependencies": {
     "@percy/cypress": "^3.1.1",
@@ -51,6 +52,7 @@
     "@types/react": "^17.0.39",
     "@types/react-dom": "^17.0.13",
     "@types/sharp": "^0.29.5",
+    "@types/twitter-text": "^3.1.1",
     "@typescript-eslint/eslint-plugin": "^5.14.0",
     "@typescript-eslint/parser": "^5.14.0",
     "autoprefixer": "^10.4.2",
