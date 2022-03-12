@@ -3,7 +3,7 @@ import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
 
-import { lang, log } from '~/utils.server';
+import { autoLink, lang, log } from '~/utils.server';
 import type { Article } from '~/db.server';
 import ArticleItem from '~/components/article';
 import { cluster } from '~/cookies.server';
@@ -60,8 +60,20 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   );
   log.trace(`Articles: ${JSON.stringify(data, null, 2)}`);
   log.info(`Fetched ${data.rows.length} articles for ${params.cluster}.`);
+  const articles = data.rows as Article[];
+  articles.forEach((article) =>
+    article.tweets.forEach((tweet) => {
+      tweet.html = autoLink(tweet.text, {
+        linkAttributeBlock(entity, attrs) {
+          attrs.target = '_blank';
+          attrs.rel = 'noopener noreferrer';
+          attrs.class = 'hover:underline';
+        },
+      });
+    })
+  );
   return json<LoaderData>(
-    { articles: data.rows as Article[], locale: lang(request) },
+    { articles, locale: lang(request) },
     { headers: { 'Set-Cookie': await cluster.serialize(params.cluster) } }
   );
 };
