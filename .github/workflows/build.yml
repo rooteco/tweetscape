@@ -20,6 +20,7 @@ jobs:
             node_modules
           key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
       - run: yarn install --immutable --immutable-cache
+      - run: yarn tsc
       - run: yarn build
         env:
           NODE_ENV: production
