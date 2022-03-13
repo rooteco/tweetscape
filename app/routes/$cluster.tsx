@@ -57,7 +57,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       inner join clusters on clusters.id = tweets.cluster_id
     where clusters.slug = '${params.cluster}' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
     group by links.id, clusters.id
-    order by ${sort === 'tweets_count' ? 'json_array_length(tweets)' : sort} desc
+    order by ${sort === 'tweets_count' ? 'count(tweets)' : sort} desc
     limit 20;
     `
   );
