@@ -1,7 +1,7 @@
 export default function Twitter() {
   return (
     <svg
-      className='fill-current h-3'
+      className='fill-current h-3 w-3'
       viewBox='328 355 335 276'
       xmlns='http://www.w3.org/2000/svg'
     >

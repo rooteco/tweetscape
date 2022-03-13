@@ -1,7 +1,9 @@
 import { useLoaderData } from 'remix';
 
 import type { Influencer, Score, Tweet } from '~/db.server';
+import LikeIcon from '~/icons/like';
 import type { LoaderData } from '~/routes/$cluster';
+import ReplyIcon from '~/icons/reply';
 import TwitterIcon from '~/icons/twitter';
 
 export type TweetItemProps = Tweet & {
@@ -33,12 +35,28 @@ export default function TweetItem({
               {author.username}
             </a>
             <a
-              className='mx-2 inline-flex justify-center items-center'
+              className='ml-2 inline-flex justify-center items-center'
               href={`https://twitter.com/${author.username}`}
               target='_blank'
               rel='noopener noreferrer'
             >
               <TwitterIcon />
+            </a>
+            <a
+              className='ml-2 inline-flex justify-center items-center'
+              href={`https://twitter.com/intent/like?tweet_id=${id}`}
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              <LikeIcon />
+            </a>
+            <a
+              className='mx-2 inline-flex justify-center items-center'
+              href={`https://twitter.com/intent/tweet?in_reply_to=${id}`}
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              <ReplyIcon />
             </a>
           </div>
           <div className='text-xs text-slate-600 dark:text-slate-400'>
