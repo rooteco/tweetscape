@@ -71,4 +71,8 @@ export interface Article extends Link {
   tweets: (Tweet & { author: Influencer; score: Score })[];
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 0,
+  idleTimeoutMillis: 0,
+});
