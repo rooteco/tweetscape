@@ -1,12 +1,5 @@
 import '@percy/cypress';
 
-Cypress.Commands.add(
-  'seed',
-  (overrides?: Overrides) =>
-    cy.task('seed', overrides) as unknown as Cypress.Chainable<{
-      assessment?: number;
-    }>
-);
 Cypress.Commands.add('getBySel', (sel: string, ...args: any) =>
   cy.get(`[data-cy=${sel}]`, ...args)
 );

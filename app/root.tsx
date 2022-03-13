@@ -130,7 +130,7 @@ export default function App() {
 
   const [theme, setTheme] = useTheme();
   const nextTheme = useMemo(
-    () => THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length],
+    () => THEMES[(THEMES.indexOf(theme as Theme) + 1) % THEMES.length],
     [theme]
   );
 

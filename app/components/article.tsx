@@ -219,8 +219,8 @@ export default function ArticleItem({
           </button>
         </nav>
         <ul className='pb-2.5 flex flex-wrap overflow-auto max-h-96'>
-          {results.map((tweet, idx) => (
-            <TweetItem {...tweet} key={tweet.id} order={idx} />
+          {results.map((tweet) => (
+            <TweetItem {...tweet} key={tweet.id} />
           ))}
         </ul>
       </div>

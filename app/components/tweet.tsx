@@ -7,7 +7,6 @@ import TwitterIcon from '~/icons/twitter';
 export type TweetItemProps = Tweet & {
   author: Influencer;
   score: Score;
-  order: number;
 };
 
 export default function TweetItem({
@@ -18,11 +17,10 @@ export default function TweetItem({
   html,
   retweet_count,
   created_at,
-  order,
 }: TweetItemProps) {
   const { locale } = useLoaderData<LoaderData>();
   return (
-    <li order={order} className='flex p-2 w-full sm:w-1/2'>
+    <li className='flex p-2 w-full sm:w-1/2'>
       <div className='flex-grow rounded border border-slate-900 dark:border-white py-3 px-4'>
         <div className='flex items-center justify-between w-full'>
           <div>
