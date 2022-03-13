@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import {
   Link,
   Links,
@@ -11,11 +12,13 @@ import {
   useTransition,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
-import { useEffect, useMemo, useState } from 'react';
 import NProgress from 'nprogress';
 import cn from 'classnames';
 
 import type { Cluster } from '~/db.server';
+import Empty from '~/components/empty';
+import Footer from '~/components/footer';
+import Header from '~/components/header';
 import OpenIcon from '~/icons/open';
 import { log } from '~/utils.server';
 import { pool } from '~/db.server';
@@ -31,6 +34,55 @@ const THEME_SNIPPET = `
       document.documentElement.classList.add('dark');
   }
   `;
+export function useTheme(): [
+  Theme | undefined,
+  Dispatch<SetStateAction<Theme | undefined>>
+] {
+  const [theme, setTheme] = useState<Theme>();
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else if (theme === 'sync') {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.classList.add('dark');
+    }
+  }, [theme]);
+  useEffect(() => {
+    setTheme((prev) => (localStorage.getItem('theme') as Theme) ?? prev);
+  }, []);
+  useEffect(() => {
+    if (theme) localStorage.setItem('theme', theme);
+  }, [theme]);
+  return useMemo(() => [theme, setTheme], [theme, setTheme]);
+}
+
+export function ErrorBoundary({ error }: { error: Error }) {
+  useTheme();
+  return (
+    <html lang='en'>
+      <head>
+        <meta charSet='utf-8' />
+        <meta name='viewport' content='width=device-width,initial-scale=1' />
+        <Meta />
+        <Links />
+      </head>
+      <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
+        <Header />
+        <Empty>
+          <p>an unexpected runtime error ocurred</p>
+          <p>{error.message}</p>
+        </Empty>
+        <Footer />
+        <ScrollRestoration />
+        <Scripts />
+        <LiveReload />
+      </body>
+    </html>
+  );
+}
 
 export const loader: LoaderFunction = async () => {
   log.info('Fetching visible clusters...');
@@ -76,23 +128,7 @@ export default function App() {
   const clusters = useLoaderData<Cluster[]>();
   const { pathname } = useLocation();
 
-  const [theme, setTheme] = useState<Theme>();
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else if (theme === 'sync') {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches)
-        document.documentElement.classList.add('dark');
-    }
-  }, [theme]);
-  useEffect(() => {
-    setTheme((prev) => (localStorage.getItem('theme') as Theme) ?? prev);
-  }, []);
-  useEffect(() => {
-    if (theme) localStorage.setItem('theme', theme);
-  }, [theme]);
+  const [theme, setTheme] = useTheme();
   const nextTheme = useMemo(
     () => THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length],
     [theme]
@@ -108,10 +144,7 @@ export default function App() {
       </head>
       <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
-        <header className='py-4 border-b-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-between items-end'>
-          <h1 className='font-extrabold tracking-tighter text-4xl'>
-            tweetscape.co
-          </h1>
+        <Header>
           <nav className='font-semibold text-sm'>
             {clusters
               .map(({ id, name, slug }) => (
@@ -151,50 +184,9 @@ export default function App() {
               <OpenIcon />
             </a>
           </nav>
-        </header>
+        </Header>
         <Outlet />
-        <footer className='py-4 mt-10 border-t-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-end items-end'>
-          <p className='text-xs text-center md:text-right'>
-            all content copyright{' '}
-            <a
-              className='underline'
-              href='https://roote.co'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              roote
-            </a>{' '}
-            © 2022 · all rights reserved
-            <br />
-            read more about{' '}
-            <a
-              className='underline'
-              href='https://www.roote.co/tweetscape/vision'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              our vision
-            </a>{' '}
-            and{' '}
-            <a
-              className='underline'
-              href='https://github.com/nicholaschiang/tweetscape#how-it-works'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              how it works
-            </a>{' '}
-            ·{' '}
-            <a
-              className='underline'
-              href='https://twitter.com/TweetscapeHQ'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              twitter
-            </a>
-          </p>
-        </footer>
+        <Footer />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
