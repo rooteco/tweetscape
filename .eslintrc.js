@@ -24,6 +24,11 @@ module.exports = {
     browser: true,
     node: true,
   },
+  settings: {
+    // Support Typescript's `paths` aliases (e.g. `~/` to `./app/`).
+    // @see {@link https://stackoverflow.com/a/57678771}
+    'import/resolver': { typescript: {} },
+  },
   rules: {
     // Support Typescript's triple slash directive comments in reference files.
     // {@link https://github.com/typescript-eslint/typescript-eslint/issues/600}
