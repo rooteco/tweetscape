@@ -6,11 +6,11 @@ import invariant from 'tiny-invariant';
 import { autoLink, lang, log } from '~/utils.server';
 import type { Article } from '~/db.server';
 import ArticleItem from '~/components/article';
+import { Client } from '~/db.server';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
 import { cluster } from '~/cookies.server';
-import { pool } from '~/db.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
 
@@ -19,12 +19,16 @@ type Filter = 'show_retweets' | 'hide_retweets';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.cluster, 'expected params.cluster');
+  log.info(`Establishing connection with PostgreSQL...`);
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  client.on('error', (e) => log.error(`PostgreSQL cluster error: ${e.stack}`));
+  await client.connect();
   log.info(`Fetching articles for ${params.cluster}...`);
   const url = new URL(request.url);
   const sort = (url.searchParams.get('sort') ?? 'attention_score') as Sort;
   const filter = (url.searchParams.get('filter') ?? 'hide_retweets') as Filter;
   /* prettier-ignore */
-  const data = await pool.query(
+  const data = await client.query(
     `
     select
       links.*,
@@ -61,6 +65,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     limit 20;
     `
   );
+  log.info(`Disconnecting client from PostgreSQL...`);
+  await client.end();
   log.trace(`Articles: ${JSON.stringify(data, null, 2)}`);
   log.info(`Fetched ${data.rows.length} articles for ${params.cluster}.`);
   const articles = data.rows as Article[];
