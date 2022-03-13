@@ -25,7 +25,7 @@ export default function Footer() {
         and{' '}
         <a
           className='underline'
-          href='https://github.com/nicholaschiang/tweetscape#how-it-works'
+          href='https://github.com/rooteco/tweetscape#how-it-works'
           target='_blank'
           rel='noopener noreferrer'
         >

@@ -184,7 +184,7 @@ export default function App() {
             </button>
             {' · '}
             <a
-              href='https://github.com/nicholaschiang/tweetscape'
+              href='https://github.com/rooteco/tweetscape'
               target='_blank'
               rel='noopener noreferrer'
             >
