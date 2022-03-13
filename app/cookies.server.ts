@@ -5,5 +5,5 @@ export const cluster = createCookie('cluster', {
   sameSite: 'lax',
   httpOnly: true,
   secure: true,
-  secrets: [process.env.COOKIE_SECRET],
+  secrets: [process.env.COOKIE_SECRET as string],
 });

@@ -1,3 +1,4 @@
+import type { Agent } from 'https';
 import { PassThrough } from 'stream';
 import type { Readable } from 'stream';
 import { createHash } from 'crypto';
@@ -6,9 +7,11 @@ import fsp from 'fs/promises';
 import https from 'https';
 import path from 'path';
 
+import type { FitEnum } from 'sharp';
 import type { LoaderFunction } from 'remix';
 import type { Request as NodeRequest } from '@remix-run/node';
 import { Response as NodeResponse } from '@remix-run/node';
+import invariant from 'tiny-invariant';
 import sharp from 'sharp';
 
 import { log } from '~/utils.server';
@@ -35,12 +38,13 @@ function getIntOrNull(value: string | null) {
 export const loader: LoaderFunction = async ({ params, request }) => {
   const url = new URL(request.url);
 
+  invariant(params.url, 'expected params.url');
   const src = new URL(params.url).href;
   if (!src) return badImageResponse();
 
   const width = getIntOrNull(url.searchParams.get('width'));
   const height = getIntOrNull(url.searchParams.get('height'));
-  const fit = url.searchParams.get('fit') || 'cover';
+  const fit = (url.searchParams.get('fit') || 'cover') as keyof FitEnum;
 
   const hash = createHash('sha256');
   hash.update('v1');
@@ -73,7 +77,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
     log.info(`Cache skipped for: ${src}`);
   } catch (e) {
-    log.error((e as Error).stack);
+    log.error(`Cache error: ${(e as Error).stack}`);
   }
 
   try {
@@ -84,7 +88,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       imageBody = fs.createReadStream(path.resolve('public', src.slice(1)));
     } else {
       const imgRequest = new Request(src.toString()) as unknown as NodeRequest;
-      imgRequest.agent = new https.Agent({
+      (imgRequest as unknown as { agent: Agent }).agent = new https.Agent({
         rejectUnauthorized: false,
       });
       const imageResponse = await fetch(imgRequest as unknown as Request);
@@ -92,18 +96,14 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       status = imageResponse.status;
     }
 
-    if (!imageBody) {
-      return badImageResponse();
-    }
+    if (!imageBody) return badImageResponse();
 
     const sharpInstance = sharp();
     sharpInstance.on('error', (e) => {
-      log.error(e.stack);
+      log.error(`Sharp image optimization error: ${e.stack}`);
     });
 
-    if (width || height) {
-      sharpInstance.resize(width, height, { fit });
-    }
+    if (width || height) sharpInstance.resize(width, height, { fit });
     sharpInstance.webp({ reductionEffort: 6 });
 
     const imageManipulationStream = imageBody.pipe(sharpInstance);
@@ -117,10 +117,10 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       imageManipulationStream.pipe(cacheFileStream);
       imageManipulationStream.on('end', () => {
         resolve();
-        imageBody.destroy();
+        imageBody?.destroy();
       });
       imageManipulationStream.on('error', () => {
-        imageBody.destroy();
+        imageBody?.destroy();
         void fsp.rm(cachedFile).catch(() => {});
       });
     });
@@ -135,7 +135,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       },
     }) as unknown as Response;
   } catch (e) {
-    log.error((e as Error).stack);
+    log.error(`Image optimization error: ${(e as Error).stack}`);
     return badImageResponse();
   }
 };
