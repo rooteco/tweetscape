@@ -6,6 +6,7 @@ import invariant from 'tiny-invariant';
 import { autoLink, lang, log } from '~/utils.server';
 import type { Article } from '~/db.server';
 import ArticleItem from '~/components/article';
+import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
 import { cluster } from '~/cookies.server';
@@ -118,11 +119,7 @@ export default function Cluster() {
         </Link>
       </nav>
       <ol className='text-sm'>
-        {!articles.length && (
-          <div className='border uppercase rounded text-slate-400 border-slate-300 dark:text-slate-600 dark:border-slate-700 border-dashed text-center font-normal p-6 my-12 flex items-center justify-center min-h-[95vh]'>
-            no articles to show
-          </div>
-        )}
+        {!articles.length && <Empty>no articles to show</Empty>}
         {articles.map((a) => (
           <ArticleItem {...a} key={a.id} />
         ))}
