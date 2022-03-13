@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+export { Client } from 'pg';
 
 // It's safer to make these all strings so that I always wrap them in the
 // front-end code that receives the JSON-ified versions of all these datatypes.
@@ -70,9 +70,3 @@ export interface Article extends Link {
   attention_score: number;
   tweets: (Tweet & { author: Influencer; score: Score })[];
 }
-
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 0,
-  idleTimeoutMillis: 0,
-});
