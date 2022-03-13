@@ -1,23 +1,23 @@
 <h1 align='center'>Tweetscape: The Supercharged Twitter Feed</h1>
 
 <p align='center'>
-  <a aria-label='Release version' href='https://github.com/nicholaschiang/tweetscape/releases'>
-    <img src='https://img.shields.io/github/v/release/nicholaschiang/tweetscape?style=flat-square&labelColor=000000'>
+  <a aria-label='Release version' href='https://github.com/rooteco/tweetscape/releases'>
+    <img src='https://img.shields.io/github/v/release/rooteco/tweetscape?style=flat-square&labelColor=000000'>
   </a>
   <a aria-label='Website status' href='https://tweetscape.co'>
     <img src='https://img.shields.io/website?down_color=lightgrey&down_message=down&up_color=brightgreen&up_message=up&url=https%3A%2F%2Ftweetscape.co&style=flat-square&labelColor=000000'>
   </a>
-  <a aria-label='Build status' href='https://github.com/nicholaschiang/tweetscape/actions'>
-    <img src='https://img.shields.io/github/workflow/status/nicholaschiang/tweetscape/Build?style=flat-square&labelColor=000000'>
+  <a aria-label='Build status' href='https://github.com/rooteco/tweetscape/actions'>
+    <img src='https://img.shields.io/github/workflow/status/rooteco/tweetscape/Build?style=flat-square&labelColor=000000'>
   </a>
   <a aria-label='Integration tests' href='https://dashboard.cypress.io/projects/u2qr64/runs'>
     <img src='https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/u2qr64/develop&style=flat-square&labelColor=000000'>
   </a>
-  <a aria-label='Dependencies' href='https://depfu.com/repos/github/nicholaschiang/tweetscape'>
-    <img src='https://img.shields.io/depfu/dependencies/github/nicholaschiang/tweetscape?style=flat-square&labelColor=000000'>
+  <a aria-label='Dependencies' href='https://depfu.com/repos/github/rooteco/tweetscape'>
+    <img src='https://img.shields.io/depfu/dependencies/github/rooteco/tweetscape?style=flat-square&labelColor=000000'>
   </a>
-  <a aria-label='Maintainability' href='https://codeclimate.com/github/nicholaschiang/tweetscape'>
-    <img src='https://img.shields.io/codeclimate/maintainability/nicholaschiang/tweetscape?style=flat-square&labelColor=000000'>
+  <a aria-label='Maintainability' href='https://codeclimate.com/github/rooteco/tweetscape'>
+    <img src='https://img.shields.io/codeclimate/maintainability/rooteco/tweetscape?style=flat-square&labelColor=000000'>
   </a>
 </p>
 
@@ -153,7 +153,7 @@ $ sudo apt-get install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-
 6. Clone and `cd` into this repository locally by running:
 
 ```
-$ git clone https://github.com/nicholaschiang/tweetscape.git && cd tweetscape/
+$ git clone https://github.com/rooteco/tweetscape.git && cd tweetscape/
 ```
 
 7. Follow [these instructions](https://yarnpkg.com/getting-started/install) to install `yarn` (our dependency manager for a number of reasons):
@@ -168,7 +168,7 @@ $ corepack enable
 $ yarn
 ```
 
-9. Copy over the `.env` file (which contains project secrets) from [this private repository](https://github.com/nicholaschiang/tweetscape-env):
+9. Copy over the `.env` file (which contains project secrets) from [this private repository](https://github.com/rooteco/tweetscape-env):
 
 ```
 $ cp tweetscape-env/.env* tweetscape/
