@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model annotations {
+  tweet_id        String
+  normalized_text String
+  probability     Decimal         @db.Decimal
+  type            annotation_type
+  start           Int
+  end             Int
+  tweets          tweets          @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([tweet_id, normalized_text])
+}
+
+model clusters {
+  id         String   @id
+  name       String   @unique
+  slug       String   @unique
+  active     Boolean  @default(false)
+  created_at DateTime @db.Timestamptz(6)
+  updated_at DateTime @db.Timestamptz(6)
+  visible    Boolean  @default(false)
+  scores     scores[]
+}
+
+model influencers {
+  id                String     @id
+  name              String
+  username          String
+  profile_image_url String?
+  followers_count   Int?
+  following_count   Int?
+  tweets_count      Int?
+  created_at        DateTime?  @db.Timestamptz(6)
+  updated_at        DateTime?  @db.Timestamptz(6)
+  mentions          mentions[]
+  scores            scores[]
+  tweets            tweets[]
+}
+
+model links {
+  id           BigInt                  @id @default(autoincrement())
+  url          String                  @unique
+  expanded_url String                  @unique
+  display_url  String
+  images       Unsupported("_image")[]
+  status       Int?
+  title        String?
+  description  String?
+  unwound_url  String?
+  urls         urls[]
+}
+
+model mentions {
+  tweet_id      String
+  influencer_id String
+  start         Int
+  end           Int
+  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tweets        tweets      @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([tweet_id, influencer_id])
+}
+
+model refs {
+  referenced_tweet_id                     String
+  referencer_tweet_id                     String
+  type                                    ref_type
+  tweets_refs_referenced_tweet_idTotweets tweets   @relation("refs_referenced_tweet_idTotweets", fields: [referenced_tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tweets_refs_referencer_tweet_idTotweets tweets   @relation("refs_referencer_tweet_idTotweets", fields: [referencer_tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([referenced_tweet_id, referencer_tweet_id])
+}
+
+model scores {
+  id                          String      @id
+  influencer_id               String
+  cluster_id                  String
+  attention_score             Decimal     @db.Decimal
+  attention_score_change_week Decimal?    @db.Decimal
+  insider_score               Decimal     @db.Decimal
+  organization_rank           Int?
+  personal_rank               Int?
+  rank                        Int
+  created_at                  DateTime    @db.Timestamptz(6)
+  clusters                    clusters    @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  influencers                 influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model tags {
+  tweet_id String
+  tag      String
+  type     tag_type
+  start    Int
+  end      Int
+  tweets   tweets   @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([tweet_id, tag, type])
+}
+
+model tweets {
+  id                                    String        @id
+  author_id                             String
+  text                                  String
+  retweet_count                         Int
+  reply_count                           Int
+  like_count                            Int
+  quote_count                           Int
+  created_at                            DateTime      @db.Timestamptz(6)
+  influencers                           influencers   @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  annotations                           annotations[]
+  mentions                              mentions[]
+  refs_refs_referenced_tweet_idTotweets refs[]        @relation("refs_referenced_tweet_idTotweets")
+  refs_refs_referencer_tweet_idTotweets refs[]        @relation("refs_referencer_tweet_idTotweets")
+  tags                                  tags[]
+  urls                                  urls[]
+}
+
+model urls {
+  tweet_id String
+  link_id  BigInt
+  start    Int
+  end      Int
+  links    links  @relation(fields: [link_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tweets   tweets @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([tweet_id, link_id])
+}
+
+enum annotation_type {
+  Person
+  Place
+  Product
+  Organization
+  Other
+}
+
+enum ref_type {
+  quoted
+  retweeted
+  replied_to
+}
+
+enum tag_type {
+  cashtag
+  hashtag
+}
