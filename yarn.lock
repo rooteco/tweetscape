@@ -287,7 +287,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@remix-run/node@npm:1.2.3, @remix-run/node@npm:^1.2.3":
+"@remix-run/node@npm:1.2.3":
   version: 1.2.3
   resolution: "@remix-run/node@npm:1.2.3"
   dependencies:
@@ -347,6 +347,18 @@ __metadata:
     react: ">=16.8"
     react-dom: ">=16.8"
   checksum: 7bb003aa82a9d683644a9ec51d592003ca51b261238d9fd78f2ac9927c687e1ced9fc887211e71bffb8a47d5837ccadb5dfe58ba6eaff455a742f713f816884c
+  languageName: node
+  linkType: hard
+
+"@remix-run/vercel@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "@remix-run/vercel@npm:1.2.3"
+  dependencies:
+    "@remix-run/node": 1.2.3
+    "@remix-run/server-runtime": 1.2.3
+  peerDependencies:
+    "@vercel/node": ^1.8.3
+  checksum: 2410fe70aa0079ffd9b0271c015740a003ae8b709c1a72a431cf4bb367d842c47a88628e26a154bf81b3f3080c5a7566c2a363435771de277177f52aefe39125
   languageName: node
   linkType: hard
 
@@ -9010,9 +9022,9 @@ __metadata:
   dependencies:
     "@percy/cypress": ^3.1.1
     "@remix-run/dev": ^1.2.3
-    "@remix-run/node": ^1.2.3
     "@remix-run/react": ^1.2.3
     "@remix-run/serve": ^1.2.3
+    "@remix-run/vercel": ^1.2.3
     "@types/accept-language-parser": ^1.5.3
     "@types/nprogress": ^0.2.0
     "@types/pg": ^8.6.5
