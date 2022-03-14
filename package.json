@@ -7,7 +7,6 @@
   "description": "The Supercharged Twitter Feed",
   "license": "AGPL-3.0",
   "sideEffects": false,
-  "main": "build/index.js",
   "scripts": {
     "build:remix": "cross-env NODE_ENV=production remix build",
     "build:css": "tailwindcss -m -i ./styles/app.css -o app/styles/app.css",
