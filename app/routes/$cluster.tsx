@@ -4,7 +4,7 @@ import cn from 'classnames';
 import invariant from 'tiny-invariant';
 
 import { autoLink, lang, log } from '~/utils.server';
-import type { Article } from '~/db.server';
+import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import { Client } from '~/db.server';
 import Empty from '~/components/empty';

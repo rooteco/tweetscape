@@ -2,7 +2,7 @@ import { useLoaderData, useSearchParams } from 'remix';
 import { useMemo, useState } from 'react';
 import cn from 'classnames';
 
-import type { Article } from '~/db.server';
+import type { Article } from '~/types';
 import FilterIcon from '~/icons/filter';
 import type { LoaderData } from '~/routes/$cluster';
 import SortIcon from '~/icons/sort';

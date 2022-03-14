@@ -15,7 +15,7 @@ import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import NProgress from 'nprogress';
 import cn from 'classnames';
 
-import type { Cluster } from '~/db.server';
+import type { Cluster } from '~/types';
 import Empty from '~/components/empty';
 import { Client } from '~/db.server';
 import Footer from '~/components/footer';
