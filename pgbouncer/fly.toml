@@ -8,14 +8,14 @@ kill_timeout = 5
 processes = []
 
 [env]
-DB_USER = "tweetscape"
-DB_NAME = "tweetscape"
-DB_HOST = "fdaa:0:51c6:a7b:ad1:0:a4a1:2"
+DB_USER = "postgres"
+DB_NAME = "postgres"
+DB_HOST = "fdaa:0:51c6:a7b:ad0:0:aa0a:2"
 DB_PORT = 5432
 AUTH_TYPE = "plain"
 LISTEN_ADDR = "::"
 POOL_MODE = "transaction"
-MAX_DB_CONNECTIONS = 8
+MAX_DB_CONNECTIONS = 1
 
 [build]
 image = "edoburu/pgbouncer:latest"
