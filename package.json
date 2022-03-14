@@ -25,6 +25,7 @@
     "setup:remix": "remix setup node"
   },
   "dependencies": {
+    "@prisma/client": "^3.10.0",
     "@remix-run/react": "^1.2.3",
     "@remix-run/vercel": "^1.2.3",
     "@vercel/node": "^1.13.0",
