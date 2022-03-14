@@ -177,14 +177,14 @@ $ cp tweetscape-env/.env* tweetscape/
 10. [Install the `flyctl` CLI](https://fly.io/docs/getting-started/installing-flyctl), login to the CLI, and setup port forwarding so you can access the PostgreSQL database from your machine:
 
 ```
-$ fly proxy 5432 -a tweetscape-db
+$ fly proxy 5432 -a tweetscape-pg
 ```
 
 11. (Optional) Install [Beekeeper Studio](https://www.beekeeperstudio.io/get) to be able to visually manipulate the PostgreSQL data.
     Or, you should be able to simply access the `psql` command interface directly:
 
 ```
-$ psql postgres://tweetscape:<pwd-from-env-file>@localhost:5432/tweetscape
+$ psql postgres://postgres:<pwd-from-env-file>@localhost:5432/postgres
 ```
 
 12. Finally, you should be able to start a fully-functioning development server:

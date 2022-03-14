@@ -1,0 +1,21 @@
+# fly.toml file generated for tweetscape-pgbouncer on 2022-03-14T12:47:38-07:00
+# https://community.fly.io/t/how-to-setup-and-use-pgbouncer-with-fly-postgres/3035/2
+
+app = "tweetscape-pgbouncer"
+
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+[env]
+DB_USER = "postgres"
+DB_NAME = "postgres"
+DB_HOST = "fdaa:0:51c6:a7b:ad0:0:aa0a:2"
+DB_PORT = 5432
+AUTH_TYPE = "plain"
+LISTEN_ADDR = "::"
+POOL_MODE = "transaction"
+MAX_DB_CONNECTIONS = 1
+
+[build]
+image = "edoburu/pgbouncer:latest"
