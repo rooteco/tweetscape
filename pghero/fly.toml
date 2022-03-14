@@ -1,4 +1,4 @@
-# fly.toml file generated for tweetscape-pghero on 2022-03-14T12:15:21-07:00
+# fly.toml file generated for tweetscape-pghero on 2022-03-14T15:47:46-07:00
 
 app = "tweetscape-pghero"
 
@@ -12,31 +12,31 @@ processes = []
 image = "ankane/pghero"
 
 [experimental]
-  allowed_public_ports = []
-  auto_rollback = true
+allowed_public_ports = []
+auto_rollback = true
 
 [[services]]
-  http_checks = []
-  internal_port = 8080
-  processes = ["app"]
-  protocol = "tcp"
-  script_checks = []
+http_checks = []
+internal_port = 8080
+processes = ["app"]
+protocol = "tcp"
+script_checks = []
 
-  [services.concurrency]
-    hard_limit = 25
-    soft_limit = 20
-    type = "connections"
+[services.concurrency]
+hard_limit = 25
+soft_limit = 20
+type = "connections"
 
-  [[services.ports]]
-    handlers = ["http"]
-    port = 80
+[[services.ports]]
+handlers = ["http"]
+port = 80
 
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
+[[services.ports]]
+handlers = ["tls", "http"]
+port = 443
 
-  [[services.tcp_checks]]
-    grace_period = "1s"
-    interval = "15s"
-    restart_limit = 0
-    timeout = "2s"
+[[services.tcp_checks]]
+grace_period = "1s"
+interval = "15s"
+restart_limit = 0
+timeout = "2s"
