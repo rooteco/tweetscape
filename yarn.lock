@@ -247,6 +247,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@prisma/engines@npm:3.10.0-50.73e60b76d394f8d37d8ebd1f8918c79029f0db86":
+  version: 3.10.0-50.73e60b76d394f8d37d8ebd1f8918c79029f0db86
+  resolution: "@prisma/engines@npm:3.10.0-50.73e60b76d394f8d37d8ebd1f8918c79029f0db86"
+  checksum: 7faa8659dd72e70f9b24be291e3660d086d5b2ee1b6557bf783100a2efaf4f7087882196191c845f96c3953a55ea8bcb03110af98a18e803b90084c0c2211444
+  languageName: node
+  linkType: hard
+
 "@remix-run/dev@npm:^1.2.3":
   version: 1.2.3
   resolution: "@remix-run/dev@npm:1.2.3"
@@ -857,6 +864,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vercel/node@npm:^1.13.0":
+  version: 1.13.0
+  resolution: "@vercel/node@npm:1.13.0"
+  dependencies:
+    "@types/node": "*"
+    ts-node: 8.9.1
+    typescript: 4.3.4
+  checksum: 54ee2f1b51f658d241b049e5c698d8fb1f70f9740bbbb0e4f83c44c11f5538eabcfdde767f6b1b2311a31c8242b1e1904bf2a2800f258c98faf013bad4425fe0
+  languageName: node
+  linkType: hard
+
 "@web-std/blob@npm:^3.0.3":
   version: 3.0.4
   resolution: "@web-std/blob@npm:3.0.4"
@@ -1138,6 +1156,13 @@ __metadata:
     delegates: ^1.0.0
     readable-stream: ^2.0.6
   checksum: 70d251719c969b2745bfe5ddf3ebaefa846a636e90a6d5212573676af5d6670e15457761d4725731e19cbebdce42c4ab0cbedf23ab047f2a08274985aa10a3c7
+  languageName: node
+  linkType: hard
+
+"arg@npm:^4.1.0":
+  version: 4.1.3
+  resolution: "arg@npm:4.1.3"
+  checksum: 544af8dd3f60546d3e4aff084d451b96961d2267d668670199692f8d054f0415d86fc5497d0e641e91546f0aa920e7c29e5250e99fc89f5552a34b5d93b77f43
   languageName: node
   linkType: hard
 
@@ -2624,6 +2649,13 @@ __metadata:
   version: 1.2.2
   resolution: "didyoumean@npm:1.2.2"
   checksum: d5d98719d58b3c2fa59663c4c42ba9716f1fd01245c31d5fce31915bd3aa26e6aac149788e007358f778ebbd68a2256eb5973e8ca6f221df221ba060115acf2e
+  languageName: node
+  linkType: hard
+
+"diff@npm:^4.0.1":
+  version: 4.0.2
+  resolution: "diff@npm:4.0.2"
+  checksum: f2c09b0ce4e6b301c221addd83bf3f454c0bc00caa3dd837cf6c127d6edf7223aa2bbe3b688feea110b7f262adbfc845b757c44c8a9f8c0c5b15d8fa9ce9d20d
   languageName: node
   linkType: hard
 
@@ -5611,6 +5643,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"make-error@npm:^1.1.1":
+  version: 1.3.6
+  resolution: "make-error@npm:1.3.6"
+  checksum: b86e5e0e25f7f777b77fabd8e2cbf15737972869d852a22b7e73c17623928fccb826d8e46b9951501d3f20e51ad74ba8c59ed584f610526a48f8ccf88aaec402
+  languageName: node
+  linkType: hard
+
 "make-fetch-happen@npm:^10.0.3":
   version: 10.0.4
   resolution: "make-fetch-happen@npm:10.0.4"
@@ -7423,6 +7462,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prisma@npm:^3.10.0":
+  version: 3.10.0
+  resolution: "prisma@npm:3.10.0"
+  dependencies:
+    "@prisma/engines": 3.10.0-50.73e60b76d394f8d37d8ebd1f8918c79029f0db86
+  bin:
+    prisma: build/index.js
+    prisma2: build/index.js
+  checksum: da693ebd69ec5f5a8132a86f1c6e300033a5ea869016e19364f514fdda6143f0d6236982a26b431313f06fecfaa2d1bd82eac3ebbf5b58082271f1a65c8a683d
+  languageName: node
+  linkType: hard
+
 "process-nextick-args@npm:~2.0.0":
   version: 2.0.1
   resolution: "process-nextick-args@npm:2.0.1"
@@ -8396,7 +8447,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-support@npm:^0.5.21":
+"source-map-support@npm:^0.5.17, source-map-support@npm:^0.5.21":
   version: 0.5.21
   resolution: "source-map-support@npm:0.5.21"
   dependencies:
@@ -8963,6 +9014,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ts-node@npm:8.9.1":
+  version: 8.9.1
+  resolution: "ts-node@npm:8.9.1"
+  dependencies:
+    arg: ^4.1.0
+    diff: ^4.0.1
+    make-error: ^1.1.1
+    source-map-support: ^0.5.17
+    yn: 3.1.1
+  peerDependencies:
+    typescript: ">=2.7"
+  bin:
+    ts-node: dist/bin.js
+    ts-node-script: dist/bin-script.js
+    ts-node-transpile-only: dist/bin-transpile.js
+    ts-script: dist/bin-script-deprecated.js
+  checksum: 59997e32cfb84323317f9fd33ff62d025b467ff36c296c3ad1ee54f08fd355c58fab37e096e2a63fd01fced929384b16b9d74bf324713a21844e527ddd5f6c17
+  languageName: node
+  linkType: hard
+
 "tsconfig-paths@npm:^3.12.0, tsconfig-paths@npm:^3.9.0":
   version: 3.13.0
   resolution: "tsconfig-paths@npm:3.13.0"
@@ -9035,6 +9106,7 @@ __metadata:
     "@types/twitter-text": ^3.1.1
     "@typescript-eslint/eslint-plugin": ^5.14.0
     "@typescript-eslint/parser": ^5.14.0
+    "@vercel/node": ^1.13.0
     accept-language-parser: ^1.5.0
     autoprefixer: ^10.4.2
     bottleneck: ^2.19.5
@@ -9064,6 +9136,7 @@ __metadata:
     postcss: ^8.4.8
     prettier: ^2.5.1
     pretty-quick: ^3.1.3
+    prisma: ^3.10.0
     react: ^17.0.2
     react-dom: ^17.0.2
     release: ^6.3.0
@@ -9150,6 +9223,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:4.3.4":
+  version: 4.3.4
+  resolution: "typescript@npm:4.3.4"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 75e1f2769c7ff38c718523d05eaf1c2611dbf92c0ab0f85f603ead9bb23416af2009a5dac46e76ef6a207a8508fa53f51b43a41f2a91b1241b53cd744c16128c
+  languageName: node
+  linkType: hard
+
 "typescript@npm:^4.6.2":
   version: 4.6.2
   resolution: "typescript@npm:4.6.2"
@@ -9157,6 +9240,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 8a44ed7e6f6c4cb1ebe8cf236ecda2fb119d84dcf0fbd77e707b2dfea1bbcfc4e366493a143513ce7f57203c75da9d4e20af6fe46de89749366351046be7577c
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@4.3.4#~builtin<compat/typescript>":
+  version: 4.3.4
+  resolution: "typescript@patch:typescript@npm%3A4.3.4#~builtin<compat/typescript>::version=4.3.4&hash=bda367"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 6ccc2e1148e172da119ea4b72c66395a0c18a53884d21fb82bb4503a948a7169e9961defe24a359040a3d77bf5ff338945804296e0e27c87b5bd22ea1d25781b
   languageName: node
   linkType: hard
 
@@ -9806,6 +9899,13 @@ __metadata:
     buffer-crc32: ~0.2.3
     fd-slicer: ~1.1.0
   checksum: 7f21fe0bbad6e2cb130044a5d1d0d5a0e5bf3d8d4f8c4e6ee12163ce798fee3de7388d22a7a0907f563ac5f9d40f8699a223d3d5c1718da90b0156da6904022b
+  languageName: node
+  linkType: hard
+
+"yn@npm:3.1.1":
+  version: 3.1.1
+  resolution: "yn@npm:3.1.1"
+  checksum: 2c487b0e149e746ef48cda9f8bad10fc83693cd69d7f9dcd8be4214e985de33a29c9e24f3c0d6bcf2288427040a8947406ab27f7af67ee9456e6b84854f02dd6
   languageName: node
   linkType: hard
 
