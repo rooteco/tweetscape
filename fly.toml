@@ -5,7 +5,7 @@ kill_timeout = 1
 processes = []
 
 [deploy]
-strategy = "bluegreen"
+strategy = "rolling"
 
 [env]
 NODE_ENV = "production"
