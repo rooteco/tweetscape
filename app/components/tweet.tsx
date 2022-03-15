@@ -1,6 +1,6 @@
 import { useLoaderData } from 'remix';
 
-import type { Influencer, Score, Tweet } from '~/db.server';
+import type { Influencer, Score, Tweet } from '~/types';
 import LikeIcon from '~/icons/like';
 import type { LoaderData } from '~/routes/$cluster';
 import ReplyIcon from '~/icons/reply';

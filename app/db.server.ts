@@ -1,72 +1,109 @@
-export { Client } from 'pg';
+import { createHash } from 'crypto';
 
-// It's safer to make these all strings so that I always wrap them in the
-// front-end code that receives the JSON-ified versions of all these datatypes.
-type Date = string;
+import { Client } from 'pg';
+import type { QueryResult } from 'pg';
+import { createClient } from 'redis';
 
-export interface Cluster {
-  id: string;
-  name: string;
-  slug: string;
-  active: boolean;
-  created_at: Date;
-  updated_at: Date;
+import { log } from '~/utils.server';
+import redisClient from '~/redis.server';
+import { substr } from '~/utils';
+
+interface RequestResponseCache<T> {
+  (query: string, maxAgeSeconds?: number): Promise<QueryResult<T>>;
 }
 
-export interface Link {
-  id: number;
-  url: string;
-  expanded_url: string;
-  display_url: string;
-  images: { url: string; width: number; height: number }[] | null;
-  status: number | null;
-  title: string | null;
-  description: string | null;
-  unwound_url: string | null;
+function createSwrRedisCache<T>({
+  redisClient,
+}: {
+  redisClient: ReturnType<typeof createClient>;
+}): RequestResponseCache<T> {
+  let connectionPromise: Promise<void>;
+  if (!redisClient.isOpen) {
+    connectionPromise = redisClient.connect();
+  }
+
+  return async (query, maxAgeSeconds = 60) => {
+    await connectionPromise;
+
+    const key = createHash('sha256').update(query).digest('hex');
+
+    const stillGoodKey = `swr:stillgood:${key}`;
+    const responseKey = `swr:response:${key}`;
+
+    const cachedStillGoodPromise = redisClient
+      .get(stillGoodKey)
+      .then((cachedStillGood) => {
+        if (!cachedStillGood) {
+          return false;
+        }
+        return true;
+      })
+      .catch(() => false);
+
+    let response = await redisClient
+      .get(responseKey)
+      .then(async (cachedResponseString) => {
+        if (!cachedResponseString) {
+          return null;
+        }
+
+        const cachedResponse = JSON.parse(
+          cachedResponseString
+        ) as QueryResult<T>;
+
+        if (await cachedStillGoodPromise) {
+          log.debug(`Redis cache hit for key (${responseKey}), returning...`);
+        } else {
+          log.debug(
+            `Redis cache stale for key (${responseKey}), revalidating...`
+          );
+
+          /* eslint-disable-next-line promise/no-nesting */
+          (async () => {
+            log.debug(`Establishing connection with PostgreSQL...`);
+            const client = new Client({
+              connectionString: process.env.DATABASE_URL,
+            });
+            client.on('error', (e) =>
+              log.error(`PostgreSQL error: ${e.stack}`)
+            );
+            await client.connect();
+            log.debug(`Executing PostgreSQL query (${substr(query, 50)})...`);
+            const toCache = await client.query(query);
+            log.debug(`Disconnecting client from PostgreSQL...`);
+            await client.end();
+            await redisClient.set(responseKey, JSON.stringify(toCache));
+            await redisClient.setEx(stillGoodKey, maxAgeSeconds, 'true');
+          })().catch((e) => {
+            log.error(`Failed to revalidate: ${(e as Error).stack}`);
+          });
+        }
+
+        return cachedResponse;
+      })
+      .catch(() => null);
+
+    if (!response) {
+      log.debug(`Establishing connection with PostgreSQL...`);
+      const client = new Client({ connectionString: process.env.DATABASE_URL });
+      client.on('error', (e) => log.error(`PostgreSQL error: ${e.stack}`));
+      await client.connect();
+      log.debug(`Executing PostgreSQL query (${substr(query, 50)})...`);
+      response = await client.query(query);
+      log.debug(`Disconnecting client from PostgreSQL...`);
+      await client.end();
+      log.debug(`Redis cache miss for key (${responseKey}), querying...`);
+
+      (async () => {
+        await redisClient.set(responseKey, JSON.stringify(response));
+        await redisClient.setEx(stillGoodKey, maxAgeSeconds, 'true');
+      })().catch((e) => {
+        log.error(`Failed to seed cache: ${(e as Error).stack}`);
+      });
+    }
+
+    return response;
+  };
 }
 
-export interface Tweet {
-  id: string;
-  author_id: string;
-  text: string;
-  html?: string;
-  retweet_count: number;
-  reply_count: number;
-  like_count: number;
-  quote_count: number;
-  created_at: Date;
-}
-
-export interface Score {
-  id: string;
-  influencer_id: string;
-  cluster_id: string;
-  attention_score: number;
-  attention_score_change_week: number;
-  insider_score: number;
-  organization_rank: number | null;
-  personal_rank: number | null;
-  rank: number;
-  created_at: Date;
-}
-
-export interface Influencer {
-  id: string;
-  name: string;
-  username: string;
-  profile_image_url: string | null;
-  followers_count: number | null;
-  following_count: number | null;
-  tweets_count: number | null;
-  created_at: Date | null;
-  updated_at: Date | null;
-}
-
-export interface Article extends Link {
-  cluster_id: string;
-  cluster_name: string;
-  cluster_slug: string;
-  insider_score: number;
-  attention_score: number;
-  tweets: (Tweet & { author: Influencer; score: Score })[];
-}
+export const db = createSwrRedisCache({ redisClient });
