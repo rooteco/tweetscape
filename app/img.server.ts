@@ -1,6 +1,5 @@
+import type { PassThrough, Readable } from 'stream';
 import type { Agent } from 'https';
-import { PassThrough } from 'stream';
-import type { Readable } from 'stream';
 import { createHash } from 'crypto';
 import fs from 'fs';
 import fsp from 'fs/promises';
