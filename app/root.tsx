@@ -17,10 +17,10 @@ import cn from 'classnames';
 
 import type { Cluster } from '~/types';
 import Empty from '~/components/empty';
-import { Client } from '~/db.server';
 import Footer from '~/components/footer';
 import Header from '~/components/header';
 import OpenIcon from '~/icons/open';
+import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import styles from '~/styles/app.css';
 
@@ -85,16 +85,8 @@ export function ErrorBoundary({ error }: { error: Error }) {
 }
 
 export const loader: LoaderFunction = async () => {
-  log.info(`Establishing connection with PostgreSQL...`);
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  client.on('error', (e) => log.error(`PostgreSQL root error: ${e.stack}`));
-  await client.connect();
   log.info('Fetching visible clusters...');
-  const data = await client.query(
-    'select * from clusters where visible = true'
-  );
-  log.info(`Disconnecting client from PostgreSQL...`);
-  await client.end();
+  const data = await db('select * from clusters where visible = true');
   log.trace(`Clusters: ${JSON.stringify(data.rows, null, 2)}`);
   log.info(`Fetched ${data.rows.length} visible clusters.`);
   return data.rows as Cluster[];
