@@ -1,21 +1,19 @@
-import { Link, json, useLoaderData, useSearchParams } from 'remix';
+import { json, useLoaderData } from 'remix';
 import type { LoaderFunction } from 'remix';
-import cn from 'classnames';
 import invariant from 'tiny-invariant';
 
 import { autoLink, lang, log } from '~/utils.server';
 import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
-import FilterIcon from '~/icons/filter';
-import SortIcon from '~/icons/sort';
+import Nav from '~/components/nav';
 import { cluster } from '~/cookies.server';
 import { db } from '~/db.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
 
-type Sort = 'attention_score' | 'tweets_count';
-type Filter = 'show_retweets' | 'hide_retweets';
+export type Sort = 'attention_score' | 'tweets_count';
+export type Filter = 'show_retweets' | 'hide_retweets';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.cluster, 'expected params.cluster');
@@ -81,43 +79,23 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   );
 };
 
-export default function Cluster() {
-  const { articles } = useLoaderData<LoaderData>();
-  const [searchParams] = useSearchParams();
-  const sort = (searchParams.get('sort') ?? 'attention_score') as Sort;
-  const filter = (searchParams.get('filter') ?? 'hide_retweets') as Filter;
+export function ErrorBoundary({ error }: { error: Error }) {
   return (
     <main>
-      <nav className='text-xs mt-2'>
-        <SortIcon />
-        <Link
-          className={cn({ underline: sort === 'attention_score' })}
-          to={`?filter=${filter}&sort=attention_score`}
-        >
-          attention score
-        </Link>
-        {' · '}
-        <Link
-          className={cn({ underline: sort === 'tweets_count' })}
-          to={`?filter=${filter}&sort=tweets_count`}
-        >
-          tweets count
-        </Link>
-        <FilterIcon />
-        <Link
-          className={cn({ underline: filter === 'hide_retweets' })}
-          to={`?filter=hide_retweets&sort=${sort}`}
-        >
-          hide retweets
-        </Link>
-        {' · '}
-        <Link
-          className={cn({ underline: filter === 'show_retweets' })}
-          to={`?filter=show_retweets&sort=${sort}`}
-        >
-          show retweets
-        </Link>
-      </nav>
+      <Nav />
+      <Empty>
+        <p>an unexpected runtime error ocurred</p>
+        <p>{error.message}</p>
+      </Empty>
+    </main>
+  );
+}
+
+export default function Cluster() {
+  const { articles } = useLoaderData<LoaderData>();
+  return (
+    <main>
+      <Nav />
       <ol className='text-sm'>
         {!articles.length && <Empty>no articles to show</Empty>}
         {articles.map((a) => (
