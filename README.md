@@ -42,7 +42,7 @@ Tweetscape is a full-stack React application built with [Remix](https://remix.ru
 
 ### Project Structure
 
-This repository is a [React](https://reactjs.org) app built in [Typescript](https://typescriptlang.org) with [Remix](https://remix.run), [TailwindCSS](https://tailwindcss), and [PostgreSQL](https://www.postgresql.org).
+This repository is a [React](https://reactjs.org) app built in [Typescript](https://typescriptlang.org) with [Remix](https://remix.run), [TailwindCSS](https://tailwindcss.com/), and [PostgreSQL](https://www.postgresql.org).
 Both the Remix app and PostgreSQL database are deployed worldwide as edge-based, clustered applications on [Fly](https://fly.io):
 
 ```
