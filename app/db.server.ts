@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 
 import { Client } from 'pg';
 import type { QueryResult } from 'pg';
-import { createClient } from 'redis';
+import type { createClient } from 'redis';
 
 import { log } from '~/utils.server';
 import redisClient from '~/redis.server';
