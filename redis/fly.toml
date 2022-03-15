@@ -1,0 +1,14 @@
+# fly.toml file generated for tweetscape-redis on 2022-03-14T16:50:35-07:00
+
+app = "tweetscape-redis"
+
+kill_signal = "SIGINT"
+kill_timeout = 5
+processes = []
+
+[build]
+image = "flyio/redis:6.2.6"
+
+[[mounts]]
+destination = "/data"
+source = "redis"
