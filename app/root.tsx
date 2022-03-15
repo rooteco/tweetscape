@@ -118,11 +118,15 @@ export const meta: MetaFunction = () => ({
 export default function App() {
   const transition = useTransition();
   useEffect(() => {
-    // when the state is idle then we can to complete the progress bar
-    if (transition.state === 'idle') NProgress.done();
+    if (transition.state === 'idle') {
+      // when the state is idle then we can to complete the progress bar
+      NProgress.done();
+      return () => {};
+    }
     // and when it's something else it means it's either submitting a form or
     // waiting for the loaders of the next location so we start it
-    else NProgress.start();
+    const timeoutId = setTimeout(() => NProgress.start(), 500);
+    return () => clearTimeout(timeoutId);
   }, [transition.state]);
 
   const clusters = useLoaderData<Cluster[]>();
