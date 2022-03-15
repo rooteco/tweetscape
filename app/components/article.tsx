@@ -7,10 +7,7 @@ import FilterIcon from '~/icons/filter';
 import type { LoaderData } from '~/routes/$cluster';
 import SortIcon from '~/icons/sort';
 import TweetItem from '~/components/tweet';
-
-function substr(str: string, len: number): string {
-  return `${str.substr(0, len).trim()}${str.length > len ? '…' : ''}`;
-}
+import { substr } from '~/utils';
 
 type Sort = 'attention_score' | 'retweet_count' | 'latest' | 'earliest';
 type Filter = 'show_retweets' | 'hide_retweets';
