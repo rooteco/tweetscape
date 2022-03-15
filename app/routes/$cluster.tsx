@@ -7,8 +7,8 @@ import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
 import Nav from '~/components/nav';
-import { cluster } from '~/cookies.server';
 import { db } from '~/db.server';
+import { href } from '~/cookies.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
 
@@ -19,6 +19,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.cluster, 'expected params.cluster');
   log.info(`Fetching articles for ${params.cluster}...`);
   const url = new URL(request.url);
+  const cookie = await href.serialize(`${url.pathname}${url.search}`);
   const sort = (url.searchParams.get('sort') ?? 'attention_score') as Sort;
   const filter = (url.searchParams.get('filter') ?? 'hide_retweets') as Filter;
   /* prettier-ignore */
@@ -75,7 +76,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   );
   return json<LoaderData>(
     { articles, locale: lang(request) },
-    { headers: { 'Set-Cookie': await cluster.serialize(params.cluster) } }
+    { headers: { 'Set-Cookie': cookie } }
   );
 };
 
