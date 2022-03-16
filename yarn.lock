@@ -2895,6 +2895,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv-cli@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "dotenv-cli@npm:5.0.0"
+  dependencies:
+    cross-spawn: ^7.0.3
+    dotenv: ^16.0.0
+    dotenv-expand: ^8.0.1
+    minimist: ^1.2.5
+  bin:
+    dotenv: cli.js
+  checksum: 283238fd23eca018f71b1b044f765e45756defaf7457705ad8ac2e5e602fbf092979d16962508f6ea05a2f004d099ee5573add8dc84cd2abe7d6c999d09521da
+  languageName: node
+  linkType: hard
+
+"dotenv-expand@npm:^8.0.1":
+  version: 8.0.2
+  resolution: "dotenv-expand@npm:8.0.2"
+  checksum: 4b42b2602478bccf1bfde25c97ecc0fee4059e74df4f8fda7f076b2ef428315e00b301bda43eec3707bfa083837abb284d6fec91571f164449243001ed8eef81
+  languageName: node
+  linkType: hard
+
 "dotenv@npm:^16.0.0":
   version: 16.0.0
   resolution: "dotenv@npm:16.0.0"
@@ -9433,6 +9454,7 @@ __metadata:
     cross-env: ^7.0.3
     cypress: ^9.5.2
     dotenv: ^16.0.0
+    dotenv-cli: ^5.0.0
     eslint: ^8.11.0
     eslint-config-airbnb: ^19.0.4
     eslint-config-airbnb-typescript: ^16.1.2
