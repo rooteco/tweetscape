@@ -1,7 +1,9 @@
-export default function Twitter() {
+import cn from 'classnames';
+
+export default function Twitter({ className }: { className?: string }) {
   return (
     <svg
-      className='fill-current h-3 w-3'
+      className={cn('fill-current', className ?? 'h-3 w-3')}
       viewBox='328 355 335 276'
       xmlns='http://www.w3.org/2000/svg'
     >
