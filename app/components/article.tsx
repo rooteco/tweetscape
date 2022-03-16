@@ -165,6 +165,7 @@ export default function ArticleItem({
             aria-pressed={sort === 'attention_score'}
             className={cn({ underline: sort === 'attention_score' })}
             onClick={() => setSort('attention_score')}
+            title='Show tweets from influencers with higher attention scores first.'
           >
             attention score
           </button>
@@ -174,6 +175,7 @@ export default function ArticleItem({
             aria-pressed={sort === 'retweet_count'}
             className={cn({ underline: sort === 'retweet_count' })}
             onClick={() => setSort('retweet_count')}
+            title='Show tweets with more retweets first.'
           >
             retweet count
           </button>
@@ -183,6 +185,7 @@ export default function ArticleItem({
             aria-pressed={sort === 'latest'}
             className={cn({ underline: sort === 'latest' })}
             onClick={() => setSort('latest')}
+            title='Show the latest (last) tweets first.'
           >
             latest
           </button>
@@ -192,6 +195,7 @@ export default function ArticleItem({
             aria-pressed={sort === 'earliest'}
             className={cn({ underline: sort === 'earliest' })}
             onClick={() => setSort('earliest')}
+            title='Show the earliest (first) tweets first.'
           >
             earliest
           </button>
@@ -201,6 +205,7 @@ export default function ArticleItem({
             aria-pressed={filter === 'hide_retweets'}
             className={cn({ underline: filter === 'hide_retweets' })}
             onClick={() => setFilter('hide_retweets')}
+            title='Exclude retweets from the list below.'
           >
             hide retweets
           </button>
@@ -216,7 +221,7 @@ export default function ArticleItem({
             title={
               searchParamsFilter === 'hide_retweets'
                 ? 'Cannot show retweets when filtering them out at the article level; click "show tweets" at the top level (below the "tweetscape.co" logo) to use this filter.'
-                : undefined
+                : 'Include retweets in the list below.'
             }
           >
             show retweets
