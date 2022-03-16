@@ -46,7 +46,9 @@ create table scores (
   "organization_rank" integer,
   "personal_rank" integer,
   "rank" integer not null,
-  "created_at" timestamptz not null
+  "created_at" timestamptz not null,
+  unique ("cluster_id", "influencer_id"),
+  unique ("cluster_id", "rank")
 ); 
 create table tweets (
   "id" text unique not null primary key,
