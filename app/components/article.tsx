@@ -1,4 +1,4 @@
-import { useLoaderData, useSearchParams } from 'remix';
+import { Link, useLoaderData, useSearchParams } from 'remix';
 import { useMemo, useState } from 'react';
 import cn from 'classnames';
 
@@ -34,6 +34,7 @@ export default function ArticleItem({
   );
   const [sort, setSort] = useState<Sort>('attention_score');
   const [searchParams] = useSearchParams();
+  const searchParamsSort = searchParams.get('sort') ?? 'attention_score';
   const searchParamsFilter = searchParams.get('filter') ?? 'hide_retweets';
   const [filter, setFilter] = useState<Filter>(searchParamsFilter as Filter);
   const results = useMemo(
@@ -267,9 +268,21 @@ export default function ArticleItem({
           {' · '}
           <Tooltip
             content={
-              searchParamsFilter === 'hide_retweets'
-                ? 'Cannot show retweets when filtering them out at the article level; click "show tweets" at the top level (below the "tweetscape.co" logo) to use this filter.'
-                : 'Include retweets in the list below.'
+              searchParamsFilter === 'hide_retweets' ? (
+                <p>
+                  Cannot show retweets when filtering them out at the article
+                  level; click{' '}
+                  <Link
+                    className='underline'
+                    to={`?filter=show_retweets&sort=${searchParamsSort}`}
+                  >
+                    show tweets
+                  </Link>{' '}
+                  to use this filter.
+                </p>
+              ) : (
+                'Include retweets in the list below.'
+              )
             }
           >
             <button
