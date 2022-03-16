@@ -1,6 +1,6 @@
 describe('Cluster PG', () => {
   it('shows the top articles for cluster', () => {
-    cy.visit('/ethereum');
+    cy.visit('/ethereum').loading(false);
     cy.contains('a', 'hide retweets').should('have.class', 'underline');
     cy.contains('a', 'attention score').should('have.class', 'underline');
     cy.percySnapshot('Cluster');
@@ -81,6 +81,7 @@ describe('Cluster PG', () => {
               'have.class',
               'underline'
             );
+            cy.loading(false);
             cy.percySnapshot('Cluster Tweets Opened');
             cy.contains('button', 'retweet count')
               .click()
@@ -95,19 +96,22 @@ describe('Cluster PG', () => {
                   'At long last, President Biden signed his executive order on crypto'
                 );
               });
+            cy.loading(false);
             cy.percySnapshot('Cluster Tweets Sorted');
           });
       });
     cy.contains('a', 'tweets count').click().should('have.class', 'underline');
-    cy.url().should(
-      'eq',
-      'http://localhost:3000/ethereum?filter=hide_retweets&sort=tweets_count'
-    );
+    cy.url()
+      .should(
+        'eq',
+        'http://localhost:3000/ethereum?filter=hide_retweets&sort=tweets_count'
+      )
+      .loading(false);
     cy.percySnapshot('Cluster Sorted');
   });
 
   it('shows filters and sorting from url', () => {
-    cy.visit('/ethereum?filter=show_retweets&sort=tweets_count');
+    cy.visit('/ethereum?filter=show_retweets&sort=tweets_count').loading(false);
     cy.percySnapshot('Cluster Filtered');
   });
 });
