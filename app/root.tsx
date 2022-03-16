@@ -109,11 +109,12 @@ export const links: LinksFunction = () => [
   },
   { rel: 'stylesheet', href: '/fonts/inter.css' },
   { rel: 'stylesheet', href: styles },
+  { rel: 'mask-icon', sizes: 'any', href: '/favicon.svg', color: '#1D9BF0' },
+  { rel: 'shortcut icon', href: '/favicon.ico' },
+  { rel: 'apple-touch-icon', sizes: '192x192', href: '/favicon.png' },
 ];
 
-export const meta: MetaFunction = () => ({
-  title: 'Tweetscape: The Supercharged Twitter Feed',
-});
+export const meta: MetaFunction = () => ({ title: 'Tweetscape' });
 
 export default function App() {
   const transition = useTransition();
