@@ -24,5 +24,3 @@ jobs:
       - run: yarn build
         env:
           NODE_ENV: production
-          COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
