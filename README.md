@@ -174,10 +174,11 @@ $ yarn
 $ cp tweetscape-env/.env* tweetscape/
 ```
 
-10. [Install the `flyctl` CLI](https://fly.io/docs/getting-started/installing-flyctl), login to the CLI, and setup port forwarding so you can access the PostgreSQL database from your machine:
+10. [Install the `flyctl` CLI](https://fly.io/docs/getting-started/installing-flyctl), login to the CLI, and setup port forwarding so you can access the PostgreSQL database and Redis instance from your machine:
 
 ```
-$ fly proxy 5432 -a tweetscape-pg
+$ fly proxy 5432 -a tweetscape-pgbouncer
+$ fly proxy 6379 -a tweetscape-redis
 ```
 
 11. (Optional) Install [Beekeeper Studio](https://www.beekeeperstudio.io/get) to be able to visually manipulate the PostgreSQL data.
@@ -191,6 +192,12 @@ $ psql postgres://postgres:<pwd-from-env-file>@localhost:5432/postgres
 
 ```
 $ yarn dev
+```
+
+13. (Optional) To run fully local versions of our deployed infrastructure, you'll have to first make sure you've got Docker properly installed and configured on your system. Then, you'll be able to start a local PostgreSQL database and Redis instance by running:
+
+```
+$ yarn concurrently yarn:dev:postgres yarn:dev:redis
 ```
 
 ### Commit Message Format
