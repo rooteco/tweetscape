@@ -3,5 +3,8 @@
   "baseUrl": "http://localhost:3000",
   "pluginsFile": "cypress/plugins/index.ts",
   "supportFile": "cypress/support/index.ts",
-  "integrationFolder": "cypress/tests"
+  "integrationFolder": "cypress/tests",
+  "retries": {
+    "runMode": 2
+  }
 }
