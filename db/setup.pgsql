@@ -1,4 +1,3 @@
-drop view articles;
 drop table urls;
 drop table links;
 drop type image;
@@ -122,34 +121,3 @@ create table urls (
   "end" integer not null,
   primary key ("tweet_id", "link_id")
 );
-create view articles as
-  select
-    links.*,
-    clusters.id as cluster_id,
-    clusters.name as cluster_name,
-    clusters.slug as cluster_slug,
-    sum(tweets.insider_score) as insider_score,
-    sum(tweets.attention_score) as attention_score,
-    json_agg(tweets.*) as tweets
-  from links
-    inner join (
-      select distinct on (tweets.author_id, urls.link_id)
-        urls.link_id as link_id,
-        tweets.*
-      from urls
-        inner join (
-          select 
-            tweets.*,
-            scores.cluster_id as cluster_id,
-            scores.insider_score as insider_score,
-            scores.attention_score as attention_score,
-            to_json(influencers.*) as author,
-            to_json(scores.*) as score
-          from tweets
-            inner join influencers on influencers.id = tweets.author_id
-            inner join scores on scores.influencer_id = influencers.id
-        ) as tweets on tweets.id = urls.tweet_id
-    ) as tweets on tweets.link_id = links.id
-    inner join clusters on clusters.id = tweets.cluster_id
-  group by links.id, clusters.id
-order by attention_score desc;
