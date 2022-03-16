@@ -6,6 +6,7 @@ import type { Article } from '~/types';
 import FilterIcon from '~/icons/filter';
 import type { LoaderData } from '~/routes/$cluster';
 import SortIcon from '~/icons/sort';
+import Tooltip from '~/components/tooltip';
 import TweetItem from '~/components/tweet';
 import { substr } from '~/utils';
 
@@ -160,72 +161,80 @@ export default function ArticleItem({
       >
         <nav className='text-xs my-2.5'>
           <SortIcon />
-          <button
-            type='button'
-            aria-pressed={sort === 'attention_score'}
-            className={cn({ underline: sort === 'attention_score' })}
-            onClick={() => setSort('attention_score')}
-            title='Show tweets from influencers with higher attention scores first.'
-          >
-            attention score
-          </button>
+          <Tooltip content='Show tweets from influencers with higher attention scores first.'>
+            <button
+              type='button'
+              aria-pressed={sort === 'attention_score'}
+              className={cn({ underline: sort === 'attention_score' })}
+              onClick={() => setSort('attention_score')}
+            >
+              attention score
+            </button>
+          </Tooltip>
           {' · '}
-          <button
-            type='button'
-            aria-pressed={sort === 'retweet_count'}
-            className={cn({ underline: sort === 'retweet_count' })}
-            onClick={() => setSort('retweet_count')}
-            title='Show tweets with more retweets first.'
-          >
-            retweet count
-          </button>
+          <Tooltip content='Show tweets with more retweets first.'>
+            <button
+              type='button'
+              aria-pressed={sort === 'retweet_count'}
+              className={cn({ underline: sort === 'retweet_count' })}
+              onClick={() => setSort('retweet_count')}
+            >
+              retweet count
+            </button>
+          </Tooltip>
           {' · '}
-          <button
-            type='button'
-            aria-pressed={sort === 'latest'}
-            className={cn({ underline: sort === 'latest' })}
-            onClick={() => setSort('latest')}
-            title='Show the latest (last) tweets first.'
-          >
-            latest
-          </button>
+          <Tooltip content='Show the latest (last) tweets first.'>
+            <button
+              type='button'
+              aria-pressed={sort === 'latest'}
+              className={cn({ underline: sort === 'latest' })}
+              onClick={() => setSort('latest')}
+            >
+              latest
+            </button>
+          </Tooltip>
           {' · '}
-          <button
-            type='button'
-            aria-pressed={sort === 'earliest'}
-            className={cn({ underline: sort === 'earliest' })}
-            onClick={() => setSort('earliest')}
-            title='Show the earliest (first) tweets first.'
-          >
-            earliest
-          </button>
+          <Tooltip content='Show the earliest (first) tweets first.'>
+            <button
+              type='button'
+              aria-pressed={sort === 'earliest'}
+              className={cn({ underline: sort === 'earliest' })}
+              onClick={() => setSort('earliest')}
+            >
+              earliest
+            </button>
+          </Tooltip>
           <FilterIcon />
-          <button
-            type='button'
-            aria-pressed={filter === 'hide_retweets'}
-            className={cn({ underline: filter === 'hide_retweets' })}
-            onClick={() => setFilter('hide_retweets')}
-            title='Exclude retweets from the list below.'
-          >
-            hide retweets
-          </button>
+          <Tooltip content='Exclude retweets from the list below.'>
+            <button
+              type='button'
+              aria-pressed={filter === 'hide_retweets'}
+              className={cn({ underline: filter === 'hide_retweets' })}
+              onClick={() => setFilter('hide_retweets')}
+            >
+              hide retweets
+            </button>
+          </Tooltip>
           {' · '}
-          <button
-            type='button'
-            disabled={searchParamsFilter === 'hide_retweets'}
-            aria-pressed={filter === 'show_retweets'}
-            className={cn('disabled:cursor-not-allowed', {
-              underline: filter === 'show_retweets',
-            })}
-            onClick={() => setFilter('show_retweets')}
-            title={
+          <Tooltip
+            content={
               searchParamsFilter === 'hide_retweets'
                 ? 'Cannot show retweets when filtering them out at the article level; click "show tweets" at the top level (below the "tweetscape.co" logo) to use this filter.'
                 : 'Include retweets in the list below.'
             }
           >
-            show retweets
-          </button>
+            <button
+              type='button'
+              disabled={searchParamsFilter === 'hide_retweets'}
+              aria-pressed={filter === 'show_retweets'}
+              className={cn('disabled:cursor-not-allowed', {
+                underline: filter === 'show_retweets',
+              })}
+              onClick={() => setFilter('show_retweets')}
+            >
+              show retweets
+            </button>
+          </Tooltip>
         </nav>
         <ul className='pb-2.5 flex flex-wrap overflow-auto max-h-96'>
           {results.map((tweet) => (
