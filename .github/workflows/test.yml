@@ -1,0 +1,64 @@
+name: Test
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, chrome]
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/Cypress
+            ~/.cache/yarn
+            .next/cache
+            node_modules
+          key: ${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+      - run: yarn install --immutable --immutable-cache
+      - run: yarn build
+        env:
+          NODE_ENV: production
+
+      - run: psql ${{ secrets.DATABASE_URL }} -f cypress/fixtures/db.sql
+      - run: yarn start & yarn wait-on http-get://localhost:3000
+        env:
+          NODE_ENV: production
+          COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: redis://localhost:6379
+      - run: yarn start:cy --record --parallel --headless --group ${{ matrix.browser }} -b ${{ matrix.browser }}
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+      - uses: codecov/codecov-action@v1
+        if: ${{ success() || failure() }}
