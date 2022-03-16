@@ -62,6 +62,7 @@ export default function ArticleItem({
     <li className='my-8'>
       <div>
         <a
+          data-cy='title'
           className='font-semibold hover:underline text-base'
           href={expanded_url}
           target='_blank'
@@ -75,6 +76,7 @@ export default function ArticleItem({
         <span className='text-sm'>
           (
           <a
+            data-cy='domain'
             className='hover:underline'
             href={`https://${new URL(expanded_url).hostname.replace(
               /^www\./,
@@ -88,7 +90,11 @@ export default function ArticleItem({
           )
         </span>
       </div>
-      {description && <p className='text-sm'>{substr(description, 285)}</p>}
+      {description && (
+        <p data-cy='description' className='text-sm'>
+          {substr(description, 285)}
+        </p>
+      )}
       <div className='text-sm text-slate-600 dark:text-slate-400 flex items-center mt-1.5'>
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
           {Array.from(tweets)
@@ -149,6 +155,7 @@ export default function ArticleItem({
         </a>
       </div>
       <div
+        data-cy='tweets'
         className={cn('border-b border-black dark:border-white', { hidden })}
       >
         <nav className='text-xs my-2.5'>

@@ -27,6 +27,7 @@ export default function TweetItem({
         <div className='flex items-center justify-between w-full'>
           <div>
             <a
+              data-cy='author'
               className='hover:underline font-bold'
               href={`https://hive.one/p/${author.username}`}
               target='_blank'
@@ -35,6 +36,7 @@ export default function TweetItem({
               {author.username}
             </a>
             <a
+              data-cy='twitter'
               className='ml-2 inline-flex justify-center items-center'
               href={`https://twitter.com/${author.username}`}
               target='_blank'
@@ -43,6 +45,7 @@ export default function TweetItem({
               <TwitterIcon />
             </a>
             <a
+              data-cy='like'
               className='ml-2 inline-flex justify-center items-center'
               href={`https://twitter.com/intent/like?tweet_id=${id}`}
               target='_blank'
@@ -51,6 +54,7 @@ export default function TweetItem({
               <LikeIcon />
             </a>
             <a
+              data-cy='reply'
               className='mx-2 inline-flex justify-center items-center'
               href={`https://twitter.com/intent/tweet?in_reply_to=${id}`}
               target='_blank'
@@ -63,6 +67,7 @@ export default function TweetItem({
             <span>{retweet_count} retweets</span>
             <span className='mx-1'>·</span>
             <a
+              data-cy='points'
               className='hover:underline'
               href={`https://hive.one/p/${author.username}`}
               target='_blank'
@@ -72,6 +77,7 @@ export default function TweetItem({
             </a>
             <span className='mx-1'>·</span>
             <a
+              data-cy='date'
               className='hover:underline'
               href={`https://twitter.com/${author.username}/status/${id}`}
               target='_blank'
@@ -90,6 +96,7 @@ export default function TweetItem({
           </div>
         </div>
         <p
+          data-cy='text'
           className='mt-3 text-xs text-justify'
           dangerouslySetInnerHTML={{ __html: html ?? text }}
         />

@@ -30,37 +30,37 @@ async function data(c, start, end, db) {
         await db.query('SET CONSTRAINTS ALL IMMEDIATE');
         const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
         await insertInfluencers(influencers, c, db);
-        log.info(`Fetching tweets from ${influencers.length} timelines...`);
-        await Promise.all(
-          influencers.map(async (i) => {
-            const { id } = i.social_account.social_account;
-            const data = await getTweets(id, start, end);
-            const users = data.reduce(
-              (a, b) => [...a, ...(b.includes?.users ?? [])],
-              []
-            );
-            await insertUsers(users, db);
-            const referencedTweets = data.reduce(
-              (a, b) => [...a, ...(b.includes?.tweets ?? [])],
-              []
-            );
-            await insertTweets(referencedTweets, db);
-            const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
-            await insertTweets(tweets, db);
-            await Promise.all(
-              tweets
-                .map((t) => [
-                  insertURLs(t.entities?.urls ?? [], t, db),
-                  insertMentions(t.entities?.mentions ?? [], t, db),
-                  insertAnnotations(t.entities?.annotations ?? [], t, db),
-                  insertTags(t.entities?.hashtags ?? [], t, db, 'hashtag'),
-                  insertTags(t.entities?.cashtags ?? [], t, db, 'cashtag'),
-                  insertRefs(t.referenced_tweets ?? [], t, db),
-                ])
-                .flat()
-            );
-          })
-        );
+        //log.info(`Fetching tweets from ${influencers.length} timelines...`);
+        //await Promise.all(
+        //influencers.map(async (i) => {
+        //const { id } = i.social_account.social_account;
+        //const data = await getTweets(id, start, end);
+        //const users = data.reduce(
+        //(a, b) => [...a, ...(b.includes?.users ?? [])],
+        //[]
+        //);
+        //await insertUsers(users, db);
+        //const referencedTweets = data.reduce(
+        //(a, b) => [...a, ...(b.includes?.tweets ?? [])],
+        //[]
+        //);
+        //await insertTweets(referencedTweets, db);
+        //const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
+        //await insertTweets(tweets, db);
+        //await Promise.all(
+        //tweets
+        //.map((t) => [
+        //insertURLs(t.entities?.urls ?? [], t, db),
+        //insertMentions(t.entities?.mentions ?? [], t, db),
+        //insertAnnotations(t.entities?.annotations ?? [], t, db),
+        //insertTags(t.entities?.hashtags ?? [], t, db, 'hashtag'),
+        //insertTags(t.entities?.cashtags ?? [], t, db, 'cashtag'),
+        //insertRefs(t.referenced_tweets ?? [], t, db),
+        //])
+        //.flat()
+        //);
+        //})
+        //);
         log.info(`Committing database transaction (${pg})...`);
         await db.query('COMMIT');
       } catch (e) {
@@ -92,6 +92,10 @@ async function data(c, start, end, db) {
   }, 2500);
   try {
     await data({ id: '2209261', name: 'Ethereum' }, start, end, db);
+    await data({ id: '2300535630', name: 'Tesla' }, start, end, db);
+    await data({ id: '2300535799', name: 'Python' }, start, end, db);
+    await data({ id: '7799179292', name: 'NFT' }, start, end, db);
+    await data({ id: '7799179304', name: 'React' }, start, end, db);
   } catch (e) {
     throw e;
   } finally {

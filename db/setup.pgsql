@@ -1,7 +1,19 @@
-drop owned by current_user;
-create schema if not exists public;
-grant all on schema public to postgres;
-grant all on schema public to public;
+drop view articles;
+drop table urls;
+drop table links;
+drop type image;
+drop table tags;
+drop type tag_type;
+drop table annotations;
+drop type annotation_type;
+drop table mentions;
+drop table refs;
+drop type ref_type;
+drop table tweets;
+drop table scores; 
+drop table influencers;
+drop domain url;
+drop table clusters;
 
 create table clusters (
   "id" text unique not null primary key, 
@@ -34,7 +46,9 @@ create table scores (
   "organization_rank" integer,
   "personal_rank" integer,
   "rank" integer not null,
-  "created_at" timestamptz not null
+  "created_at" timestamptz not null,
+  unique ("cluster_id", "influencer_id"),
+  unique ("cluster_id", "rank")
 ); 
 create table tweets (
   "id" text unique not null primary key,
