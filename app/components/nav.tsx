@@ -15,6 +15,7 @@ export default function Nav() {
       <Link
         className={cn({ underline: sort === 'attention_score' })}
         to={`?filter=${filter}&sort=attention_score`}
+        title='Show articles with higher attention score sums first.'
       >
         attention score
       </Link>
@@ -22,6 +23,7 @@ export default function Nav() {
       <Link
         className={cn({ underline: sort === 'tweets_count' })}
         to={`?filter=${filter}&sort=tweets_count`}
+        title='Show articles with more influencer tweets first.'
       >
         tweets count
       </Link>
@@ -29,6 +31,7 @@ export default function Nav() {
       <Link
         className={cn({ underline: filter === 'hide_retweets' })}
         to={`?filter=hide_retweets&sort=${sort}`}
+        title='Exclude retweets from your ranking algorithm.'
       >
         hide retweets
       </Link>
@@ -36,6 +39,7 @@ export default function Nav() {
       <Link
         className={cn({ underline: filter === 'show_retweets' })}
         to={`?filter=show_retweets&sort=${sort}`}
+        title='Include retweets in your ranking algorithm.'
       >
         show retweets
       </Link>
