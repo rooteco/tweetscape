@@ -48,6 +48,17 @@ export interface Score {
   created_at: Date;
 }
 
+export interface Token {
+  id: number;
+  token_type: string;
+  expires_in: number;
+  access_token: string;
+  scope: string;
+  refresh_token: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface Influencer {
   id: string;
   name: string;
