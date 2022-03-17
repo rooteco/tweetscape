@@ -1,10 +1,9 @@
 import type { LoaderFunction } from 'remix';
-import format from 'pg-format';
 import { redirect } from 'remix';
 
 import type { Influencer, Token } from '~/types';
 import { href, oauth } from '~/cookies.server';
-import { execute } from '~/db.server';
+import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
 type OAuthError = { error: string; error_description: string };
@@ -47,40 +46,28 @@ export const loader: LoaderFunction = async ({ request }) => {
           }
         );
         const user = (await userRes.json()) as Influencer;
-        log.info(`User: ${JSON.stringify(user, null, 2)}`);
-        //const values = [
-        //user.id,
-        //data.token_type,
-        //data.expires_in,
-        //data.access_token,
-        //data.scope,
-        //data.refresh_token,
-        //new Date(),
-        //new Date(),
-        //];
-        //const query = format(
-        //`
-        //INSERT INTO tokens (
-        //"influencer_id",
-        //"token_type",
-        //"expires_in",
-        //"access_token",
-        //"scope",
-        //"refresh_token",
-        //"created_at",
-        //"updated_at"
-        //) VALUES %L ON CONFLICT (refresh_token) DO UPDATE SET (
-        //"token_type",
-        //"expires_in",
-        //"access_token",
-        //"scope",
-        //"updated_at"
-        //) = ROW (excluded.*) WHERE tokens IS DISTINCT FROM excluded;
-        //`,
-        //[values]
-        //);
-        //log.info(`Inserting OAuth2 access token: ${query}`);
-        //await execute(query);
+        log.info(`Upserting user: ${JSON.stringify(user, null, 2)}`);
+        await db.influencers.upsert({
+          create: user,
+          update: user,
+          where: { id: user.id },
+        });
+        log.info(`Upserting token for ${user.name} (${user.id})...`);
+        const token = {
+          ...data,
+          influencer_id: user.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        };
+        await db.tokens.upsert({
+          create: token,
+          update: token,
+          where: {
+            influencer_id: user.id,
+            access_token: token.access_token,
+            refresh_token: token.refresh_token,
+          },
+        });
       }
     }
   }
