@@ -85,12 +85,9 @@ export function ErrorBoundary({ error }: { error: Error }) {
   );
 }
 
-export type Env = { OAUTH_CLIENT_ID: string; OAUTH_REDIRECT_URI: string };
-export type LoaderData = { clusters: Cluster[]; env: Env };
+export type LoaderData = Cluster[];
 
-export const loader: LoaderFunction = async ({
-  request,
-}): Promise<LoaderData> => {
+export const loader: LoaderFunction = async (): Promise<LoaderData> => {
   invariant(process.env.OAUTH_CLIENT_ID, 'expected OAUTH_CLIENT_ID env var');
   log.info('Fetching visible clusters...');
   const clusters = await redis<Cluster>(
@@ -98,14 +95,7 @@ export const loader: LoaderFunction = async ({
   );
   log.trace(`Clusters: ${JSON.stringify(clusters, null, 2)}`);
   log.info(`Fetched ${clusters.length} visible clusters.`);
-  const url = new URL(request.url);
-  return {
-    clusters,
-    env: {
-      OAUTH_CLIENT_ID: process.env.OAUTH_CLIENT_ID,
-      OAUTH_REDIRECT_URI: `${url.protocol}//${url.host}`,
-    },
-  };
+  return clusters;
 };
 
 export const links: LinksFunction = () => [
@@ -141,7 +131,7 @@ export default function App() {
     return () => clearTimeout(timeoutId);
   }, [transition.state]);
 
-  const { clusters } = useLoaderData<LoaderData>();
+  const clusters = useLoaderData<LoaderData>();
 
   const [theme, setTheme] = useTheme();
   const nextTheme = useMemo(
