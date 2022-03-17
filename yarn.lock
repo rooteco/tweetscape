@@ -9510,6 +9510,7 @@ __metadata:
     html-entities: ^2.3.2
     html5parser: ^2.0.2
     husky: ^7.0.4
+    nanoid: ^3.3.1
     node-fetch: ^3.2.3
     nprogress: ^0.2.0
     pg: ^8.7.3

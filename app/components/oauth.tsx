@@ -1,24 +1,50 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import cn from 'classnames';
+import { nanoid } from 'nanoid';
+import { useLoaderData } from 'remix';
 
+import type { LoaderData } from '~/root';
 import TwitterIcon from '~/icons/twitter';
 
+// Base64-URL-encoding is a minor variation on the typical Base64 encoding
+// method. It starts with the same Base64-encoding method available in most
+// programming languages, but uses URL-safe characters instead.
+// @see {@link https://www.oauth.com/oauth2-servers/pkce/authorization-request}
+function base64UrlEncode(str: string) {
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 export default function OAuth() {
+  const { env } = useLoaderData<LoaderData>();
+  const state = useMemo(() => nanoid(), []);
+  useEffect(() => localStorage.setItem('state', state), [state]);
   const href = useMemo(() => {
-    const params = new URLSearchParams({
+    const params = {
+      state,
       response_type: 'code',
-      client_id: 'asfasdf',
-      redirect_uri: 'https://tweetscape.co',
-      scope: ['tweet.read', 'users.read', 'follows.read', 'follows.write'].join(
-        '%20'
-      ),
-      state: 'state',
-      code_challenge: 'challenge',
-      code_challenge_method: 'plain',
-    }).toString();
-    const url = new URL(`https://twitter.com/i/oauth2/authorize?${params}`);
+      client_id: env.OAUTH_CLIENT_ID,
+      redirect_uri: encodeURIComponent(env.OAUTH_REDIRECT_URI),
+      scope: [
+        'tweet.read',
+        'tweet.write',
+        'users.read',
+        'follows.read',
+        'follows.write',
+        'offline.access',
+        'like.read',
+        'like.write',
+        'list.read',
+        'list.write',
+      ].join('%20'),
+      code_challenge: base64UrlEncode(nanoid()),
+      code_challenge_method: 'S256',
+    };
+    const search = Object.entries(params)
+      .map((p) => p.join('='))
+      .join('&');
+    const url = new URL(`https://twitter.com/i/oauth2/authorize?${search}`);
     return url.href;
-  }, []);
+  }, [state, env.OAUTH_CLIENT_ID, env.OAUTH_REDIRECT_URI]);
 
   const [visible, setVisible] = useState<boolean>(true);
   const lastScrollPosition = useRef<number>(0);
