@@ -1,8 +1,9 @@
 import type { LoaderFunction } from 'remix';
 import { redirect } from 'remix';
 
-import type { Influencer, Token } from '~/types';
 import { href, oauth } from '~/cookies.server';
+import type { Token } from '~/types';
+import { TwitterApi } from '~/twitter.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
@@ -39,23 +40,39 @@ export const loader: LoaderFunction = async ({ request }) => {
         log.error(`OAuth2 error (${data.error}): ${data.error_description}`);
       } else {
         log.info(`OAuth2 data: ${JSON.stringify(data, null, 2)}`);
-        const userRes = await fetch(
-          'https://api.twitter.com/2/users/me?user.fields=id,name,username,created_at,profile_image_url,public_metrics',
-          {
-            headers: { Authorization: `Bearer ${data.access_token}` },
-          }
-        );
-        const user = (await userRes.json()) as Influencer;
-        log.info(`Upserting user: ${JSON.stringify(user, null, 2)}`);
+        log.info('Fetching logged in user from Twitter...');
+        const client = new TwitterApi(data.access_token);
+        const { data: user } = await client.v2.me({
+          'user.fields': [
+            'id',
+            'name',
+            'username',
+            'profile_image_url',
+            'public_metrics',
+            'created_at',
+          ],
+        });
+        log.info(`Upserting influencer ${user.name} (${user.id})...`);
+        const influencer = {
+          id: user.id,
+          name: user.name,
+          username: user.username,
+          profile_image_url: user.profile_image_url,
+          followers_count: user.public_metrics?.followers_count,
+          following_count: user.public_metrics?.following_count,
+          tweets_count: user.public_metrics?.tweet_count,
+          created_at: user.created_at,
+          updated_at: new Date(),
+        };
         await db.influencers.upsert({
-          create: user,
-          update: user,
-          where: { id: user.id },
+          create: influencer,
+          update: influencer,
+          where: { id: influencer.id },
         });
         log.info(`Upserting token for ${user.name} (${user.id})...`);
         const token = {
           ...data,
-          influencer_id: user.id,
+          influencer_id: influencer.id,
           created_at: new Date(),
           updated_at: new Date(),
         };
@@ -63,7 +80,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           create: token,
           update: token,
           where: {
-            influencer_id: user.id,
+            influencer_id: token.influencer_id,
             access_token: token.access_token,
             refresh_token: token.refresh_token,
           },
