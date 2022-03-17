@@ -23,44 +23,44 @@ async function data(c, start, end, db) {
   const arr = Array(Math.ceil(Number(total) / 50)).fill(null);
   await Promise.all(
     arr.map(async (_, pg) => {
-      if (pg >= 1000 / 50) return;
+      if (pg >= 1000 / 50) return; // Only import tweets from first 1000 influencers.
       try {
         log.info(`Beginning database transaction (${pg})...`);
         await db.query('BEGIN');
         await db.query('SET CONSTRAINTS ALL IMMEDIATE');
         const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
         await insertInfluencers(influencers, c, db);
-        //log.info(`Fetching tweets from ${influencers.length} timelines...`);
-        //await Promise.all(
-        //influencers.map(async (i) => {
-        //const { id } = i.social_account.social_account;
-        //const data = await getTweets(id, start, end);
-        //const users = data.reduce(
-        //(a, b) => [...a, ...(b.includes?.users ?? [])],
-        //[]
-        //);
-        //await insertUsers(users, db);
-        //const referencedTweets = data.reduce(
-        //(a, b) => [...a, ...(b.includes?.tweets ?? [])],
-        //[]
-        //);
-        //await insertTweets(referencedTweets, db);
-        //const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
-        //await insertTweets(tweets, db);
-        //await Promise.all(
-        //tweets
-        //.map((t) => [
-        //insertURLs(t.entities?.urls ?? [], t, db),
-        //insertMentions(t.entities?.mentions ?? [], t, db),
-        //insertAnnotations(t.entities?.annotations ?? [], t, db),
-        //insertTags(t.entities?.hashtags ?? [], t, db, 'hashtag'),
-        //insertTags(t.entities?.cashtags ?? [], t, db, 'cashtag'),
-        //insertRefs(t.referenced_tweets ?? [], t, db),
-        //])
-        //.flat()
-        //);
-        //})
-        //);
+        log.info(`Fetching tweets from ${influencers.length} timelines...`);
+        await Promise.all(
+          influencers.map(async (i) => {
+            const { id } = i.social_account.social_account;
+            const data = await getTweets(id, start, end);
+            const users = data.reduce(
+              (a, b) => [...a, ...(b.includes?.users ?? [])],
+              []
+            );
+            await insertUsers(users, db);
+            const referencedTweets = data.reduce(
+              (a, b) => [...a, ...(b.includes?.tweets ?? [])],
+              []
+            );
+            await insertTweets(referencedTweets, db);
+            const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
+            await insertTweets(tweets, db);
+            await Promise.all(
+              tweets
+                .map((t) => [
+                  insertURLs(t.entities?.urls ?? [], t, db),
+                  insertMentions(t.entities?.mentions ?? [], t, db),
+                  insertAnnotations(t.entities?.annotations ?? [], t, db),
+                  insertTags(t.entities?.hashtags ?? [], t, db, 'hashtag'),
+                  insertTags(t.entities?.cashtags ?? [], t, db, 'cashtag'),
+                  insertRefs(t.referenced_tweets ?? [], t, db),
+                ])
+                .flat()
+            );
+          })
+        );
         log.info(`Committing database transaction (${pg})...`);
         await db.query('COMMIT');
       } catch (e) {
