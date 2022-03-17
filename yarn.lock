@@ -451,6 +451,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@prisma/client@npm:^3.11.0":
+  version: 3.11.0
+  resolution: "@prisma/client@npm:3.11.0"
+  dependencies:
+    "@prisma/engines-version": 3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b
+  peerDependencies:
+    prisma: "*"
+  peerDependenciesMeta:
+    prisma:
+      optional: true
+  checksum: be0a4d7c8d8fd2a4b4ef527548a40e39be61d8d05ca01b1eb989e6d237ab7e1d558022ca30be803ecf8d0c7f0bf7f48ec8f143882642de8b13c6b13990b93e0c
+  languageName: node
+  linkType: hard
+
+"@prisma/engines-version@npm:3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b":
+  version: 3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b
+  resolution: "@prisma/engines-version@npm:3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b"
+  checksum: c3200d2000587155febee5cfeb5c8ce678ef4fff947fc239246096030f56a22cb9baabebea612527bcf2e5950ee203bea8b13c32b1d76126576d121c917a6f25
+  languageName: node
+  linkType: hard
+
 "@prisma/engines@npm:3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b":
   version: 3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b
   resolution: "@prisma/engines@npm:3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b"
@@ -9451,6 +9472,7 @@ __metadata:
   dependencies:
     "@percy/cli": ^1.0.0-beta.76
     "@percy/cypress": ^3.1.1
+    "@prisma/client": ^3.11.0
     "@remix-run/dev": ^1.2.3
     "@remix-run/node": ^1.2.3
     "@remix-run/react": ^1.2.3
