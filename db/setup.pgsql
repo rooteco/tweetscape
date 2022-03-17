@@ -38,7 +38,7 @@ create table influencers (
 );
 create table tokens (
   "id" bigint generated always as identity primary key,
-  "influencer_id" text references influencers(id) deferrable not null,
+  "influencer_id" text unique references influencers(id) deferrable not null,
   "token_type" text not null,
   "expires_in" integer not null,
   "access_token" text not null unique,
