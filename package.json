@@ -24,9 +24,10 @@
     "deploy": "fly deploy --remote-only",
     "lint": "eslint --ext .js,.ts,.jsx,.tsx app",
     "style": "pretty-quick",
-    "postinstall": "yarn setup:install-sharp && yarn setup:remix",
-    "setup:install-sharp": "(cd ./node_modules/sharp && yarn run install)",
-    "setup:remix": "remix setup node"
+    "setup:sharp": "(cd ./node_modules/sharp && yarn run install)",
+    "setup:remix": "remix setup node",
+    "setup:prisma": "prisma generate",
+    "postinstall": "concurrently yarn:setup:sharp yarn:setup:remix yarn:setup:prisma"
   },
   "dependencies": {
     "@remix-run/node": "^1.2.3",
