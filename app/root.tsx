@@ -85,10 +85,12 @@ export function ErrorBoundary({ error }: { error: Error }) {
 
 export const loader: LoaderFunction = async () => {
   log.info('Fetching visible clusters...');
-  const data = await redis('select * from clusters where visible = true');
-  log.trace(`Clusters: ${JSON.stringify(data.rows, null, 2)}`);
-  log.info(`Fetched ${data.rows.length} visible clusters.`);
-  return data.rows as Cluster[];
+  const clusters = await redis<Cluster>(
+    'select * from clusters where visible = true'
+  );
+  log.trace(`Clusters: ${JSON.stringify(clusters, null, 2)}`);
+  log.info(`Fetched ${clusters.length} visible clusters.`);
+  return clusters;
 };
 
 export const links: LinksFunction = () => [

@@ -1,9 +1,8 @@
 import { createHash } from 'crypto';
 
-import { Client } from 'pg';
-import type { QueryResult } from 'pg';
 import { createClient } from 'redis';
 
+import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { substr } from '~/utils';
 
@@ -20,7 +19,7 @@ if (!redisClient.isOpen) connectionPromise = redisClient.connect();
 export async function redis<T>(
   query: string,
   maxAgeSeconds = 60
-): Promise<QueryResult<T>> {
+): Promise<T[]> {
   await connectionPromise;
 
   const key = createHash('sha256').update(query).digest('hex');
@@ -30,42 +29,27 @@ export async function redis<T>(
 
   const cachedStillGoodPromise = redisClient
     .get(stillGoodKey)
-    .then((cachedStillGood) => {
-      if (!cachedStillGood) {
-        return false;
-      }
-      return true;
-    })
+    .then((cachedStillGood) => !!cachedStillGood)
     .catch(() => false);
 
   let response = await redisClient
     .get(responseKey)
     .then(async (cachedResponseString) => {
-      if (!cachedResponseString) {
-        return null;
-      }
+      if (!cachedResponseString) return null;
 
-      const cachedResponse = JSON.parse(cachedResponseString) as QueryResult<T>;
+      const cachedResponse = JSON.parse(cachedResponseString) as T[];
+
+      if (!cachedResponse.length) return null;
 
       if (await cachedStillGoodPromise) {
-        log.debug(`Redis cache hit for key (${responseKey}), returning...`);
+        log.debug(`Redis cache hit for (${responseKey}), returning...`);
       } else {
-        log.debug(
-          `Redis cache stale for key (${responseKey}), revalidating...`
-        );
+        log.debug(`Redis cache stale for (${responseKey}), revalidating...`);
 
         /* eslint-disable-next-line promise/no-nesting */
         (async () => {
-          log.debug(`Establishing connection with PostgreSQL...`);
-          const client = new Client({
-            connectionString: process.env.DATABASE_URL,
-          });
-          client.on('error', (e) => log.error(`PostgreSQL error: ${e.stack}`));
-          await client.connect();
           log.debug(`Executing PostgreSQL query (${substr(query, 50)})...`);
-          const toCache = await client.query(query);
-          log.debug(`Disconnecting client from PostgreSQL...`);
-          await client.end();
+          const toCache = await db.$queryRawUnsafe<T[]>(query);
           await redisClient.set(responseKey, JSON.stringify(toCache));
           await redisClient.setEx(stillGoodKey, maxAgeSeconds, 'true');
         })().catch((e) => {
@@ -78,15 +62,9 @@ export async function redis<T>(
     .catch(() => null);
 
   if (!response) {
-    log.debug(`Establishing connection with PostgreSQL...`);
-    const client = new Client({ connectionString: process.env.DATABASE_URL });
-    client.on('error', (e) => log.error(`PostgreSQL error: ${e.stack}`));
-    await client.connect();
+    log.debug(`Redis cache miss for (${responseKey}), querying...`);
     log.debug(`Executing PostgreSQL query (${substr(query, 50)})...`);
-    response = await client.query(query);
-    log.debug(`Disconnecting client from PostgreSQL...`);
-    await client.end();
-    log.debug(`Redis cache miss for key (${responseKey}), querying...`);
+    response = await db.$queryRawUnsafe<T[]>(query);
 
     (async () => {
       await redisClient.set(responseKey, JSON.stringify(response));
