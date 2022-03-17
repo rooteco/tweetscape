@@ -1,6 +1,6 @@
 drop table urls;
+drop table images;
 drop table links;
-drop type image;
 drop table tags;
 drop type tag_type;
 drop table annotations;
@@ -98,21 +98,22 @@ create table tags (
   "end" integer not null,
   primary key ("tweet_id", "tag", "type")
 );
-create type image as (
-  "url" url,
-  "width" integer,
-  "height" integer
-);
 create table links (
   "id" bigint generated always as identity primary key,
   "url" url unique not null,
   "expanded_url" url unique not null,
   "display_url" text not null,
-  "images" image[],
   "status" integer,
   "title" text,
   "description" text,
   "unwound_url" url 
+);
+create table images (
+  "link_id" bigint references links(id) deferrable not null,
+  "url" url not null,
+  "width" integer not null,
+  "height" integer not null,
+  primary key ("link_id", "url", "width", "height")
 );
 create table urls (
   "tweet_id" text references tweets(id) deferrable not null,
