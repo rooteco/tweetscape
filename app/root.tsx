@@ -19,8 +19,8 @@ import Empty from '~/components/empty';
 import Footer from '~/components/footer';
 import Header from '~/components/header';
 import OpenIcon from '~/icons/open';
-import { db } from '~/db.server';
 import { log } from '~/utils.server';
+import { redis } from '~/redis.server';
 import styles from '~/styles/app.css';
 
 type Theme = 'sync' | 'dark' | 'light';
@@ -85,10 +85,12 @@ export function ErrorBoundary({ error }: { error: Error }) {
 
 export const loader: LoaderFunction = async () => {
   log.info('Fetching visible clusters...');
-  const data = await db('select * from clusters where visible = true');
-  log.trace(`Clusters: ${JSON.stringify(data.rows, null, 2)}`);
-  log.info(`Fetched ${data.rows.length} visible clusters.`);
-  return data.rows as Cluster[];
+  const clusters = await redis<Cluster>(
+    'select * from clusters where visible = true'
+  );
+  log.trace(`Clusters: ${JSON.stringify(clusters, null, 2)}`);
+  log.info(`Fetched ${clusters.length} visible clusters.`);
+  return clusters;
 };
 
 export const links: LinksFunction = () => [

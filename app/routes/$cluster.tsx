@@ -7,8 +7,8 @@ import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
 import Nav from '~/components/nav';
-import { db } from '~/db.server';
 import { href } from '~/cookies.server';
+import { redis } from '~/redis.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
 
@@ -23,7 +23,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const sort = (url.searchParams.get('sort') ?? 'attention_score') as Sort;
   const filter = (url.searchParams.get('filter') ?? 'hide_retweets') as Filter;
   /* prettier-ignore */
-  const data = await db(
+  const articles = await redis<Article>(
     `
     select
       links.*,
@@ -60,9 +60,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     limit 20;
     `
   );
-  log.trace(`Articles: ${JSON.stringify(data, null, 2)}`);
-  log.info(`Fetched ${data.rows.length} articles for ${params.cluster}.`);
-  const articles = data.rows as Article[];
+  log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
+  log.info(`Fetched ${articles.length} articles for ${params.cluster}.`);
   articles.forEach((article) =>
     article.tweets.forEach((tweet) => {
       tweet.html = autoLink(tweet.text, {
