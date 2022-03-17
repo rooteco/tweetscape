@@ -93,21 +93,16 @@ export const loader: LoaderFunction = async () => {
 };
 
 export const links: LinksFunction = () => [
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
-    rel: 'preload',
-    href: '/fonts/inter-latin.woff2',
-    as: 'font',
-    type: 'font/woff2',
+    rel: 'preconnect',
+    href: 'https://fonts.gstatic.com',
     crossOrigin: 'anonymous',
   },
   {
-    rel: 'preload',
-    href: '/fonts/inter-latin-ext.woff2',
-    as: 'font',
-    type: 'font/woff2',
-    crossOrigin: 'anonymous',
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap',
   },
-  { rel: 'stylesheet', href: '/fonts/inter.css' },
   { rel: 'stylesheet', href: styles },
   { rel: 'mask-icon', sizes: 'any', href: '/favicon.svg', color: '#1D9BF0' },
   { rel: 'shortcut icon', href: '/favicon.ico' },
