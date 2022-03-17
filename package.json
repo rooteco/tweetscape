@@ -45,6 +45,7 @@
     "remix": "^1.2.3",
     "sharp": "^0.30.3",
     "tiny-invariant": "^1.2.0",
+    "twitter-api-v2": "^1.11.0",
     "twitter-text": "^3.1.0"
   },
   "devDependencies": {
