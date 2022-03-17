@@ -17,7 +17,7 @@ if (!global.redisClient)
 let connectionPromise: Promise<void>;
 if (!redisClient.isOpen) connectionPromise = redisClient.connect();
 
-export async function db<T>(
+export async function redis<T>(
   query: string,
   maxAgeSeconds = 60
 ): Promise<QueryResult<T>> {
