@@ -1,14 +1,13 @@
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import {
-  Link,
   Links,
   LiveReload,
   Meta,
+  NavLink,
   Outlet,
   Scripts,
   ScrollRestoration,
   useLoaderData,
-  useLocation,
   useTransition,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
@@ -126,7 +125,6 @@ export default function App() {
   }, [transition.state]);
 
   const clusters = useLoaderData<Cluster[]>();
-  const { pathname } = useLocation();
 
   const [theme, setTheme] = useTheme();
   const nextTheme = useMemo(
@@ -148,15 +146,15 @@ export default function App() {
           <nav className='font-semibold text-sm'>
             {clusters
               .map(({ id, name, slug }) => (
-                <Link
+                <NavLink
                   key={id}
-                  className={cn('lowercase', {
-                    underline: pathname === `/${slug}`,
-                  })}
+                  className={({ isActive }) =>
+                    cn('lowercase', { underline: isActive })
+                  }
                   to={`/${slug}`}
                 >
                   {name}
-                </Link>
+                </NavLink>
               ))
               .reduce((a, b) => (
                 <>
