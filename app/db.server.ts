@@ -2,15 +2,20 @@ import { createHash } from 'crypto';
 
 import { Client } from 'pg';
 import type { QueryResult } from 'pg';
+import { createClient } from 'redis';
 
 import { log } from '~/utils.server';
-import redisClient from '~/redis.server';
 import { substr } from '~/utils';
 
-let connectionPromise: Promise<void>;
-if (!redisClient.isOpen) {
-  connectionPromise = redisClient.connect();
+declare global {
+  var redisClient: ReturnType<typeof createClient>;
 }
+
+if (!global.redisClient)
+  global.redisClient = createClient({ url: process.env.REDIS_URL });
+
+let connectionPromise: Promise<void>;
+if (!redisClient.isOpen) connectionPromise = redisClient.connect();
 
 export async function db<T>(
   query: string,
