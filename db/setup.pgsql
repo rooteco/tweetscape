@@ -10,6 +10,7 @@ drop table refs;
 drop type ref_type;
 drop table tweets;
 drop table scores; 
+drop table tokens;
 drop table influencers;
 drop domain url;
 drop table clusters;
@@ -34,6 +35,17 @@ create table influencers (
   "tweets_count" integer,
   "created_at" timestamptz,
   "updated_at" timestamptz
+);
+create table tokens (
+  "id" bigint generated always as identity primary key,
+  "influencer_id" text references influencers(id) deferrable not null,
+  "token_type" text not null,
+  "expires_in" integer not null,
+  "access_token" text not null unique,
+  "scope" text not null,
+  "refresh_token" text not null unique,
+  "created_at" timestamptz not null,
+  "updated_at" timestamptz not null
 );
 create table scores (
   "id" text unique not null primary key,
