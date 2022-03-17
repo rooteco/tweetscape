@@ -507,19 +507,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@remix-run/express@npm:1.2.3":
-  version: 1.2.3
-  resolution: "@remix-run/express@npm:1.2.3"
+"@remix-run/express@npm:1.3.1":
+  version: 1.3.1
+  resolution: "@remix-run/express@npm:1.3.1"
   dependencies:
-    "@remix-run/node": 1.2.3
-    "@remix-run/server-runtime": 1.2.3
+    "@remix-run/node": 1.3.1
+    "@remix-run/server-runtime": 1.3.1
   peerDependencies:
     express: ^4.17.1
-  checksum: 18d9a7f4125d4fb94e8bb609ed7dd2fadce98238fe1bf5d9d26e87667911154f8911398795d5fc3390c0f7770bf8c5d222d365cedb191bf75ce378efc5ca2aa8
+  checksum: 11e7e3e690e0b232c62f2ff36b4f918f1db995f3804cc475d46f27b5591f5698c9e405d5d2eaa0537f8d2b1c84e277273614f1907b982e45996a0b82b1858b9c
   languageName: node
   linkType: hard
 
-"@remix-run/node@npm:1.2.3, @remix-run/node@npm:^1.2.3":
+"@remix-run/node@npm:1.3.1":
+  version: 1.3.1
+  resolution: "@remix-run/node@npm:1.3.1"
+  dependencies:
+    "@remix-run/server-runtime": 1.3.1
+    "@types/busboy": ^0.3.1
+    "@types/node-fetch": ^2.5.12
+    "@web-std/file": ^3.0.0
+    abort-controller: ^3.0.0
+    blob-stream: ^0.1.3
+    busboy: ^0.3.1
+    cookie-signature: ^1.1.0
+    form-data: ^4.0.0
+    node-fetch: ^2.6.1
+    source-map-support: ^0.5.21
+  checksum: 4389af74e901272c6aad5edd8e9182185e96e62fc976efa9e9fc8d7bb6306e0bdc23676536e7c4d1c9e7b31c83890ea3e7fe1d5c388bd28114f8aea226ce6ffe
+  languageName: node
+  linkType: hard
+
+"@remix-run/node@npm:^1.2.3":
   version: 1.2.3
   resolution: "@remix-run/node@npm:1.2.3"
   dependencies:
@@ -551,17 +570,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@remix-run/serve@npm:^1.2.3":
-  version: 1.2.3
-  resolution: "@remix-run/serve@npm:1.2.3"
+"@remix-run/serve@npm:^1.3.1":
+  version: 1.3.1
+  resolution: "@remix-run/serve@npm:1.3.1"
   dependencies:
-    "@remix-run/express": 1.2.3
+    "@remix-run/express": 1.3.1
     compression: ^1.7.4
     express: ^4.17.1
     morgan: ^1.10.0
   bin:
     remix-serve: cli.js
-  checksum: 4f84fc76e48d84f840077ccf9f6f6925e302170c36bc76a48f7d016099c735a446dc8f12482e5ef23370e28d64641c99afb222eb8273b3ef4342bdf351984c3c
+  checksum: 5d869c786cc4e9c3b5695c3779876dd3c119c387cddedbcf1c77545f0d72bbbdd17f216ba9474d79e4161578b81e484aa521a2c7d3f6b213188f82e0ad074b13
   languageName: node
   linkType: hard
 
@@ -579,6 +598,23 @@ __metadata:
     react: ">=16.8"
     react-dom: ">=16.8"
   checksum: 7bb003aa82a9d683644a9ec51d592003ca51b261238d9fd78f2ac9927c687e1ced9fc887211e71bffb8a47d5837ccadb5dfe58ba6eaff455a742f713f816884c
+  languageName: node
+  linkType: hard
+
+"@remix-run/server-runtime@npm:1.3.1":
+  version: 1.3.1
+  resolution: "@remix-run/server-runtime@npm:1.3.1"
+  dependencies:
+    "@types/cookie": ^0.4.0
+    cookie: ^0.4.1
+    jsesc: ^3.0.1
+    react-router-dom: ^6.2.2
+    set-cookie-parser: ^2.4.8
+    source-map: ^0.7.3
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 753cf1c9ffebf020d3cf5d1abd1956d914d0af1e5380894e54174dc7fc4a007be270c5affb819ccca179c8bbddd48afdd4ceea21e2589dafd7e46e886ce38381
   languageName: node
   linkType: hard
 
@@ -9476,7 +9512,7 @@ __metadata:
     "@remix-run/dev": ^1.2.3
     "@remix-run/node": ^1.2.3
     "@remix-run/react": ^1.2.3
-    "@remix-run/serve": ^1.2.3
+    "@remix-run/serve": ^1.3.1
     "@types/accept-language-parser": ^1.5.3
     "@types/nprogress": ^0.2.0
     "@types/pg": ^8.6.5
