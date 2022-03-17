@@ -46,15 +46,15 @@ model influencers {
 }
 
 model links {
-  id           BigInt                  @id @default(autoincrement())
-  url          String                  @unique
-  expanded_url String                  @unique
+  id           BigInt   @id @default(autoincrement())
+  url          String   @unique
+  expanded_url String   @unique
   display_url  String
-  images       Unsupported("_image")[]
   status       Int?
   title        String?
   description  String?
   unwound_url  String?
+  images       images[]
   urls         urls[]
 }
 
@@ -135,6 +135,16 @@ model urls {
   tweets   tweets @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([tweet_id, link_id])
+}
+
+model images {
+  link_id BigInt
+  url     String
+  width   Int
+  height  Int
+  links   links  @relation(fields: [link_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([link_id, url, width, height])
 }
 
 enum annotation_type {
