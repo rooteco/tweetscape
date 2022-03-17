@@ -18,6 +18,7 @@
     "dev": "concurrently yarn:dev:remix yarn:dev:css",
     "dev:postgres": "dotenv -- bash -c 'sudo docker run -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD -p 5432:5432 postgres'",
     "dev:redis": "dotenv -- bash -c 'sudo docker run -p 6379:6379 redis redis-server --protected-mode yes --requirepass $REDIS_PASSWORD'",
+    "dev:seed": "dotenv -- bash -c 'psql $DATABASE_URL -f cypress/fixtures/db.sql'",
     "start:cy": "percy exec -- cypress run",
     "start": "cross-env NODE_ENV=production remix-serve build",
     "deploy": "fly deploy --remote-only",
