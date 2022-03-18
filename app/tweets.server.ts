@@ -1,78 +1,39 @@
 import type {
-  ReferencedTweetV2,
-  TweetEntityAnnotationsV2,
-  TweetEntityHashtagV2,
   TweetEntityMentionV2,
   TweetEntityUrlV2,
   TweetV2,
+  UserV2,
 } from 'twitter-api-v2';
-import type { Decimal } from '@prisma/client/runtime';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
-import type {
-  Annotation,
-  AnnotationType,
-  Mention,
-  Ref,
-  Tag,
-  TagType,
-  Tweet,
-} from '~/types';
-import { TwitterApi, TwitterV2IncludesHelper } from '~/twitter.server';
+import {
+  TwitterApi,
+  TwitterV2IncludesHelper,
+  toAnnotation,
+  toInfluencer,
+  toRef,
+  toTag,
+  toTweet,
+} from '~/twitter.server';
 import { commitSession, getSession } from '~/session.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
-function toAnnotation(a: TweetEntityAnnotationsV2, t: TweetV2): Annotation {
-  return {
-    tweet_id: t.id,
-    normalized_text: a.normalized_text,
-    probability: a.probability as unknown as Decimal,
-    type: a.type as AnnotationType,
-    start: a.start,
-    end: a.end,
-  };
-}
-
-function toMention(m: TweetEntityMentionV2, t: TweetV2): Mention {
-  return {
-    tweet_id: t.id,
-    influencer_id: m.id,
-    start: m.start,
-    end: m.end,
-  };
-}
-
-function toTag(h: TweetEntityHashtagV2, t: TweetV2, type: TagType): Tag {
-  return {
-    type,
-    tweet_id: t.id,
-    tag: h.tag,
-    start: h.start,
-    end: h.end,
-  };
-}
-
-function toRef(r: ReferencedTweetV2, t: TweetV2): Ref {
-  return {
-    referenced_tweet_id: r.id,
-    referencer_tweet_id: t.id,
-    type: r.type,
-  };
-}
-
-function toTweet(tweet: TweetV2): Tweet {
-  return {
-    id: tweet.id,
-    author_id: tweet.author_id as string,
-    text: tweet.text,
-    retweet_count: tweet.public_metrics?.retweet_count as number,
-    reply_count: tweet.public_metrics?.reply_count as number,
-    like_count: tweet.public_metrics?.like_count as number,
-    quote_count: tweet.public_metrics?.quote_count as number,
-    created_at: new Date(tweet.created_at as string),
-  };
+async function insertMentions(
+  mentions: TweetEntityMentionV2[],
+  t: TweetV2,
+  users: UserV2[]
+) {
+  const data = mentions
+    .map((m) => ({
+      tweet_id: t.id,
+      influencer_id: users.find((u) => u.username === m.username)?.id as string,
+      start: m.start,
+      end: m.end,
+    }))
+    .filter((m) => !!m.influencer_id);
+  await db.mentions.createMany({ data, skipDuplicates: true });
 }
 
 async function insertURLs(urls: TweetEntityUrlV2[], t: TweetV2) {
@@ -81,16 +42,25 @@ async function insertURLs(urls: TweetEntityUrlV2[], t: TweetV2) {
   // @see {@link https://github.com/prisma/prisma/issues/8131}
   const links = await db.$transaction(
     urls.map((u) =>
-      db.links.create({
-        data: {
+      db.links.upsert({
+        create: {
           url: u.url,
           expanded_url: u.expanded_url,
           display_url: u.display_url,
-          status: Number(u.status),
+          status: u.status ? Number(u.status) : undefined,
           title: u.title,
           description: u.description,
           unwound_url: u.unwound_url,
         },
+        update: {
+          url: u.url,
+          display_url: u.display_url,
+          status: u.status ? Number(u.status) : undefined,
+          title: u.title,
+          description: u.description,
+          unwound_url: u.unwound_url,
+        },
+        where: { expanded_url: u.expanded_url },
       })
     )
   );
@@ -145,13 +115,19 @@ export const loader: LoaderFunction = async ({ request }) => {
           'referenced_tweets.id.author_id',
           'entities.mentions.username',
         ],
+        'user.fields': [
+          'id',
+          'name',
+          'username',
+          'profile_image_url',
+          'public_metrics',
+          'created_at',
+        ],
       });
       const includes = new TwitterV2IncludesHelper(res);
-      log.info(`Inserting ${includes.users.length} users for ${context}...`);
-      await db.influencers.createMany({
-        data: includes.users,
-        skipDuplicates: true,
-      });
+      const authors = includes.users.map(toInfluencer);
+      log.info(`Inserting ${authors.length} tweet authors for ${context}...`);
+      await db.influencers.createMany({ data: authors, skipDuplicates: true });
       const referencedTweets = includes.tweets.map(toTweet);
       log.info(
         `Inserting ${referencedTweets.length} referenced tweets for ${context}...`
@@ -167,23 +143,20 @@ export const loader: LoaderFunction = async ({ request }) => {
         res.tweets
           .map((t) => [
             insertURLs(t.entities?.urls ?? [], t),
-            db.mentions.createMany({
-              data: t.entities?.mentions.map((m) => toMention(m, t)) ?? [],
-              skipDuplicates: true,
-            }),
+            insertMentions(t.entities?.mentions ?? [], t, includes.users),
             db.annotations.createMany({
               data:
-                t.entities?.annotations.map((a) => toAnnotation(a, t)) ?? [],
+                t.entities?.annotations?.map((a) => toAnnotation(a, t)) ?? [],
               skipDuplicates: true,
             }),
             db.tags.createMany({
               data:
-                t.entities?.hashtags.map((h) => toTag(h, t, 'hashtag')) ?? [],
+                t.entities?.hashtags?.map((h) => toTag(h, t, 'hashtag')) ?? [],
               skipDuplicates: true,
             }),
             db.tags.createMany({
               data:
-                t.entities?.cashtags.map((h) => toTag(h, t, 'cashtag')) ?? [],
+                t.entities?.cashtags?.map((h) => toTag(h, t, 'cashtag')) ?? [],
               skipDuplicates: true,
             }),
             db.refs.createMany({
