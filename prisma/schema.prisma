@@ -40,6 +40,7 @@ model influencers {
   tweets_count      Int?
   created_at        DateTime?  @db.Timestamptz(6)
   updated_at        DateTime?  @db.Timestamptz(6)
+  lists             lists[]
   mentions          mentions[]
   scores            scores[]
   tokens            tokens?
@@ -159,6 +160,18 @@ model tokens {
   created_at    DateTime    @db.Timestamptz(6)
   updated_at    DateTime    @db.Timestamptz(6)
   influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model lists {
+  id             String      @id
+  owner_id       String
+  name           String
+  description    String
+  private        Boolean
+  follower_count Int
+  member_count   Int
+  created_at     DateTime    @db.Timestamptz(6)
+  influencers    influencers @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum annotation_type {
