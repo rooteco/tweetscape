@@ -56,7 +56,9 @@ export default function ArticleItem({
               new Date(a.created_at).valueOf() -
               new Date(b.created_at).valueOf()
             );
-          return b.score.attention_score - a.score.attention_score;
+          return (
+            Number(b.score.attention_score) - Number(a.score.attention_score)
+          );
         }),
     [sort, filter, tweets]
   );
@@ -100,7 +102,11 @@ export default function ArticleItem({
       <div className='text-sm text-slate-600 dark:text-slate-400 flex items-center mt-1.5'>
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
           {Array.from(tweets)
-            .sort((a, b) => b.score.attention_score - a.score.attention_score)
+            .sort(
+              (a, b) =>
+                Number(b.score.attention_score) -
+                Number(a.score.attention_score)
+            )
             .slice(0, 10)
             .reverse()
             .map(({ id, author }) => (

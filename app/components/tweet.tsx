@@ -9,6 +9,7 @@ import TwitterIcon from '~/icons/twitter';
 export type TweetItemProps = Tweet & {
   author: Influencer;
   score: Score;
+  html?: string;
 };
 
 export default function TweetItem({
@@ -73,7 +74,7 @@ export default function TweetItem({
               target='_blank'
               rel='noopener noreferrer'
             >
-              {Math.round(score.attention_score)} points
+              {Math.round(Number(score.attention_score))} points
             </a>
             <span className='mx-1'>·</span>
             <a

@@ -39,5 +39,5 @@ export type Article = Link & {
   cluster_slug: string;
   insider_score: number;
   attention_score: number;
-  tweets: (Tweet & { author: Influencer; score: Score })[];
+  tweets: (Tweet & { html?: string; author: Influencer; score: Score })[];
 };
