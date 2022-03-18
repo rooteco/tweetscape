@@ -7,6 +7,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  json,
   useLoaderData,
   useTransition,
 } from 'remix';
@@ -14,12 +15,15 @@ import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import NProgress from 'nprogress';
 import cn from 'classnames';
 
-import type { Cluster } from '~/types';
+import type { Cluster, List } from '~/types';
+import { commitSession, getSession } from '~/session.server';
 import Empty from '~/components/empty';
 import Footer from '~/components/footer';
 import Header from '~/components/header';
 import OAuth from '~/components/oauth';
 import OpenIcon from '~/icons/open';
+import { TwitterApi } from '~/twitter.server';
+import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
 import styles from '~/styles/app.css';
@@ -84,16 +88,48 @@ export function ErrorBoundary({ error }: { error: Error }) {
   );
 }
 
-export type LoaderData = Cluster[];
+export type LoaderData = { clusters: Cluster[]; lists: List[] };
 
-export const loader: LoaderFunction = async (): Promise<LoaderData> => {
+export const loader: LoaderFunction = async ({ request }) => {
   log.info('Fetching visible clusters...');
   const clusters = await redis<Cluster>(
     'select * from clusters where visible = true'
   );
   log.trace(`Clusters: ${JSON.stringify(clusters, null, 2)}`);
   log.info(`Fetched ${clusters.length} visible clusters.`);
-  return clusters;
+  const session = await getSession(request.headers.get('Cookie'));
+  const uid = session.get('uid') as string | undefined;
+  const lists: List[] = [];
+  if (uid) {
+    log.info(`Fetching token for user (${uid})...`);
+    const token = await db.tokens.findUnique({
+      where: { influencer_id: uid },
+    });
+    if (!token) {
+      log.warn(`Token for user (${uid}) not found, skipping...`);
+    } else {
+      log.info(`Fetching lists for user (${uid})...`);
+      const api = new TwitterApi(token.access_token);
+      const data = await api.v2.listsOwned(uid, {
+        'list.fields': [
+          'created_at',
+          'follower_count',
+          'member_count',
+          'private',
+          'description',
+          'owner_id',
+        ],
+      });
+      [...data].forEach((list) => {
+        lists.push({
+          ...(list as Omit<List, 'created_at'>),
+          owner_id: uid,
+          created_at: new Date(list.created_at as string),
+        });
+      });
+    }
+  }
+  return json<LoaderData>({ clusters, lists });
 };
 
 export const links: LinksFunction = () => [
