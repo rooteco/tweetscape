@@ -85,7 +85,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
     <main>
       <Nav />
       <Empty>
-        <p>an unexpected runtime error ocurred</p>
+        <p>an unexpected runtime error occurred</p>
         <p>{error.message}</p>
       </Empty>
     </main>
