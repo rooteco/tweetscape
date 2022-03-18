@@ -49,7 +49,7 @@ jobs:
         env:
           NODE_ENV: production
       - run: psql ${{ secrets.DATABASE_URL }} -f cypress/fixtures/db.sql
-      - run: yarn start & yarn wait-on http-get://localhost:3000
+      - run: yarn start & yarn wait-on http://localhost:3000
         env:
           NODE_ENV: production
           COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}

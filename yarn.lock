@@ -9510,6 +9510,7 @@ __metadata:
     html-entities: ^2.3.2
     html5parser: ^2.0.2
     husky: ^7.0.4
+    nanoid: ^3.3.1
     node-fetch: ^3.2.3
     nprogress: ^0.2.0
     pg: ^8.7.3
@@ -9526,6 +9527,7 @@ __metadata:
     sharp: ^0.30.3
     tailwindcss: ^3.0.23
     tiny-invariant: ^1.2.0
+    twitter-api-v2: ^1.11.0
     twitter-text: ^3.1.0
     typescript: ^4.6.2
     wait-on: ^6.0.1
@@ -9536,6 +9538,13 @@ __metadata:
   version: 11.0.2
   resolution: "twemoji-parser@npm:11.0.2"
   checksum: 79075c6512253f17713f236c4853dccdcc9c5a6c2d15b0109c02d684402a21ccdd80352e490cdf76072fe2c09c7c288e501ed41185ebef69df69fe355f9b7c37
+  languageName: node
+  linkType: hard
+
+"twitter-api-v2@npm:^1.11.0":
+  version: 1.11.0
+  resolution: "twitter-api-v2@npm:1.11.0"
+  checksum: c66a7ad074bcdca5e47b41a85a27db03bd2e258e16d124691e73f2540ae69b86496da9454ca48e075d6fc2964fcace78f8ef3e6b8bed17079b957f95c160059f
   languageName: node
   linkType: hard
 

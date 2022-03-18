@@ -37,6 +37,7 @@
     "accept-language-parser": "^1.5.0",
     "classnames": "^2.3.1",
     "html-entities": "^2.3.2",
+    "nanoid": "^3.3.1",
     "nprogress": "^0.2.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -44,6 +45,7 @@
     "remix": "^1.2.3",
     "sharp": "^0.30.3",
     "tiny-invariant": "^1.2.0",
+    "twitter-api-v2": "^1.11.0",
     "twitter-text": "^3.1.0"
   },
   "devDependencies": {
