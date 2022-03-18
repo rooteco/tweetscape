@@ -18,6 +18,7 @@ import type { Cluster } from '~/types';
 import Empty from '~/components/empty';
 import Footer from '~/components/footer';
 import Header from '~/components/header';
+import OAuth from '~/components/oauth';
 import OpenIcon from '~/icons/open';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
@@ -83,7 +84,9 @@ export function ErrorBoundary({ error }: { error: Error }) {
   );
 }
 
-export const loader: LoaderFunction = async () => {
+export type LoaderData = Cluster[];
+
+export const loader: LoaderFunction = async (): Promise<LoaderData> => {
   log.info('Fetching visible clusters...');
   const clusters = await redis<Cluster>(
     'select * from clusters where visible = true'
@@ -126,7 +129,7 @@ export default function App() {
     return () => clearTimeout(timeoutId);
   }, [transition.state]);
 
-  const clusters = useLoaderData<Cluster[]>();
+  const clusters = useLoaderData<LoaderData>();
 
   const [theme, setTheme] = useTheme();
   const nextTheme = useMemo(
@@ -144,6 +147,7 @@ export default function App() {
       </head>
       <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
+        <OAuth />
         <Header>
           <nav className='font-semibold text-sm'>
             {clusters

@@ -1,18 +1,19 @@
-drop table urls;
-drop table images;
-drop table links;
-drop table tags;
-drop type tag_type;
-drop table annotations;
-drop type annotation_type;
-drop table mentions;
-drop table refs;
-drop type ref_type;
-drop table tweets;
-drop table scores; 
-drop table influencers;
-drop domain url;
-drop table clusters;
+drop table if exists urls;
+drop table if exists images;
+drop table if exists links;
+drop table if exists tags;
+drop type if exists tag_type;
+drop table if exists annotations;
+drop type if exists annotation_type;
+drop table if exists mentions;
+drop table if exists refs;
+drop type if exists ref_type;
+drop table if exists tweets;
+drop table if exists scores; 
+drop table if exists tokens;
+drop table if exists influencers;
+drop domain if exists url;
+drop table if exists clusters;
 
 create table clusters (
   "id" text unique not null primary key, 
@@ -34,6 +35,17 @@ create table influencers (
   "tweets_count" integer,
   "created_at" timestamptz,
   "updated_at" timestamptz
+);
+create table tokens (
+  "id" bigint generated always as identity primary key,
+  "influencer_id" text unique references influencers(id) deferrable not null,
+  "token_type" text not null,
+  "expires_in" integer not null,
+  "access_token" text not null unique,
+  "scope" text not null,
+  "refresh_token" text not null unique,
+  "created_at" timestamptz not null,
+  "updated_at" timestamptz not null
 );
 create table scores (
   "id" text unique not null primary key,
