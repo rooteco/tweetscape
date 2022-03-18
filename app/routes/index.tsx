@@ -73,6 +73,8 @@ export const loader: LoaderFunction = async ({ request }) => {
         update: token,
         where: { influencer_id: token.influencer_id },
       });
+      log.info(`Setting session uid for ${user.name} (@${user.username})...`);
+      session.set('uid', user.id);
     }
   }
   const headers = { 'Set-Cookie': await commitSession(session) };
