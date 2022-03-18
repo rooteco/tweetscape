@@ -1,15 +1,10 @@
 import type { LoaderFunction } from 'remix';
 import { redirect } from 'remix';
 
-import type { Influencer, Token } from '~/types';
 import { href, oauth } from '~/cookies.server';
+import { TwitterApi } from '~/twitter.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
-
-type OAuthError = { error: string; error_description: string };
-function isOAuthError(error: Token | OAuthError): error is OAuthError {
-  return typeof (error as OAuthError).error === 'string';
-}
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -21,54 +16,66 @@ export const loader: LoaderFunction = async ({ request }) => {
       codeVerifier: string;
     };
     if (oauthCookie.stateId === stateId) {
-      const params = new URLSearchParams({
-        code,
-        grant_type: 'authorization_code',
-        client_id: process.env.OAUTH_CLIENT_ID as string,
-        redirect_uri: `${url.protocol}//${url.host}`,
-        code_verifier: oauthCookie.codeVerifier,
-      }).toString();
-      const endpoint = `https://api.twitter.com/2/oauth2/token?${params}`;
-      log.info(`Fetching OAuth2 access token (${endpoint})...`);
-      const res = await fetch(endpoint, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        method: 'POST',
+      log.info('Logging in with Twitter OAuth2...');
+      const client = new TwitterApi({
+        clientId: process.env.OAUTH_CLIENT_ID as string,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
       });
-      const data = (await res.json()) as Token | OAuthError;
-      if (isOAuthError(data)) {
-        log.error(`OAuth2 error (${data.error}): ${data.error_description}`);
-      } else {
-        log.info(`OAuth2 data: ${JSON.stringify(data, null, 2)}`);
-        const userRes = await fetch(
-          'https://api.twitter.com/2/users/me?user.fields=id,name,username,created_at,profile_image_url,public_metrics',
-          {
-            headers: { Authorization: `Bearer ${data.access_token}` },
-          }
-        );
-        const user = (await userRes.json()) as Influencer;
-        log.info(`Upserting user: ${JSON.stringify(user, null, 2)}`);
-        await db.influencers.upsert({
-          create: user,
-          update: user,
-          where: { id: user.id },
-        });
-        log.info(`Upserting token for ${user.name} (${user.id})...`);
-        const token = {
-          ...data,
-          influencer_id: user.id,
-          created_at: new Date(),
-          updated_at: new Date(),
-        };
-        await db.tokens.upsert({
-          create: token,
-          update: token,
-          where: {
-            influencer_id: user.id,
-            access_token: token.access_token,
-            refresh_token: token.refresh_token,
-          },
-        });
-      }
+      const {
+        client: api,
+        scope,
+        accessToken,
+        refreshToken,
+        expiresIn,
+      } = await client.loginWithOAuth2({
+        code,
+        codeVerifier: oauthCookie.codeVerifier,
+        redirectUri: `${url.protocol}//${url.host}`,
+      });
+      log.info('Fetching logged in user from Twitter API...');
+      const { data: user } = await api.v2.me({
+        'user.fields': [
+          'id',
+          'name',
+          'username',
+          'profile_image_url',
+          'public_metrics',
+          'created_at',
+        ],
+      });
+      log.info(`Upserting influencer ${user.name} (@${user.username})...`);
+      const influencer = {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        profile_image_url: user.profile_image_url,
+        followers_count: user.public_metrics?.followers_count,
+        following_count: user.public_metrics?.following_count,
+        tweets_count: user.public_metrics?.tweet_count,
+        created_at: user.created_at,
+        updated_at: new Date(),
+      };
+      await db.influencers.upsert({
+        create: influencer,
+        update: influencer,
+        where: { id: influencer.id },
+      });
+      log.info(`Upserting token for ${user.name} (@${user.username})...`);
+      const token = {
+        influencer_id: influencer.id,
+        token_type: 'bearer',
+        expires_in: expiresIn,
+        access_token: accessToken,
+        scope: scope.join(' '),
+        refresh_token: refreshToken as string,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+      await db.tokens.upsert({
+        create: token,
+        update: token,
+        where: { influencer_id: token.influencer_id },
+      });
     }
   }
   const cookie = (await href.parse(request.headers.get('cookie'))) as string;

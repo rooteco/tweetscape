@@ -19,6 +19,9 @@ function base64UrlEncode(hash: Hash) {
     .replace(/=+$/, '');
 }
 
+// I probably could've done this using the `twitter-api-v2` wrapper, but this
+// works just fine. In the future, if I have to change anything, I'll probably:
+// @see {@link https://github.com/PLhery/node-twitter-api-v2/blob/master/doc/auth.md#create-the-auth-link-1}
 export const loader: LoaderFunction = async ({ request }) => {
   const stateId = nanoid();
   const url = new URL(request.url);

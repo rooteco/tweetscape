@@ -13,7 +13,6 @@ import {
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import NProgress from 'nprogress';
 import cn from 'classnames';
-import invariant from 'tiny-invariant';
 
 import type { Cluster } from '~/types';
 import Empty from '~/components/empty';
@@ -88,7 +87,6 @@ export function ErrorBoundary({ error }: { error: Error }) {
 export type LoaderData = Cluster[];
 
 export const loader: LoaderFunction = async (): Promise<LoaderData> => {
-  invariant(process.env.OAUTH_CLIENT_ID, 'expected OAUTH_CLIENT_ID env var');
   log.info('Fetching visible clusters...');
   const clusters = await redis<Cluster>(
     'select * from clusters where visible = true'
