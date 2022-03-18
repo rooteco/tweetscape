@@ -31,15 +31,17 @@ model clusters {
 }
 
 model influencers {
-  id                String     @id
+  id                String           @id
   name              String
   username          String
   profile_image_url String?
   followers_count   Int?
   following_count   Int?
   tweets_count      Int?
-  created_at        DateTime?  @db.Timestamptz(6)
-  updated_at        DateTime?  @db.Timestamptz(6)
+  created_at        DateTime?        @db.Timestamptz(6)
+  updated_at        DateTime?        @db.Timestamptz(6)
+  list_followers    list_followers[]
+  list_members      list_members[]
   lists             lists[]
   mentions          mentions[]
   scores            scores[]
@@ -163,15 +165,35 @@ model tokens {
 }
 
 model lists {
-  id             String      @id
+  id             String           @id
   owner_id       String
   name           String
   description    String
   private        Boolean
   follower_count Int
   member_count   Int
-  created_at     DateTime    @db.Timestamptz(6)
-  influencers    influencers @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  created_at     DateTime         @db.Timestamptz(6)
+  influencers    influencers      @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  list_followers list_followers[]
+  list_members   list_members[]
+}
+
+model list_followers {
+  influencer_id String
+  list_id       String
+  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lists         lists       @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([influencer_id, list_id])
+}
+
+model list_members {
+  influencer_id String
+  list_id       String
+  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lists         lists       @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([influencer_id, list_id])
 }
 
 enum annotation_type {
