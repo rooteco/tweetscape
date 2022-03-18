@@ -11,6 +11,7 @@ drop type if exists ref_type;
 drop table if exists tweets;
 drop table if exists scores; 
 drop table if exists tokens;
+drop table if exists lists;
 drop table if exists influencers;
 drop domain if exists url;
 drop table if exists clusters;
@@ -35,6 +36,16 @@ create table influencers (
   "tweets_count" integer,
   "created_at" timestamptz,
   "updated_at" timestamptz
+);
+create table lists (
+  "id" text unique not null primary key,
+  "owner_id" text references influencers(id) deferrable not null,
+  "name" text not null,
+  "description" text not null,
+  "private" boolean not null,
+  "follower_count" integer not null,
+  "member_count" integer not null,
+  "created_at" timestamptz not null
 );
 create table tokens (
   "id" bigint generated always as identity primary key,
