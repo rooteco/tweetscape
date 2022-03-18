@@ -47,6 +47,16 @@ create table lists (
   "member_count" integer not null,
   "created_at" timestamptz not null
 );
+create table list_members (
+  "influencer_id" text references influencers(id) deferrable not null,
+  "list_id" text references lists(id) deferrable not null,
+  primary key ("influencer_id", "list_id")
+);
+create table list_followers (
+  "influencer_id" text references influencers(id) deferrable not null,
+  "list_id" text references lists(id) deferrable not null,
+  primary key ("influencer_id", "list_id")
+);
 create table tokens (
   "id" bigint generated always as identity primary key,
   "influencer_id" text unique references influencers(id) deferrable not null,

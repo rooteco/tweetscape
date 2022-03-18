@@ -95,14 +95,16 @@ export const loader: LoaderFunction = async ({ request }) => {
   log.info(`Fetching token for user (${uid})...`);
   const token = await db.tokens.findUnique({ where: { influencer_id: uid } });
   invariant(token, `expected token for user (${uid})`);
-  log.info(`Fetching lists for user (${uid})...`);
-  const lists = await db.lists.findMany({ where: { owner_id: uid } });
+  log.info(`Fetching followed lists for user (${uid})...`);
+  const lists = await db.list_followers.findMany({
+    where: { influencer_id: uid },
+  });
   const api = new TwitterApi(token.access_token);
   await Promise.all(
-    lists.map(async (list) => {
-      const context = `user (${uid}) list ${list.name} (${list.id})`;
+    lists.map(async ({ list_id }) => {
+      const context = `user (${uid}) list (${list_id})`;
       log.info(`Fetching tweets for ${context}...`);
-      const res = await api.v2.listTweets(list.id, {
+      const res = await api.v2.listTweets(list_id, {
         'tweet.fields': [
           'created_at',
           'entities',
@@ -128,14 +130,14 @@ export const loader: LoaderFunction = async ({ request }) => {
       const authors = includes.users.map(toInfluencer);
       log.info(`Inserting ${authors.length} tweet authors for ${context}...`);
       await db.influencers.createMany({ data: authors, skipDuplicates: true });
-      const referencedTweets = includes.tweets.map(toTweet);
-      log.info(
-        `Inserting ${referencedTweets.length} referenced tweets for ${context}...`
-      );
-      await db.tweets.createMany({
-        data: referencedTweets,
+      log.info(`Inserting ${authors.length} list members for ${context}...`);
+      await db.list_members.createMany({
+        data: authors.map((a) => ({ list_id, influencer_id: a.id })),
         skipDuplicates: true,
       });
+      const refs = includes.tweets.map(toTweet);
+      log.info(`Inserting ${refs.length} referenced tweets for ${context}...`);
+      await db.tweets.createMany({ data: refs, skipDuplicates: true });
       const tweets = res.tweets.map(toTweet);
       log.info(`Inserting ${tweets.length} tweets for ${context}...`);
       await db.tweets.createMany({ data: tweets, skipDuplicates: true });
@@ -168,8 +170,6 @@ export const loader: LoaderFunction = async ({ request }) => {
       );
     })
   );
-  log.info(`Inserting lists for user (${uid})...`);
-  await db.lists.createMany({ data: lists, skipDuplicates: true });
   const headers = { 'Set-Cookie': await commitSession(session) };
   return new Response('Sync Success', { status: 200, headers });
 };
