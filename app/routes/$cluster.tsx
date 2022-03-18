@@ -100,7 +100,7 @@ export default function Cluster() {
       <ol className='text-sm'>
         {!articles.length && <Empty>no articles to show</Empty>}
         {articles.map((a) => (
-          <ArticleItem {...a} key={a.id} />
+          <ArticleItem {...a} key={Number(a.id)} />
         ))}
       </ol>
     </main>
