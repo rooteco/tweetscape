@@ -75,7 +75,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <Header />
         <Empty>
-          <p>an unexpected runtime error ocurred</p>
+          <p>an unexpected runtime error occurred</p>
           <p>{error.message}</p>
         </Empty>
         <Footer />
@@ -101,8 +101,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   let user: Influencer | undefined;
   if (uid) {
     log.info(`Fetching user (${uid})...`);
-    user =
-      (await db.influencers.findUnique({ where: { id: uid } })) ?? undefined;
+    const influencer = await db.influencers.findUnique({ where: { id: uid } });
+    if (influencer) user = influencer;
+    else log.warn(`User (${uid}) could not be found.`);
   }
   const headers = { 'Set-Cookie': await commitSession(session) };
   return json<LoaderData>({ clusters, user }, { headers });
