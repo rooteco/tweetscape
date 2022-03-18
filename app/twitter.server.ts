@@ -1,1 +1,1 @@
-export { TwitterApi } from 'twitter-api-v2';
+export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
