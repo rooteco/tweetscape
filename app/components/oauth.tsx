@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from 'remix';
+import { Link, useFetcher, useMatches } from 'remix';
 import { useEffect, useRef, useState } from 'react';
 import cn from 'classnames';
 
@@ -24,7 +24,12 @@ export default function OAuth() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const { user } = useLoaderData<LoaderData>();
+  const { user } = useMatches()[0].data as LoaderData;
+
+  const fetcher = useFetcher();
+  useEffect(() => {
+    if (user && fetcher.type === 'init') fetcher.load('/sync');
+  }, [user, fetcher]);
 
   return (
     <aside
