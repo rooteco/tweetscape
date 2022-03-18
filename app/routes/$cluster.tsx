@@ -3,11 +3,11 @@ import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
 import { autoLink, lang, log } from '~/utils.server';
+import { commitSession, getSession } from '~/session.server';
 import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
 import Nav from '~/components/nav';
-import { href } from '~/cookies.server';
 import { redis } from '~/redis.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
@@ -19,7 +19,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.cluster, 'expected params.cluster');
   log.info(`Fetching articles for ${params.cluster}...`);
   const url = new URL(request.url);
-  const cookie = await href.serialize(`${url.pathname}${url.search}`);
+  const session = await getSession(request.headers.get('Cookie'));
+  session.set('href', `${url.pathname}${url.search}`);
   const sort = (url.searchParams.get('sort') ?? 'attention_score') as Sort;
   const filter = (url.searchParams.get('filter') ?? 'hide_retweets') as Filter;
   /* prettier-ignore */
@@ -75,7 +76,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   );
   return json<LoaderData>(
     { articles, locale: lang(request) },
-    { headers: { 'Set-Cookie': cookie } }
+    { headers: { 'Set-Cookie': await commitSession(session) } }
   );
 };
 

@@ -1,7 +1,7 @@
 import type { LoaderFunction } from 'remix';
 import { redirect } from 'remix';
 
-import { href, oauth } from '~/cookies.server';
+import { commitSession, getSession } from '~/session.server';
 import { TwitterApi } from '~/twitter.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
@@ -10,12 +10,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const stateId = url.searchParams.get('state');
   const code = url.searchParams.get('code');
+  const session = await getSession(request.headers.get('Cookie'));
   if (stateId && code) {
-    const oauthCookie = (await oauth.parse(request.headers.get('cookie'))) as {
-      stateId: string;
-      codeVerifier: string;
-    };
-    if (oauthCookie.stateId === stateId) {
+    if (session.get('stateId') === stateId) {
       log.info('Logging in with Twitter OAuth2...');
       const client = new TwitterApi({
         clientId: process.env.OAUTH_CLIENT_ID as string,
@@ -29,7 +26,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         expiresIn,
       } = await client.loginWithOAuth2({
         code,
-        codeVerifier: oauthCookie.codeVerifier,
+        codeVerifier: session.get('codeVerifier') as string,
         redirectUri: `${url.protocol}//${url.host}`,
       });
       log.info('Fetching logged in user from Twitter API...');
@@ -78,6 +75,6 @@ export const loader: LoaderFunction = async ({ request }) => {
       });
     }
   }
-  const cookie = (await href.parse(request.headers.get('cookie'))) as string;
-  return redirect(cookie ?? '/tesla');
+  const headers = { 'Set-Cookie': await commitSession(session) };
+  return redirect((session.get('href') as string) ?? '/tesla', { headers });
 };
