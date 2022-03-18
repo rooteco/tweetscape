@@ -15,14 +15,13 @@ import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import NProgress from 'nprogress';
 import cn from 'classnames';
 
-import type { Cluster, List } from '~/types';
+import type { Cluster, Influencer } from '~/types';
 import { commitSession, getSession } from '~/session.server';
 import Empty from '~/components/empty';
 import Footer from '~/components/footer';
 import Header from '~/components/header';
 import OAuth from '~/components/oauth';
 import OpenIcon from '~/icons/open';
-import { TwitterApi } from '~/twitter.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
@@ -88,7 +87,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   );
 }
 
-export type LoaderData = { clusters: Cluster[]; lists: List[] };
+export type LoaderData = { clusters: Cluster[]; user?: Influencer };
 
 export const loader: LoaderFunction = async ({ request }) => {
   log.info('Fetching visible clusters...');
@@ -99,37 +98,14 @@ export const loader: LoaderFunction = async ({ request }) => {
   log.info(`Fetched ${clusters.length} visible clusters.`);
   const session = await getSession(request.headers.get('Cookie'));
   const uid = session.get('uid') as string | undefined;
-  const lists: List[] = [];
+  let user: Influencer | undefined;
   if (uid) {
-    log.info(`Fetching token for user (${uid})...`);
-    const token = await db.tokens.findUnique({
-      where: { influencer_id: uid },
-    });
-    if (!token) {
-      log.warn(`Token for user (${uid}) not found, skipping...`);
-    } else {
-      log.info(`Fetching lists for user (${uid})...`);
-      const api = new TwitterApi(token.access_token);
-      const data = await api.v2.listsOwned(uid, {
-        'list.fields': [
-          'created_at',
-          'follower_count',
-          'member_count',
-          'private',
-          'description',
-          'owner_id',
-        ],
-      });
-      [...data].forEach((list) => {
-        lists.push({
-          ...(list as Omit<List, 'created_at'>),
-          owner_id: uid,
-          created_at: new Date(list.created_at as string),
-        });
-      });
-    }
+    log.info(`Fetching user (${uid})...`);
+    user =
+      (await db.influencers.findUnique({ where: { id: uid } })) ?? undefined;
   }
-  return json<LoaderData>({ clusters, lists });
+  const headers = { 'Set-Cookie': await commitSession(session) };
+  return json<LoaderData>({ clusters, user }, { headers });
 };
 
 export const links: LinksFunction = () => [
@@ -165,7 +141,7 @@ export default function App() {
     return () => clearTimeout(timeoutId);
   }, [transition.state]);
 
-  const clusters = useLoaderData<LoaderData>();
+  const { clusters } = useLoaderData<LoaderData>();
 
   const [theme, setTheme] = useTheme();
   const nextTheme = useMemo(
