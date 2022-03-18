@@ -26,10 +26,21 @@ export default function OAuth() {
 
   const { user } = useMatches()[0].data as LoaderData;
 
-  const fetcher = useFetcher();
+  const [progress, setProgress] = useState(0);
+  const lists = useFetcher();
   useEffect(() => {
-    if (user && fetcher.type === 'init') fetcher.load('/sync');
-  }, [user, fetcher]);
+    if (user && lists.type === 'init') {
+      lists.load('/sync/lists');
+      setProgress(0.25);
+    } else if (lists.type === 'done') setProgress(0.5);
+  }, [user, lists]);
+  const tweets = useFetcher();
+  useEffect(() => {
+    if (user && lists.type === 'done' && tweets.type === 'init') {
+      tweets.load('/sync/tweets');
+      setProgress(0.75);
+    } else if (tweets.type === 'done') setProgress(1);
+  }, [user, lists.type, tweets]);
 
   return (
     <aside
@@ -83,6 +94,19 @@ export default function OAuth() {
             Hold tight; soon you’ll be able to filter and sort your own
             lists—using the full power of PostgreSQL—to your heart’s content.
           </p>
+          <div
+            className='mt-4 w-full bg-slate-200 rounded-full h-2.5 dark:bg-slate-700'
+            role='progressbar'
+            aria-label='sync progress'
+            aria-valuemin={0}
+            aria-valuemax={1}
+            aria-valuenow={0.5}
+          >
+            <div
+              className='bg-[#1d9bf0] h-2.5 rounded-full transition-[width] ease-out'
+              style={{ width: `${progress * 100}%` }}
+            />
+          </div>
         </>
       )}
     </aside>
