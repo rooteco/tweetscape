@@ -5,6 +5,7 @@ import type {
 } from '@twitter-api-v2/plugin-rate-limit';
 import { TwitterApiRateLimitMemoryStore } from '@twitter-api-v2/plugin-rate-limit';
 
+import { log } from '~/utils.server';
 import { db } from '~/db.server';
 
 export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
@@ -13,6 +14,9 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
   public constructor(private uid: string) {}
 
   public async get(args: ITwitterApiRateLimitGetArgs) {
+    log.debug(
+      `Getting user (${this.uid}) rate limit for: ${args.method} ${args.endpoint}`
+    );
     if (args.method)
       return (
         this.memoryStore.get(args) ??
@@ -40,7 +44,6 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
   }
 
   public async set(args: ITwitterApiRateLimitSetArgs) {
-    this.memoryStore.set(args);
     const limit = {
       ...args.rateLimit,
       method: args.method,
@@ -48,6 +51,14 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
       influencer_id: this.uid,
       resets_at: new Date(args.rateLimit.reset * 1000),
     };
+    log.debug(
+      `Setting user (${this.uid}) rate limit (${limit.remaining}/${
+        limit.limit
+      } remaining until ${limit.resets_at.toLocaleString()}) for: ${
+        limit.method
+      } ${limit.endpoint}`
+    );
+    this.memoryStore.set(args);
     await db.limits.upsert({
       create: limit,
       update: limit,
@@ -62,6 +73,9 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
   }
 
   public async delete(method: string, endpoint: string) {
+    log.debug(
+      `Deleting user (${this.uid}) rate limit for: ${method} ${endpoint}`
+    );
     this.memoryStore.delete(method, endpoint);
     await db.limits.delete({
       where: {
