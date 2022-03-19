@@ -40,6 +40,7 @@ model influencers {
   tweets_count      Int?
   created_at        DateTime?        @db.Timestamptz(6)
   updated_at        DateTime?        @db.Timestamptz(6)
+  limits            limits[]
   list_followers    list_followers[]
   list_members      list_members[]
   lists             lists[]
@@ -194,6 +195,19 @@ model list_members {
   lists         lists       @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([influencer_id, list_id])
+}
+
+model limits {
+  influencer_id String
+  method        String
+  endpoint      String
+  limit         Int
+  reset         Int
+  remaining     Int
+  resets_at     DateTime    @db.Timestamptz(6)
+  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([influencer_id, method, endpoint])
 }
 
 enum annotation_type {
