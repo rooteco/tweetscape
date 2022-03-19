@@ -25,19 +25,23 @@ import { TwitterApiRateLimitDBStore } from '~/limit.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
-export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
+export {
+  ApiResponseError,
+  TwitterApi,
+  TwitterV2IncludesHelper,
+} from 'twitter-api-v2';
 
 export async function getTwitterClientForUser(
   uid: string
-): Promise<TwitterApi> {
+): Promise<{ api: TwitterApi; limits: TwitterApiRateLimitPlugin }> {
   log.info(`Fetching token for user (${uid})...`);
   const token = await db.tokens.findUnique({ where: { influencer_id: uid } });
   invariant(token, `expected token for user (${uid})`);
   const expiration = token.updated_at.valueOf() + token.expires_in * 1000;
-  const rateLimitPlugin = new TwitterApiRateLimitPlugin(
+  const limits = new TwitterApiRateLimitPlugin(
     new TwitterApiRateLimitDBStore(uid)
   );
-  let api = new TwitterApi(token.access_token, { plugins: [rateLimitPlugin] });
+  let api = new TwitterApi(token.access_token, { plugins: [limits] });
   if (expiration < new Date().valueOf()) {
     log.info(
       `User (${uid}) access token expired at ${new Date(
@@ -61,9 +65,9 @@ export async function getTwitterClientForUser(
       },
       where: { influencer_id: uid },
     });
-    api = new TwitterApi(accessToken, { plugins: [rateLimitPlugin] });
+    api = new TwitterApi(accessToken, { plugins: [limits] });
   }
-  return api;
+  return { api, limits };
 }
 
 export function toList(l: ListV2): List {

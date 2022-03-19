@@ -4,9 +4,16 @@ import type {
   ITwitterApiRateLimitStore,
 } from '@twitter-api-v2/plugin-rate-limit';
 import { TwitterApiRateLimitMemoryStore } from '@twitter-api-v2/plugin-rate-limit';
+import type { TwitterRateLimit } from 'twitter-api-v2';
 
-import { log } from '~/utils.server';
 import { db } from '~/db.server';
+import { log } from '~/utils.server';
+
+function limitToString(limit: TwitterRateLimit): string {
+  return `rate limit (${limit.remaining}/${
+    limit.limit
+  } remaining until ${new Date(limit.reset * 1000).toLocaleString()})`;
+}
 
 export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
   private memoryStore = new TwitterApiRateLimitMemoryStore();
@@ -15,31 +22,65 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
 
   public async get(args: ITwitterApiRateLimitGetArgs) {
     log.debug(
-      `Getting user (${this.uid}) rate limit for: ${args.method} ${args.endpoint}`
+      `Getting user (${this.uid}) rate limit for: ${args.method ?? 'GET'} ${
+        args.endpoint
+      }`
     );
-    if (args.method)
-      return (
-        this.memoryStore.get(args) ??
-        (await db.limits.findFirst({
-          where: {
-            influencer_id: this.uid,
-            method: args.method,
-            endpoint: args.endpoint,
-            resets_at: { gt: new Date() },
-          },
-        })) ??
-        undefined
-      );
-    return (
-      this.memoryStore.get(args) ??
-      (await db.limits.findFirst({
+    if (args.method) {
+      const fromMemory = this.memoryStore.get(args);
+      if (fromMemory) {
+        log.debug(
+          `Got user (${this.uid}) ${limitToString(fromMemory)} for: ${
+            args.method
+          } ${args.endpoint}`
+        );
+        return fromMemory;
+      }
+      const fromDB = await db.limits.findFirst({
         where: {
           influencer_id: this.uid,
+          method: args.method,
           endpoint: args.endpoint,
           resets_at: { gt: new Date() },
         },
-      })) ??
-      undefined
+      });
+      if (fromDB) {
+        log.debug(
+          `Got user (${this.uid}) ${limitToString(fromDB)} for: ${
+            args.method
+          } ${args.endpoint}`
+        );
+        return fromDB;
+      }
+    }
+    const fromMemory = this.memoryStore.get(args);
+    if (fromMemory) {
+      log.debug(
+        `Got user (${this.uid}) ${limitToString(fromMemory)} for: GET ${
+          args.endpoint
+        }`
+      );
+      return fromMemory;
+    }
+    const fromDB = await db.limits.findFirst({
+      where: {
+        influencer_id: this.uid,
+        endpoint: args.endpoint,
+        resets_at: { gt: new Date() },
+      },
+    });
+    if (fromDB) {
+      log.debug(
+        `Got user (${this.uid}) ${limitToString(fromDB)} for: GET ${
+          args.endpoint
+        }`
+      );
+      return fromDB;
+    }
+    log.debug(
+      `Could not find non-expired rate limit for user (${this.uid}) and: ${
+        args.method ?? 'GET'
+      } ${args.endpoint}`
     );
   }
 
@@ -52,11 +93,9 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
       resets_at: new Date(args.rateLimit.reset * 1000),
     };
     log.debug(
-      `Setting user (${this.uid}) rate limit (${limit.remaining}/${
-        limit.limit
-      } remaining until ${limit.resets_at.toLocaleString()}) for: ${
-        limit.method
-      } ${limit.endpoint}`
+      `Setting user (${this.uid}) ${limitToString(limit)} for: ${args.method} ${
+        args.endpoint
+      }`
     );
     this.memoryStore.set(args);
     await db.limits.upsert({
