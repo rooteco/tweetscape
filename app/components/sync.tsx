@@ -1,37 +1,51 @@
+import * as timeago from 'timeago.js';
 import { Link, useFetcher, useMatches } from 'remix';
 import { useEffect, useState } from 'react';
+import TimeAgo from 'timeago-react';
+import en_short from 'timeago.js/lib/lang/en_short';
 
 import type { LoaderData } from '~/root';
 
-export default function Sync() {
+timeago.register('en_short', en_short);
+
+// TODO: Hike up this `<ErrorBoundary>` error prop to React context so as to
+// avoid prop drilling from the boundary to the header to this component.
+export default function Sync({ error }: { error?: boolean }) {
   const { user } = useMatches()[0].data as LoaderData;
 
+  const [lastSynced, setLastSynced] = useState(new Date());
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('Syncing user');
   const lists = useFetcher();
   useEffect(() => {
+    if (error) return;
     if (user && lists.type === 'init') {
       lists.submit(null, { method: 'patch', action: '/sync/lists' });
       setProgress(1 / 6);
       setStatus('Syncing lists');
     } else if (lists.type === 'done') setProgress(2 / 6);
-  }, [user, lists]);
+  }, [error, user, lists]);
   const tweets = useFetcher();
   useEffect(() => {
+    if (error) return;
     if (user && lists.type === 'done' && tweets.type === 'init') {
       tweets.submit(null, { method: 'patch', action: '/sync/tweets' });
       setProgress(3 / 6);
       setStatus('Syncing tweets');
     } else if (tweets.type === 'done') setProgress(4 / 6);
-  }, [user, lists.type, tweets]);
+  }, [error, user, lists.type, tweets]);
   const metadata = useFetcher();
   useEffect(() => {
+    if (error) return;
     if (user && tweets.type === 'done' && metadata.type === 'init') {
       metadata.submit(null, { method: 'patch', action: '/sync/metadata' });
       setProgress(5 / 6);
       setStatus('Syncing metadata');
-    } else if (metadata.type === 'done') setProgress(6 / 6);
-  }, [user, tweets.type, metadata]);
+    } else if (metadata.type === 'done') {
+      setProgress(6 / 6);
+      setLastSynced(new Date());
+    }
+  }, [error, user, tweets.type, metadata]);
 
   if (!user)
     return (
@@ -66,9 +80,25 @@ export default function Sync() {
         <span>Login with Twitter</span>
       </Link>
     );
+  if (error)
+    return (
+      <div className='cursor-not-allowed ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          height='24'
+          viewBox='0 0 24 24'
+          width='24'
+          className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500'
+        >
+          <path d='M0 0h24v24H0z' fill='none' />
+          <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z' />
+        </svg>
+        <span>Sync error</span>
+      </div>
+    );
   if (progress < 1)
     return (
-      <div className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'>
+      <div className='cursor-wait ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'>
         <svg
           width='16'
           height='16'
@@ -84,7 +114,12 @@ export default function Sync() {
   return (
     <button
       type='button'
-      className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
+      className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
+      onClick={() => {
+        lists.type = 'init';
+        tweets.type = 'init';
+        metadata.type = 'init';
+      }}
     >
       <svg
         className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500'
@@ -95,7 +130,9 @@ export default function Sync() {
       >
         <path d='M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z' />
       </svg>
-      <span>Synced</span>
+      <span>
+        Synced <TimeAgo datetime={lastSynced} locale='en_short' />
+      </span>
     </button>
   );
 }

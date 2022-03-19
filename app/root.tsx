@@ -2,24 +2,20 @@ import {
   Links,
   LiveReload,
   Meta,
-  NavLink,
   Outlet,
   Scripts,
   ScrollRestoration,
   json,
-  useLoaderData,
   useTransition,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import NProgress from 'nprogress';
-import cn from 'classnames';
 import { useEffect } from 'react';
 
 import type { Cluster, Influencer, List } from '~/types';
 import { commitSession, getSession } from '~/session.server';
 import Empty from '~/components/empty';
 import Footer from '~/components/footer';
-import Header from '~/components/header';
 import { THEME_SNIPPET } from '~/theme';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
@@ -37,7 +33,6 @@ export function ErrorBoundary({ error }: { error: Error }) {
       </head>
       <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
-        <Header />
         <Empty>
           <p>an unexpected runtime error occurred</p>
           <p>{error.message}</p>
@@ -123,9 +118,6 @@ export default function App() {
     const timeoutId = setTimeout(() => NProgress.start(), 500);
     return () => clearTimeout(timeoutId);
   }, [transition.state]);
-
-  const { clusters, lists } = useLoaderData<LoaderData>();
-
   return (
     <html lang='en'>
       <head>
@@ -136,66 +128,6 @@ export default function App() {
       </head>
       <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
-        <Header>
-          <div className='flex mb-4'>
-            {!!lists.length && (
-              <div>
-                <h2 className='uppercase text-xs text-slate-400 dark:text-slate-600'>
-                  Lists
-                </h2>
-                <nav className='font-semibold text-sm'>
-                  {lists
-                    .map(({ id, name }) => (
-                      <NavLink
-                        key={id}
-                        className={({ isActive }) =>
-                          cn('lowercase', { underline: isActive })
-                        }
-                        to={`/lists/${id}`}
-                      >
-                        {name}
-                      </NavLink>
-                    ))
-                    .reduce((a, b) => (
-                      <>
-                        {a}
-                        {' · '}
-                        {b}
-                      </>
-                    ))}
-                </nav>
-              </div>
-            )}
-            {!!clusters.length && (
-              <div className='ml-4'>
-                <h2 className='uppercase text-xs text-slate-400 dark:text-slate-600'>
-                  Clusters
-                </h2>
-                <nav className='font-semibold text-sm'>
-                  {clusters
-                    .map(({ id, name, slug }) => (
-                      <NavLink
-                        key={id}
-                        className={({ isActive }) =>
-                          cn('lowercase', { underline: isActive })
-                        }
-                        to={`/clusters/${slug}`}
-                      >
-                        {name}
-                      </NavLink>
-                    ))
-                    .reduce((a, b) => (
-                      <>
-                        {a}
-                        {' · '}
-                        {b}
-                      </>
-                    ))}
-                </nav>
-              </div>
-            )}
-          </div>
-        </Header>
         <Outlet />
         <Footer />
         <ScrollRestoration />

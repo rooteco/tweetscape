@@ -1,15 +1,14 @@
-import type { ReactNode } from 'react';
+import { NavLink, useMatches } from 'remix';
+import cn from 'classnames';
 
 import { Theme, useTheme } from '~/theme';
+import type { LoaderData } from '~/root';
 import Sync from '~/components/sync';
 import TwitterIcon from '~/icons/twitter';
 
-export interface HeaderProps {
-  children?: ReactNode;
-}
-
-export default function Header({ children }: HeaderProps) {
+export default function Header({ error }: { error?: boolean }) {
   const [theme, setTheme] = useTheme();
+  const { clusters, lists } = useMatches()[0].data as LoaderData;
   return (
     <header className='border-b-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-between items-end'>
       <div>
@@ -100,10 +99,63 @@ export default function Header({ children }: HeaderProps) {
             </svg>
             <span>GitHub</span>
           </a>
-          <Sync />
+          <Sync error={error} />
         </nav>
       </div>
-      {children}
+      <div className='flex mb-4'>
+        {!!lists.length && (
+          <div>
+            <h2 className='uppercase text-xs text-slate-500'>Lists</h2>
+            <nav className='font-semibold text-sm'>
+              {lists
+                .map(({ id, name }) => (
+                  <NavLink
+                    key={id}
+                    className={({ isActive }) =>
+                      cn('lowercase', { underline: isActive })
+                    }
+                    to={`/lists/${id}`}
+                  >
+                    {name}
+                  </NavLink>
+                ))
+                .reduce((a, b) => (
+                  <>
+                    {a}
+                    {' · '}
+                    {b}
+                  </>
+                ))}
+            </nav>
+          </div>
+        )}
+        {!!clusters.length && (
+          <div className='ml-4'>
+            <h2 className='uppercase text-xs text-slate-500'>Clusters</h2>
+            <nav className='font-semibold text-sm'>
+              {clusters
+                .map(({ id, name, slug }) => (
+                  <NavLink
+                    key={id}
+                    className={({ isActive }) =>
+                      cn('lowercase', { underline: isActive })
+                    }
+                    to={`/clusters/${slug}`}
+                  >
+                    {name}
+                  </NavLink>
+                ))
+                .reduce((a, b) => (
+                  <>
+                    {a}
+                    {' · '}
+                    {b}
+                  </>
+                ))}
+            </nav>
+          </div>
+        )}
+      </div>
     </header>
   );
 }
