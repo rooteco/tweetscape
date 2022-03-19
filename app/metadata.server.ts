@@ -12,12 +12,17 @@ import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
 
-const scheduler = new Bottleneck({
+const limiter = new Bottleneck({
   trackDoneStatus: true,
   maxConcurrent: 100,
   minTime: 250,
 });
-const fetched = scheduler.wrap(fetch);
+limiter.on('error', (e) => {
+  log.error(`Limiter error: ${(e as Error).stack}`);
+});
+limiter.on('failed', (e) => {
+  log.warn(`Limiter job failed: ${(e as Error).stack}`);
+});
 
 function needsToBeFetched(article: Article): boolean {
   return !article.title || !article.description;
@@ -71,7 +76,7 @@ export const action: ActionFunction = async ({ request }) => {
       const url = article.expanded_url;
       try {
         log.debug(`Fetching link (${url}) metadata...`);
-        const res = await fetched(url);
+        const res = await limiter.schedule({ expiration: 5000 }, fetch, url);
         const html = await res.text();
         log.debug(`Parsing link (${url}) metadata...`);
         const ast = parse(html);
