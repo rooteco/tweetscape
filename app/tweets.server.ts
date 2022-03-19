@@ -95,16 +95,21 @@ export const loader: LoaderFunction = async ({ request }) => {
   log.info(`Fetching token for user (${uid})...`);
   const token = await db.tokens.findUnique({ where: { influencer_id: uid } });
   invariant(token, `expected token for user (${uid})`);
-  log.info(`Fetching followed lists for user (${uid})...`);
-  const lists = await db.list_followers.findMany({
-    where: { influencer_id: uid },
-  });
+  log.info(`Fetching followed and owned lists for user (${uid})...`);
+  const [followedLists, ownedLists] = await Promise.all([
+    db.list_followers.findMany({ where: { influencer_id: uid } }),
+    db.lists.findMany({ where: { owner_id: uid } }),
+  ]);
+  const listIds = [
+    ...followedLists.map((l) => l.list_id),
+    ...ownedLists.map((l) => l.id),
+  ];
   const api = new TwitterApi(token.access_token);
   await Promise.all(
-    lists.map(async ({ list_id }) => {
-      const context = `user (${uid}) list (${list_id})`;
+    listIds.map(async (listId) => {
+      const context = `user (${uid}) list (${listId})`;
       log.info(`Fetching tweets for ${context}...`);
-      const res = await api.v2.listTweets(list_id, {
+      const res = await api.v2.listTweets(listId, {
         'tweet.fields': [
           'created_at',
           'entities',
@@ -132,7 +137,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       await db.influencers.createMany({ data: authors, skipDuplicates: true });
       log.info(`Inserting ${authors.length} list members for ${context}...`);
       await db.list_members.createMany({
-        data: authors.map((a) => ({ list_id, influencer_id: a.id })),
+        data: authors.map((a) => ({ list_id: listId, influencer_id: a.id })),
         skipDuplicates: true,
       });
       const refs = includes.tweets.map(toTweet);
