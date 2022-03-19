@@ -13,7 +13,6 @@ import { redis } from '~/redis.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
 
-export type Sort = 'attention_score' | 'tweets_count';
 export type Filter = 'show_retweets' | 'hide_retweets';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
@@ -22,7 +21,6 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
   session.set('href', `${url.pathname}${url.search}`);
-  const sort = (url.searchParams.get('sort') ?? 'attention_score') as Sort;
   const filter = (url.searchParams.get('filter') ?? 'hide_retweets') as Filter;
   /* prettier-ignore */
   const articles = await redis<Article>(

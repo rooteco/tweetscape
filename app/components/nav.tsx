@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'remix';
 import cn from 'classnames';
 
-import type { Filter, Sort } from '~/routes/$cluster';
+import type { Filter, Sort } from '~/routes/clusters.$slug';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
 import Tooltip from '~/components/tooltip';

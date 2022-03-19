@@ -82,6 +82,8 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
         args.method ?? 'GET'
       } ${args.endpoint}`
     );
+    /* eslint-disable-next-line no-useless-return, consistent-return */
+    return;
   }
 
   public async set(args: ITwitterApiRateLimitSetArgs) {
