@@ -40,7 +40,3 @@ export class Logger {
 }
 
 export const log = new Logger(LogLevel.Debug);
-
-export function caps(str: string): string {
-  return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
-}

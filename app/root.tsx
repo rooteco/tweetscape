@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import {
   Links,
   LiveReload,
@@ -14,54 +13,20 @@ import {
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import NProgress from 'nprogress';
 import cn from 'classnames';
+import { useEffect } from 'react';
 
 import type { Cluster, Influencer, List } from '~/types';
 import { commitSession, getSession } from '~/session.server';
 import Empty from '~/components/empty';
 import Footer from '~/components/footer';
 import Header from '~/components/header';
-import OpenIcon from '~/icons/open';
+import { THEME_SNIPPET } from '~/theme';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
 import styles from '~/styles/app.css';
 
-type Theme = 'sync' | 'dark' | 'light';
-const THEMES: Theme[] = ['sync', 'dark', 'light'];
-const THEME_SNIPPET = `
-  if (localStorage.theme === 'dark')
-    document.documentElement.classList.add('dark');
-  if (!localStorage.theme || localStorage.theme === 'sync') {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) 
-      document.documentElement.classList.add('dark');
-  }
-  `;
-export function useTheme(): [
-  Theme | undefined,
-  Dispatch<SetStateAction<Theme | undefined>>
-] {
-  const [theme, setTheme] = useState<Theme>();
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else if (theme === 'sync') {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches)
-        document.documentElement.classList.add('dark');
-    }
-  }, [theme]);
-  useEffect(() => {
-    setTheme((prev) => (localStorage.getItem('theme') as Theme) ?? prev);
-  }, []);
-  useEffect(() => {
-    if (theme) localStorage.setItem('theme', theme);
-  }, [theme]);
-  return useMemo(() => [theme, setTheme], [theme, setTheme]);
-}
-
 export function ErrorBoundary({ error }: { error: Error }) {
-  useTheme();
   return (
     <html lang='en'>
       <head>
@@ -161,12 +126,6 @@ export default function App() {
 
   const { clusters, lists } = useLoaderData<LoaderData>();
 
-  const [theme, setTheme] = useTheme();
-  const nextTheme = useMemo(
-    () => THEMES[(THEMES.indexOf(theme as Theme) + 1) % THEMES.length],
-    [theme]
-  );
-
   return (
     <html lang='en'>
       <head>
@@ -178,7 +137,7 @@ export default function App() {
       <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <Header>
-          <nav className='font-semibold text-sm'>
+          <nav className='font-semibold text-sm mb-4'>
             {!!lists.length &&
               lists
                 .map(({ id, name }) => (
@@ -199,7 +158,7 @@ export default function App() {
                     {b}
                   </>
                 ))}
-            {!!lists.length && ' · '}
+            {!!lists.length && !!clusters.length && ' · '}
             {!!clusters.length &&
               clusters
                 .map(({ id, name, slug }) => (
@@ -220,24 +179,6 @@ export default function App() {
                     {b}
                   </>
                 ))}
-            {!!clusters.length && ' · '}
-            <button
-              type='button'
-              className='font-semibold text-sm w-[32.25px]'
-              aria-pressed={theme === 'sync' ? 'mixed' : theme === 'dark'}
-              onClick={() => setTheme(nextTheme)}
-            >
-              {nextTheme}
-            </button>
-            {' · '}
-            <a
-              href='https://github.com/rooteco/tweetscape'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              github
-              <OpenIcon />
-            </a>
           </nav>
         </Header>
         <Outlet />

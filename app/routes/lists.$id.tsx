@@ -9,7 +9,6 @@ import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
 import type { Filter } from '~/articles.server';
 import Nav from '~/components/nav';
-import OAuth from '~/components/oauth';
 import { getListArticles } from '~/articles.server';
 
 export type LoaderData = { articles: Article[]; locale: string };
@@ -44,7 +43,6 @@ export default function Cluster() {
   const { articles } = useLoaderData<LoaderData>();
   return (
     <main>
-      <OAuth />
       <Nav />
       <ol className='text-sm'>
         {!articles.length && <Empty>no articles to show</Empty>}
