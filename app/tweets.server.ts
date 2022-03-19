@@ -5,12 +5,11 @@ import type {
   UserV2,
 } from 'twitter-api-v2';
 import type { LoaderFunction } from 'remix';
-import type { PrismaClient } from '@prisma/client';
 import invariant from 'tiny-invariant';
 
 import {
+  TwitterApi,
   TwitterV2IncludesHelper,
-  getTwitterClientForUser,
   toAnnotation,
   toInfluencer,
   toRef,
@@ -18,11 +17,10 @@ import {
   toTweet,
 } from '~/twitter.server';
 import { commitSession, getSession } from '~/session.server';
+import { db } from '~/db.server';
 import { log } from '~/utils.server';
-import { db as prisma } from '~/db.server';
 
 async function insertMentions(
-  db: Pick<PrismaClient, 'mentions'>,
   mentions: TweetEntityMentionV2[],
   t: TweetV2,
   users: UserV2[]
@@ -38,15 +36,11 @@ async function insertMentions(
   await db.mentions.createMany({ data, skipDuplicates: true });
 }
 
-async function insertURLs(
-  db: Pick<PrismaClient, 'links' | 'urls' | 'images'>,
-  urls: TweetEntityUrlV2[],
-  t: TweetV2
-) {
+async function insertURLs(urls: TweetEntityUrlV2[], t: TweetV2) {
   // Prisma doesn't support `insertMany` with a `RETURNING` clause because MySQL
   // doesn't support it (workaround: either this or use plain SQL).
   // @see {@link https://github.com/prisma/prisma/issues/8131}
-  const links = await Promise.all(
+  const links = await db.$transaction(
     urls.map((u) =>
       db.links.upsert({
         create: {
@@ -94,101 +88,93 @@ async function insertURLs(
   });
 }
 
-export const loader: LoaderFunction = ({ request }) =>
-  prisma.$transaction(async (db) => {
-    const session = await getSession(request.headers.get('Cookie'));
-    const uid = session.get('uid') as string | undefined;
-    invariant(uid, 'expected session uid');
-    log.info(`Fetching token for user (${uid})...`);
-    const token = await db.tokens.findUnique({ where: { influencer_id: uid } });
-    invariant(token, `expected token for user (${uid})`);
-    log.info(`Fetching followed and owned lists for user (${uid})...`);
-    const [followedLists, ownedLists] = await Promise.all([
-      db.list_followers.findMany({ where: { influencer_id: uid } }),
-      db.lists.findMany({ where: { owner_id: uid } }),
-    ]);
-    const listIds = [
-      ...followedLists.map((l) => l.list_id),
-      ...ownedLists.map((l) => l.id),
-    ];
-    const api = await getTwitterClientForUser(db, uid);
-    await Promise.all(
-      listIds.map(async (listId) => {
-        const context = `user (${uid}) list (${listId})`;
-        log.info(`Fetching tweets for ${context}...`);
-        const res = await api.v2.listTweets(listId, {
-          'tweet.fields': [
-            'created_at',
-            'entities',
-            'author_id',
-            'public_metrics',
-            'referenced_tweets',
-          ],
-          'expansions': [
-            'referenced_tweets.id',
-            'referenced_tweets.id.author_id',
-            'entities.mentions.username',
-          ],
-          'user.fields': [
-            'id',
-            'name',
-            'username',
-            'profile_image_url',
-            'public_metrics',
-            'created_at',
-          ],
-        });
-        const includes = new TwitterV2IncludesHelper(res);
-        const authors = includes.users.map(toInfluencer);
-        log.info(`Inserting ${authors.length} tweet authors for ${context}...`);
-        await db.influencers.createMany({
-          data: authors,
-          skipDuplicates: true,
-        });
-        log.info(`Inserting ${authors.length} list members for ${context}...`);
-        await db.list_members.createMany({
-          data: authors.map((a) => ({ list_id: listId, influencer_id: a.id })),
-          skipDuplicates: true,
-        });
-        const refs = includes.tweets.map(toTweet);
-        log.info(
-          `Inserting ${refs.length} referenced tweets for ${context}...`
-        );
-        await db.tweets.createMany({ data: refs, skipDuplicates: true });
-        const tweets = res.tweets.map(toTweet);
-        log.info(`Inserting ${tweets.length} tweets for ${context}...`);
-        await db.tweets.createMany({ data: tweets, skipDuplicates: true });
-        await Promise.all(
-          res.tweets
-            .map((t) => [
-              insertURLs(db, t.entities?.urls ?? [], t),
-              insertMentions(db, t.entities?.mentions ?? [], t, includes.users),
-              db.annotations.createMany({
-                data:
-                  t.entities?.annotations?.map((a) => toAnnotation(a, t)) ?? [],
-                skipDuplicates: true,
-              }),
-              db.tags.createMany({
-                data:
-                  t.entities?.hashtags?.map((h) => toTag(h, t, 'hashtag')) ??
-                  [],
-                skipDuplicates: true,
-              }),
-              db.tags.createMany({
-                data:
-                  t.entities?.cashtags?.map((h) => toTag(h, t, 'cashtag')) ??
-                  [],
-                skipDuplicates: true,
-              }),
-              db.refs.createMany({
-                data: t.referenced_tweets?.map((r) => toRef(r, t)) ?? [],
-                skipDuplicates: true,
-              }),
-            ])
-            .flat()
-        );
-      })
-    );
-    const headers = { 'Set-Cookie': await commitSession(session) };
-    return new Response('Sync Success', { status: 200, headers });
-  });
+export const loader: LoaderFunction = async ({ request }) => {
+  const session = await getSession(request.headers.get('Cookie'));
+  const uid = session.get('uid') as string | undefined;
+  invariant(uid, 'expected session uid');
+  log.info(`Fetching token for user (${uid})...`);
+  const token = await db.tokens.findUnique({ where: { influencer_id: uid } });
+  invariant(token, `expected token for user (${uid})`);
+  log.info(`Fetching followed and owned lists for user (${uid})...`);
+  const [followedLists, ownedLists] = await Promise.all([
+    db.list_followers.findMany({ where: { influencer_id: uid } }),
+    db.lists.findMany({ where: { owner_id: uid } }),
+  ]);
+  const listIds = [
+    ...followedLists.map((l) => l.list_id),
+    ...ownedLists.map((l) => l.id),
+  ];
+  const api = new TwitterApi(token.access_token);
+  await Promise.all(
+    listIds.map(async (listId) => {
+      const context = `user (${uid}) list (${listId})`;
+      log.info(`Fetching tweets for ${context}...`);
+      const res = await api.v2.listTweets(listId, {
+        'tweet.fields': [
+          'created_at',
+          'entities',
+          'author_id',
+          'public_metrics',
+          'referenced_tweets',
+        ],
+        'expansions': [
+          'referenced_tweets.id',
+          'referenced_tweets.id.author_id',
+          'entities.mentions.username',
+        ],
+        'user.fields': [
+          'id',
+          'name',
+          'username',
+          'profile_image_url',
+          'public_metrics',
+          'created_at',
+        ],
+      });
+      const includes = new TwitterV2IncludesHelper(res);
+      const authors = includes.users.map(toInfluencer);
+      log.info(`Inserting ${authors.length} tweet authors for ${context}...`);
+      await db.influencers.createMany({ data: authors, skipDuplicates: true });
+      log.info(`Inserting ${authors.length} list members for ${context}...`);
+      await db.list_members.createMany({
+        data: authors.map((a) => ({ list_id: listId, influencer_id: a.id })),
+        skipDuplicates: true,
+      });
+      const refs = includes.tweets.map(toTweet);
+      log.info(`Inserting ${refs.length} referenced tweets for ${context}...`);
+      await db.tweets.createMany({ data: refs, skipDuplicates: true });
+      const tweets = res.tweets.map(toTweet);
+      log.info(`Inserting ${tweets.length} tweets for ${context}...`);
+      await db.tweets.createMany({ data: tweets, skipDuplicates: true });
+      await Promise.all(
+        res.tweets
+          .map((t) => [
+            insertURLs(t.entities?.urls ?? [], t),
+            insertMentions(t.entities?.mentions ?? [], t, includes.users),
+            db.annotations.createMany({
+              data:
+                t.entities?.annotations?.map((a) => toAnnotation(a, t)) ?? [],
+              skipDuplicates: true,
+            }),
+            db.tags.createMany({
+              data:
+                t.entities?.hashtags?.map((h) => toTag(h, t, 'hashtag')) ?? [],
+              skipDuplicates: true,
+            }),
+            db.tags.createMany({
+              data:
+                t.entities?.cashtags?.map((h) => toTag(h, t, 'cashtag')) ?? [],
+              skipDuplicates: true,
+            }),
+            db.refs.createMany({
+              data: t.referenced_tweets?.map((r) => toRef(r, t)) ?? [],
+              skipDuplicates: true,
+            }),
+          ])
+          .flat()
+      );
+    })
+  );
+  const headers = { 'Set-Cookie': await commitSession(session) };
+  return new Response('Sync Success', { status: 200, headers });
+};
