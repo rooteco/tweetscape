@@ -1,13 +1,16 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
-// TODO: Export an enum instead of this.
-export type Theme = 'sync' | 'dark' | 'light';
-export const THEMES: Theme[] = ['sync', 'dark', 'light'];
+export enum Theme {
+  System,
+  Dark,
+  Light,
+}
+
 export const THEME_SNIPPET = `
-  if (localStorage.theme === 'dark')
+  if (localStorage.theme === '${Theme.Dark}')
     document.documentElement.classList.add('dark');
-  if (!localStorage.theme || localStorage.theme === 'sync') {
+  if (localStorage.theme === undefined || localStorage.theme === '${Theme.System}') {
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) 
       document.documentElement.classList.add('dark');
   }
@@ -19,20 +22,20 @@ export function useTheme(): [
 ] {
   const [theme, setTheme] = useState<Theme>();
   useEffect(() => {
-    if (theme === 'dark') {
+    if (theme === Theme.Dark) {
       document.documentElement.classList.add('dark');
-    } else if (theme === 'light') {
+    } else if (theme === Theme.Light) {
       document.documentElement.classList.remove('dark');
-    } else if (theme === 'sync') {
+    } else if (theme === Theme.System) {
       if (window.matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.classList.add('dark');
     }
   }, [theme]);
   useEffect(() => {
-    setTheme((prev) => (localStorage.getItem('theme') as Theme) ?? prev);
+    setTheme((p) => (Number(localStorage.getItem('theme')) as Theme) ?? p);
   }, []);
   useEffect(() => {
-    if (theme) localStorage.setItem('theme', theme);
+    if (theme !== undefined) localStorage.setItem('theme', theme.toString());
   }, [theme]);
   return useMemo(() => [theme, setTheme], [theme, setTheme]);
 }
