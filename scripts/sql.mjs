@@ -164,23 +164,13 @@ export async function insertURLs(urls, t, db) {
       arr.map((o) => o.expanded_url).indexOf(u.expanded_url) === idx
   );
   const linkValues = deduped.map((u) => [
-    format.literal(u.url),
-    format.literal(u.expanded_url),
-    format.literal(u.display_url),
-    u.images
-      ? `ARRAY[${u.images
-          .map(
-            (o) =>
-              `(${Object.values(o)
-                .map((v) => format.literal(v))
-                .join()})`
-          )
-          .join()}]::image[]`
-      : 'NULL',
-    format.literal(u.status ?? null),
-    format.literal(u.title ?? null),
-    format.literal(u.description ?? null),
-    format.literal(u.unwound_url ?? null),
+    u.url,
+    u.expanded_url,
+    u.display_url,
+    u.status ?? null,
+    u.title ?? null,
+    u.description ?? null,
+    u.unwound_url ?? null,
   ]);
   // Handle edge-case where the `expanded_url` is different (e.g.
   // `https://twitter.com/teslaownersSV/status/1493299926612144130` v.s.
@@ -193,17 +183,15 @@ export async function insertURLs(urls, t, db) {
       "url",
       "expanded_url",
       "display_url",
-      "images",
       "status",
       "title",
       "description",
       "unwound_url"
-    ) AS (VALUES %s)
+    ) AS (VALUES %L)
     INSERT INTO links (
       "url",
       "expanded_url",
       "display_url",
-      "images",
       "status",
       "title",
       "description",
@@ -212,7 +200,6 @@ export async function insertURLs(urls, t, db) {
       data."url",
       COALESCE (existing.expanded_url, data.expanded_url),
       data."display_url",
-      data."images"::image[],
       data."status"::INTEGER,
       data."title",
       data."description",
@@ -226,9 +213,19 @@ export async function insertURLs(urls, t, db) {
     `,
     linkValues
   );
-  let links, values, query;
+  let links, values, images, query;
   try {
     links = await db.query(linkQuery);
+    images = deduped
+      .map((u, idx) =>
+        (u.images ?? []).map((i) => [
+          Number(links.rows[idx].id),
+          i.url,
+          i.width,
+          i.height,
+        ])
+      )
+      .flat();
     values = deduped.map((u, idx) => [
       t.id,
       Number(links.rows[idx].id),
@@ -243,8 +240,20 @@ export async function insertURLs(urls, t, db) {
         "start",
         "end"
       ) VALUES %L ON CONFLICT ON CONSTRAINT urls_pkey DO NOTHING;
+      
+      ${
+        images.length
+          ? `INSERT INTO images (
+        "link_id",
+        "url",
+        "width",
+        "height"
+      ) VALUES %L ON CONFLICT ON CONSTRAINT images_pkey DO NOTHING;`
+          : ''
+      }
       `,
-      values
+      values,
+      images
     );
     await db.query(query);
   } catch (e) {
@@ -253,8 +262,9 @@ export async function insertURLs(urls, t, db) {
     log.debug(`Link values: ${JSON.stringify(linkValues, null, 2)}`);
     log.debug(`Link query: ${linkQuery}`);
     log.debug(`Links: ${JSON.stringify(links, null, 2)}`);
-    log.debug(`URLs: ${JSON.stringify(values, null, 2)}`);
-    log.debug(`URLs query: ${query}`);
+    log.debug(`URL values: ${JSON.stringify(values, null, 2)}`);
+    log.debug(`Image values: ${JSON.stringify(images, null, 2)}`);
+    log.debug(`URLs and images query: ${query}`);
     throw e;
   }
 }
