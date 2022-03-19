@@ -206,7 +206,7 @@ export default function App() {
                   className={({ isActive }) =>
                     cn('lowercase', { underline: isActive })
                   }
-                  to={`/${slug}`}
+                  to={`/clusters/${slug}`}
                 >
                   {name}
                 </NavLink>
