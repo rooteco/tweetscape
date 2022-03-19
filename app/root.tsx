@@ -35,7 +35,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
         <Meta />
         <Links />
       </head>
-      <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
+      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <Header />
         <Empty>
@@ -134,7 +134,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
+      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <Header>
           <nav className='font-semibold text-sm mb-4'>
