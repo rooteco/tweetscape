@@ -77,6 +77,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       session.set('uid', user.id);
     }
   }
-  const headers = { 'Set-Cookie': await commitSession(session) };
-  return redirect((session.get('href') as string) ?? '/tesla', { headers });
+  return redirect((session.get('href') as string) ?? '/clusters/tesla', {
+    headers: { 'Set-Cookie': await commitSession(session) },
+  });
 };
