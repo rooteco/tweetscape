@@ -21,55 +21,78 @@ async function data(c, start, end, db) {
   const { total, ...data } = await getInfluencers(c, 0);
   log.info(`Fetching ${total} influencers from Hive (in pages of 50)...`);
   const arr = Array(Math.ceil(Number(total) / 50)).fill(null);
+
+  const insert = {
+    tweets: [],
+    users: [],
+    influencers: [],
+    urls: [],
+    mentions: [],
+    annotations: [],
+    hashtags: [],
+    cashtags: [],
+    refs: [],
+  };
+
   await Promise.all(
     arr.map(async (_, pg) => {
       if (pg >= 1000 / 50) return; // Only import tweets from first 1000 influencers.
-      try {
-        log.info(`Beginning database transaction (${pg})...`);
-        await db.query('BEGIN');
-        await db.query('SET CONSTRAINTS ALL IMMEDIATE');
-        const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
-        await insertInfluencers(influencers, c, db);
-        log.info(`Fetching tweets from ${influencers.length} timelines...`);
-        await Promise.all(
-          influencers.map(async (i) => {
-            const { id } = i.social_account.social_account;
-            const data = await getTweets(id, start, end);
-            const users = data.reduce(
-              (a, b) => [...a, ...(b.includes?.users ?? [])],
-              []
-            );
-            await insertUsers(users, db);
-            const referencedTweets = data.reduce(
-              (a, b) => [...a, ...(b.includes?.tweets ?? [])],
-              []
-            );
-            await insertTweets(referencedTweets, db);
-            const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
-            await insertTweets(tweets, db);
-            await Promise.all(
-              tweets
-                .map((t) => [
-                  insertURLs(t.entities?.urls ?? [], t, db),
-                  insertMentions(t.entities?.mentions ?? [], t, db),
-                  insertAnnotations(t.entities?.annotations ?? [], t, db),
-                  insertTags(t.entities?.hashtags ?? [], t, db, 'hashtag'),
-                  insertTags(t.entities?.cashtags ?? [], t, db, 'cashtag'),
-                  insertRefs(t.referenced_tweets ?? [], t, db),
-                ])
-                .flat()
-            );
-          })
-        );
-        log.info(`Committing database transaction (${pg})...`);
-        await db.query('COMMIT');
-      } catch (e) {
-        log.error(`Error with database transaction (${pg}): ${e.stack}`);
-        log.warn(`Rolling back database transaction (${pg})...`);
-        await db.query('ROLLBACK');
-      }
+      const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
+      influencers.forEach((i) => insert.influencers.push(i));
+      log.info(`Fetching tweets from ${influencers.length} timelines...`);
+      await Promise.all(
+        influencers.map(async (i) => {
+          const { id } = i.social_account.social_account;
+          const data = await getTweets(id, start, end);
+          const users = data.reduce(
+            (a, b) => [...a, ...(b.includes?.users ?? [])],
+            []
+          );
+          users.forEach((u) => insert.users.push(u));
+          const referencedTweets = data.reduce(
+            (a, b) => [...a, ...(b.includes?.tweets ?? [])],
+            []
+          );
+          referencedTweets.forEach((t) => insert.tweets.push(t));
+          const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
+          tweets.forEach((t) => insert.tweets.push(t));
+          tweets.forEach((t) => {
+            t.entities?.urls?.forEach((u) => insert.urls.push(u));
+            t.entities?.mentions?.forEach((m) => insert.mentions.push(m));
+            t.entities?.annotations?.forEach((a) => insert.annotations.push(a));
+            t.entities?.hashtags?.forEach((h) => insert.hashtags.push(h));
+            t.entities?.cashtags?.forEach((c) => insert.cashtags.push(c));
+            t.referenced_tweets?.forEach((r) => insert.refs.push(r));
+          });
+        })
+      );
     })
   );
+
+  try {
+    log.info(`Beginning database transaction for ${c.name} (${c.id})...`);
+    await db.query('BEGIN');
+    await db.query('SET CONSTRAINTS ALL DEFERRED');
+    await Promise.all([
+      insertInfluencers(insert.influencers, c, db),
+      insertUsers(insert.users, db),
+      insertTweets(insert.tweets, db),
+      insertURLs(insert.urls, t, db),
+      insertMentions(insert.mentions, t, db),
+      insertAnnotations(insert.annotations, t, db),
+      insertTags(insert.hashtags, t, db, 'hashtag'),
+      insertTags(insert.cashtags, t, db, 'cashtag'),
+      insertRefs(insert.refs, t, db),
+    ]);
+    log.info(`Committing database transaction ${c.name} (${c.id})...`);
+    await db.query('COMMIT');
+  } catch (e) {
+    log.error(
+      `Error with database transaction ${c.name} (${c.id}): ${e.stack}`
+    );
+    log.warn(`Rolling back database transaction ${c.name} (${c.id})...`);
+    await db.query('ROLLBACK');
+  }
 }
 
 (async () => {
@@ -91,11 +114,10 @@ async function data(c, start, end, db) {
     log.debug(msg);
   }, 2500);
   try {
-    await data({ id: '2209261', name: 'Ethereum' }, start, end, db);
     await data({ id: '2300535630', name: 'Tesla' }, start, end, db);
-    await data({ id: '2300535799', name: 'Python' }, start, end, db);
-    await data({ id: '7799179292', name: 'NFT' }, start, end, db);
-    await data({ id: '7799179304', name: 'React' }, start, end, db);
+    //await data({ id: '2209261', name: 'Ethereum' }, start, end, db);
+    //await data({ id: '2300535799', name: 'Python' }, start, end, db);
+    //await data({ id: '7799179292', name: 'NFT' }, start, end, db);
   } catch (e) {
     throw e;
   } finally {
