@@ -86,19 +86,22 @@ export default function Sync() {
     );
   if (error)
     return (
-      <div className='cursor-not-allowed ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'>
+      <a
+        href={`${location.pathname}${location.search}`}
+        className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
+      >
         <svg
+          className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500'
           xmlns='http://www.w3.org/2000/svg'
           height='24'
           viewBox='0 0 24 24'
           width='24'
-          className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500'
         >
           <path d='M0 0h24v24H0z' fill='none' />
-          <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z' />
+          <path d='M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z' />
         </svg>
         <span>Sync error</span>
-      </div>
+      </a>
     );
   if (progress < 1)
     return (
