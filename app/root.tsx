@@ -1,67 +1,32 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import {
   Links,
   LiveReload,
   Meta,
-  NavLink,
   Outlet,
   Scripts,
   ScrollRestoration,
   json,
-  useLoaderData,
   useTransition,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
+import { useEffect, useMemo, useState } from 'react';
 import NProgress from 'nprogress';
-import cn from 'classnames';
 
 import type { Cluster, Influencer, List } from '~/types';
 import { commitSession, getSession } from '~/session.server';
 import Empty from '~/components/empty';
+import { ErrorContext } from '~/error';
 import Footer from '~/components/footer';
 import Header from '~/components/header';
-import OpenIcon from '~/icons/open';
+import { THEME_SNIPPET } from '~/theme';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
 import styles from '~/styles/app.css';
 
-type Theme = 'sync' | 'dark' | 'light';
-const THEMES: Theme[] = ['sync', 'dark', 'light'];
-const THEME_SNIPPET = `
-  if (localStorage.theme === 'dark')
-    document.documentElement.classList.add('dark');
-  if (!localStorage.theme || localStorage.theme === 'sync') {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) 
-      document.documentElement.classList.add('dark');
-  }
-  `;
-export function useTheme(): [
-  Theme | undefined,
-  Dispatch<SetStateAction<Theme | undefined>>
-] {
-  const [theme, setTheme] = useState<Theme>();
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else if (theme === 'sync') {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches)
-        document.documentElement.classList.add('dark');
-    }
-  }, [theme]);
-  useEffect(() => {
-    setTheme((prev) => (localStorage.getItem('theme') as Theme) ?? prev);
-  }, []);
-  useEffect(() => {
-    if (theme) localStorage.setItem('theme', theme);
-  }, [theme]);
-  return useMemo(() => [theme, setTheme], [theme, setTheme]);
-}
-
-export function ErrorBoundary({ error }: { error: Error }) {
-  useTheme();
+export function ErrorBoundary({ error: e }: { error: Error }) {
+  const [error, setError] = useState<Error | undefined>(e);
+  const context = useMemo(() => ({ error, setError }), [error, setError]);
   return (
     <html lang='en'>
       <head>
@@ -70,14 +35,16 @@ export function ErrorBoundary({ error }: { error: Error }) {
         <Meta />
         <Links />
       </head>
-      <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
+      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
-        <Header />
-        <Empty>
-          <p>an unexpected runtime error occurred</p>
-          <p>{error.message}</p>
-        </Empty>
-        <Footer />
+        <ErrorContext.Provider value={context}>
+          <Header />
+          <Empty>
+            <p>an unexpected runtime error occurred</p>
+            <p>{e.message}</p>
+          </Empty>
+          <Footer />
+        </ErrorContext.Provider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
@@ -158,15 +125,8 @@ export default function App() {
     const timeoutId = setTimeout(() => NProgress.start(), 500);
     return () => clearTimeout(timeoutId);
   }, [transition.state]);
-
-  const { clusters, lists } = useLoaderData<LoaderData>();
-
-  const [theme, setTheme] = useTheme();
-  const nextTheme = useMemo(
-    () => THEMES[(THEMES.indexOf(theme as Theme) + 1) % THEMES.length],
-    [theme]
-  );
-
+  const [error, setError] = useState<Error>();
+  const context = useMemo(() => ({ error, setError }), [error, setError]);
   return (
     <html lang='en'>
       <head>
@@ -175,73 +135,13 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className='selection:bg-slate-200 dark:selection:bg-slate-700 w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
+      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
-        <Header>
-          <nav className='font-semibold text-sm'>
-            {!!lists.length &&
-              lists
-                .map(({ id, name }) => (
-                  <NavLink
-                    key={id}
-                    className={({ isActive }) =>
-                      cn('lowercase', { underline: isActive })
-                    }
-                    to={`/lists/${id}`}
-                  >
-                    {name}
-                  </NavLink>
-                ))
-                .reduce((a, b) => (
-                  <>
-                    {a}
-                    {' · '}
-                    {b}
-                  </>
-                ))}
-            {!!lists.length && ' · '}
-            {!!clusters.length &&
-              clusters
-                .map(({ id, name, slug }) => (
-                  <NavLink
-                    key={id}
-                    className={({ isActive }) =>
-                      cn('lowercase', { underline: isActive })
-                    }
-                    to={`/clusters/${slug}`}
-                  >
-                    {name}
-                  </NavLink>
-                ))
-                .reduce((a, b) => (
-                  <>
-                    {a}
-                    {' · '}
-                    {b}
-                  </>
-                ))}
-            {!!clusters.length && ' · '}
-            <button
-              type='button'
-              className='font-semibold text-sm w-[32.25px]'
-              aria-pressed={theme === 'sync' ? 'mixed' : theme === 'dark'}
-              onClick={() => setTheme(nextTheme)}
-            >
-              {nextTheme}
-            </button>
-            {' · '}
-            <a
-              href='https://github.com/rooteco/tweetscape'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              github
-              <OpenIcon />
-            </a>
-          </nav>
-        </Header>
-        <Outlet />
-        <Footer />
+        <ErrorContext.Provider value={context}>
+          <Header />
+          <Outlet />
+          <Footer />
+        </ErrorContext.Provider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

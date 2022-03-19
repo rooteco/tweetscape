@@ -18,6 +18,11 @@ module.exports = {
         'sans-serif',
       ],
     },
+    extend: {
+      animation: {
+        rotate: 'spin 2s linear infinite',
+      },
+    },
   },
   plugins: [],
 };

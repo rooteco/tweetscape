@@ -9,8 +9,8 @@ import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
 import Nav from '~/components/nav';
-import OAuth from '~/components/oauth';
 import { getClusterArticles } from '~/articles.server';
+import { useError } from '~/error';
 
 export type LoaderData = { articles: Article[]; locale: string };
 
@@ -30,6 +30,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 };
 
 export function ErrorBoundary({ error }: { error: Error }) {
+  useError(error);
   return (
     <main>
       <Nav />
@@ -45,7 +46,6 @@ export default function Cluster() {
   const { articles } = useLoaderData<LoaderData>();
   return (
     <main>
-      <OAuth />
       <Nav />
       <ol className='text-sm'>
         {!articles.length && <Empty>no articles to show</Empty>}
