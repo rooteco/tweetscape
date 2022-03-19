@@ -1,7 +1,5 @@
 import { parse } from 'accept-language-parser';
 
-export { autoLink } from 'twitter-text';
-
 export function lang(request: Request): string {
   const langs = parse(request.headers.get('Accept-Language') ?? '');
   return langs.length
