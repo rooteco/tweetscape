@@ -479,12 +479,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@remix-run/dev@npm:^1.3.1":
-  version: 1.3.1
-  resolution: "@remix-run/dev@npm:1.3.1"
+"@remix-run/dev@npm:^1.3.2":
+  version: 1.3.2
+  resolution: "@remix-run/dev@npm:1.3.2"
   dependencies:
     "@esbuild-plugins/node-modules-polyfill": ^0.1.4
-    "@remix-run/server-runtime": 1.3.1
+    "@remix-run/server-runtime": 1.3.2
     cacache: ^15.0.5
     chalk: ^4.1.2
     chalk-animation: ^1.6.0
@@ -512,7 +512,7 @@ __metadata:
     xdm: ^2.0.0
   bin:
     remix: cli.js
-  checksum: d42eceab4a7fdbff4bde285fb7b747dfe1c7ce94d9ee8865eb63c2bffae4090ec8f3fa0e83b252c3668f7beaf71e42673d66de9b04598fcc580fe1176b2610b5
+  checksum: cdd11fbff83fbaaad570d28c1ba6200acc3865053fcc51b2098bbacbc1fe4cc629836a396785198161950fbdc123c85c052401c9a3f56b7322ecda29e4ebc6ec
   languageName: node
   linkType: hard
 
@@ -588,6 +588,23 @@ __metadata:
     react: ">=16.8"
     react-dom: ">=16.8"
   checksum: 753cf1c9ffebf020d3cf5d1abd1956d914d0af1e5380894e54174dc7fc4a007be270c5affb819ccca179c8bbddd48afdd4ceea21e2589dafd7e46e886ce38381
+  languageName: node
+  linkType: hard
+
+"@remix-run/server-runtime@npm:1.3.2":
+  version: 1.3.2
+  resolution: "@remix-run/server-runtime@npm:1.3.2"
+  dependencies:
+    "@types/cookie": ^0.4.0
+    cookie: ^0.4.1
+    jsesc: ^3.0.1
+    react-router-dom: ^6.2.2
+    set-cookie-parser: ^2.4.8
+    source-map: ^0.7.3
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: db9020b9b2edae829ce1e2718e10ebb034279c2c060d7c3b717e2cd0a121cca9fd90db4dcc2c7e52457a11bb1efabe99903396f3304fdac6583c18e8ea386323
   languageName: node
   linkType: hard
 
@@ -10001,7 +10018,7 @@ __metadata:
     "@percy/cli": ^1.0.0-beta.76
     "@percy/cypress": ^3.1.1
     "@prisma/client": ^3.11.0
-    "@remix-run/dev": ^1.3.1
+    "@remix-run/dev": ^1.3.2
     "@remix-run/node": ^1.3.1
     "@remix-run/react": ^1.3.1
     "@remix-run/serve": ^1.3.1
