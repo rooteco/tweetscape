@@ -119,7 +119,7 @@ export const action: ActionFunction = async ({ request }) => {
           unwound_url: res.headers.get('Location') ?? url,
         });
       } catch (e) {
-        log.error(`Caught fetching error for link (${url}): ${e.stack}`);
+        log.error(`Error fetching link (${url}): ${(e as Error).stack}`);
       }
     })
   );
