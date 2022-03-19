@@ -10,7 +10,7 @@ import { FILTERS, getListArticles } from '~/articles.server';
 import { commitSession, getSession } from '~/session.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
-import { redis } from '~/redis.server';
+import { swr } from '~/swr.server';
 
 const limiter = new Bottleneck({
   trackDoneStatus: true,
@@ -33,7 +33,7 @@ export const action: ActionFunction = async ({ request }) => {
   const uid = session.get('uid') as string | undefined;
   invariant(uid, 'expected session uid');
   log.info(`Fetching owned and followed lists for user (${uid})...`);
-  // TODO: Move this `redis` query call into a reusable function (as it's used
+  // TODO: Move this `swr` query call into a reusable function (as it's used
   // both here and in the `app/root.tsx` loader function).
   // TODO: Should I allow potentially stale data (from redis) to be used here?
   // TODO: Wrap the `uid` in some SQL injection avoidance mechanism as it's
@@ -41,7 +41,7 @@ export const action: ActionFunction = async ({ request }) => {
   // a) find our cookie secret and encrypt their own (fake) session cookie;
   // b) set the session cookie `uid` to some malicious raw SQL;
   // c) have that SQL run here and mess up our production db.
-  const lists = await redis<Pick<List, 'id'>>(
+  const lists = await swr<Pick<List, 'id'>>(
     `
     select lists.id from lists
     left outer join list_followers on list_followers.list_id = lists.id

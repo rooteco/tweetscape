@@ -16,10 +16,7 @@ if (!global.redisClient)
 let connectionPromise: Promise<void>;
 if (!redisClient.isOpen) connectionPromise = redisClient.connect();
 
-export async function redis<T>(
-  query: string,
-  maxAgeSeconds = 60
-): Promise<T[]> {
+export async function swr<T>(query: string, maxAgeSeconds = 60): Promise<T[]> {
   await connectionPromise;
 
   const key = createHash('sha256').update(query).digest('hex');

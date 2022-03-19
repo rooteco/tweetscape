@@ -2,7 +2,7 @@ import { autoLink } from 'twitter-text';
 
 import type { Article } from '~/types';
 import { log } from '~/utils.server';
-import { redis } from '~/redis.server';
+import { swr } from '~/swr.server';
 
 // TODO: Instead of exporting these types and constants, I should export enums.
 export type Sort = 'attention_score' | 'tweets_count';
@@ -16,7 +16,7 @@ export async function getListArticles(
   filter: Filter
 ): Promise<Article[]> {
   /* prettier-ignore */
-  const articles = await redis<Article>(
+  const articles = await swr<Article>(
     `
     select
       links.*,
@@ -66,7 +66,7 @@ export async function getClusterArticles(
   sort: Sort
 ): Promise<Article[]> {
   /* prettier-ignore */
-  const articles = await redis<Article>(
+  const articles = await swr<Article>(
     `
     select
       links.*,
