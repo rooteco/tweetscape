@@ -179,46 +179,48 @@ export default function App() {
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <Header>
           <nav className='font-semibold text-sm'>
-            {lists
-              .map(({ id, name }) => (
-                <NavLink
-                  key={id}
-                  className={({ isActive }) =>
-                    cn('lowercase', { underline: isActive })
-                  }
-                  to={`/lists/${id}`}
-                >
-                  {name}
-                </NavLink>
-              ))
-              .reduce((a, b) => (
-                <>
-                  {a}
-                  {' · '}
-                  {b}
-                </>
-              ))}
-            {' · '}
-            {clusters
-              .map(({ id, name, slug }) => (
-                <NavLink
-                  key={id}
-                  className={({ isActive }) =>
-                    cn('lowercase', { underline: isActive })
-                  }
-                  to={`/clusters/${slug}`}
-                >
-                  {name}
-                </NavLink>
-              ))
-              .reduce((a, b) => (
-                <>
-                  {a}
-                  {' · '}
-                  {b}
-                </>
-              ))}
-            {' · '}
+            {!!lists.length &&
+              lists
+                .map(({ id, name }) => (
+                  <NavLink
+                    key={id}
+                    className={({ isActive }) =>
+                      cn('lowercase', { underline: isActive })
+                    }
+                    to={`/lists/${id}`}
+                  >
+                    {name}
+                  </NavLink>
+                ))
+                .reduce((a, b) => (
+                  <>
+                    {a}
+                    {' · '}
+                    {b}
+                  </>
+                ))}
+            {!!lists.length && ' · '}
+            {!!clusters.length &&
+              clusters
+                .map(({ id, name, slug }) => (
+                  <NavLink
+                    key={id}
+                    className={({ isActive }) =>
+                      cn('lowercase', { underline: isActive })
+                    }
+                    to={`/clusters/${slug}`}
+                  >
+                    {name}
+                  </NavLink>
+                ))
+                .reduce((a, b) => (
+                  <>
+                    {a}
+                    {' · '}
+                    {b}
+                  </>
+                ))}
+            {!!clusters.length && ' · '}
             <button
               type='button'
               className='font-semibold text-sm w-[32.25px]'
