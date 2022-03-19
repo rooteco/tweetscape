@@ -45,6 +45,7 @@ create table limits (
   "limit" integer not null,
   "reset" integer not null,
   "remaining" integer not null,
+  "resets_at" timestamptz not null,
   primary key ("influencer_id", "method", "endpoint")
 );
 create table lists (

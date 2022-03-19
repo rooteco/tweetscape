@@ -204,6 +204,7 @@ model limits {
   limit         Int
   reset         Int
   remaining     Int
+  resets_at     DateTime    @db.Timestamptz(6)
   influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([influencer_id, method, endpoint])
