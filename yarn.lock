@@ -7205,10 +7205,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:2.6.0":
-  version: 2.6.0
-  resolution: "node-fetch@npm:2.6.0"
-  checksum: 2b741e9315c1c07df4a291d0b304892fa7e8d623fe789fedd53f9bcb8d09102b07591b4b93e552a65dfc457eee9d5d879d0440aefdb64f2d78e7cb78cbad28e9
+"node-fetch@npm:2.6.1":
+  version: 2.6.1
+  resolution: "node-fetch@npm:2.6.1"
+  checksum: 91075bedd57879117e310fbcc36983ad5d699e522edb1ebcdc4ee5294c982843982652925c3532729fdc86b2d64a8a827797a745f332040d91823c8752ee4d7c
   languageName: node
   linkType: hard
 
@@ -8675,9 +8675,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"release@npm:^6.3.0":
-  version: 6.3.0
-  resolution: "release@npm:6.3.0"
+"release@npm:^6.3.1":
+  version: 6.3.1
+  resolution: "release@npm:6.3.1"
   dependencies:
     "@octokit/rest": 15.2.6
     args: 4.0.0
@@ -8694,7 +8694,7 @@ __metadata:
     git-username: 1.0.0
     github-username: 4.1.0
     inquirer: 5.2.0
-    node-fetch: 2.6.0
+    node-fetch: 2.6.1
     node-version: 1.1.3
     opn: 5.4.0
     ora: 2.0.0
@@ -8704,7 +8704,7 @@ __metadata:
     update-check: 1.3.2
   bin:
     release: bin/release.js
-  checksum: d7fa1f31721c21bb8d2857046e69bb526837e02293ce563adad8dc615060b2648d19f2a0a2ded32f62a010d983e02fdeb9e861f91b8cc6ad87252e942284627e
+  checksum: 446bb2242cfe98d6226921621a9c422f4a78a4b683dd9b027e06df67d3ff5da9027ad84637cd8b034475a22efd81c12f5a1551eb0f30720b4b672a4f34c86eea
   languageName: node
   linkType: hard
 
@@ -10050,7 +10050,7 @@ __metadata:
     react: ^17.0.2
     react-dom: ^17.0.2
     redis: ^4.0.4
-    release: ^6.3.0
+    release: ^6.3.1
     remix: ^1.3.1
     sharp: ^0.30.3
     tailwindcss: ^3.0.23
