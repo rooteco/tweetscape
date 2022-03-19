@@ -137,49 +137,64 @@ export default function App() {
       <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <Header>
-          <nav className='font-semibold text-sm mb-4'>
-            {!!lists.length &&
-              lists
-                .map(({ id, name }) => (
-                  <NavLink
-                    key={id}
-                    className={({ isActive }) =>
-                      cn('lowercase', { underline: isActive })
-                    }
-                    to={`/lists/${id}`}
-                  >
-                    {name}
-                  </NavLink>
-                ))
-                .reduce((a, b) => (
-                  <>
-                    {a}
-                    {' · '}
-                    {b}
-                  </>
-                ))}
-            {!!lists.length && !!clusters.length && ' · '}
-            {!!clusters.length &&
-              clusters
-                .map(({ id, name, slug }) => (
-                  <NavLink
-                    key={id}
-                    className={({ isActive }) =>
-                      cn('lowercase', { underline: isActive })
-                    }
-                    to={`/clusters/${slug}`}
-                  >
-                    {name}
-                  </NavLink>
-                ))
-                .reduce((a, b) => (
-                  <>
-                    {a}
-                    {' · '}
-                    {b}
-                  </>
-                ))}
-          </nav>
+          <div className='flex mb-4'>
+            {!!lists.length && (
+              <div>
+                <h2 className='uppercase text-xs text-slate-400 dark:text-slate-600'>
+                  Lists
+                </h2>
+                <nav className='font-semibold text-sm'>
+                  {lists
+                    .map(({ id, name }) => (
+                      <NavLink
+                        key={id}
+                        className={({ isActive }) =>
+                          cn('lowercase', { underline: isActive })
+                        }
+                        to={`/lists/${id}`}
+                      >
+                        {name}
+                      </NavLink>
+                    ))
+                    .reduce((a, b) => (
+                      <>
+                        {a}
+                        {' · '}
+                        {b}
+                      </>
+                    ))}
+                </nav>
+              </div>
+            )}
+            {!!clusters.length && (
+              <div className='ml-4'>
+                <h2 className='uppercase text-xs text-slate-400 dark:text-slate-600'>
+                  Clusters
+                </h2>
+                <nav className='font-semibold text-sm'>
+                  {clusters
+                    .map(({ id, name, slug }) => (
+                      <NavLink
+                        key={id}
+                        className={({ isActive }) =>
+                          cn('lowercase', { underline: isActive })
+                        }
+                        to={`/clusters/${slug}`}
+                      >
+                        {name}
+                      </NavLink>
+                    ))
+                    .reduce((a, b) => (
+                      <>
+                        {a}
+                        {' · '}
+                        {b}
+                      </>
+                    ))}
+                </nav>
+              </div>
+            )}
+          </div>
         </Header>
         <Outlet />
         <Footer />
