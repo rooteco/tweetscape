@@ -7,6 +7,7 @@ import type {
   UserV2,
 } from 'twitter-api-v2';
 import type { Decimal } from '@prisma/client/runtime';
+import type { PrismaClient } from '@prisma/client';
 import { TwitterApi } from 'twitter-api-v2';
 import invariant from 'tiny-invariant';
 
@@ -20,12 +21,12 @@ import type {
   TagType,
   Tweet,
 } from '~/types';
-import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
 export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
 
 export async function getTwitterClientForUser(
+  db: Pick<PrismaClient, 'tokens'>,
   uid: string
 ): Promise<TwitterApi> {
   log.info(`Fetching token for user (${uid})...`);
