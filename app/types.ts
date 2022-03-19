@@ -34,10 +34,10 @@ export type AnnotationType = annotation_type;
 export type RefType = ref_type;
 export type TagType = tag_type;
 export type Article = Link & {
-  cluster_id: string;
-  cluster_name: string;
-  cluster_slug: string;
-  insider_score: number;
-  attention_score: number;
-  tweets: (Tweet & { html?: string; author: Influencer; score: Score })[];
+  cluster_id?: string;
+  cluster_name?: string;
+  cluster_slug?: string;
+  insider_score?: number;
+  attention_score?: number;
+  tweets: (Tweet & { html?: string; author: Influencer; score?: Score })[];
 };

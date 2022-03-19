@@ -17,8 +17,8 @@ export type Sort = 'attention_score' | 'tweets_count';
 export type Filter = 'show_retweets' | 'hide_retweets';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
-  invariant(params.cluster, 'expected params.cluster');
-  log.info(`Fetching articles for ${params.cluster}...`);
+  invariant(params.slug, 'expected params.slug');
+  log.info(`Fetching articles for cluster (${params.slug})...`);
   const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
   session.set('href', `${url.pathname}${url.search}`);
@@ -56,14 +56,14 @@ export const loader: LoaderFunction = async ({ params, request }) => {
           ) as tweets on tweets.id = urls.tweet_id
       ) as tweets on tweets.link_id = links.id
       inner join clusters on clusters.id = tweets.cluster_id
-    where clusters.slug = '${params.cluster}' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
+    where clusters.slug = '${params.slug}' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
     group by links.id, clusters.id
     order by ${sort === 'tweets_count' ? 'count(tweets)' : sort} desc
     limit 20;
     `
   );
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
-  log.info(`Fetched ${articles.length} articles for ${params.cluster}.`);
+  log.info(`Fetched ${articles.length} articles for cluster (${params.slug}).`);
   articles.forEach((article) =>
     article.tweets.forEach((tweet) => {
       tweet.html = autoLink(tweet.text, {
