@@ -647,6 +647,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@twitter-api-v2/plugin-rate-limit@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@twitter-api-v2/plugin-rate-limit@npm:1.0.0"
+  peerDependencies:
+    twitter-api-v2: ^1.11.0
+  checksum: 60d976771a5a23fb9ccf6c8651e2e7ddeaf0be4e5bf4021f414fda66158145b703e5b61e4a3506182eadf3330bf81cf58eea22e4e7a5f73a89e21f4fd2a4cd38
+  languageName: node
+  linkType: hard
+
 "@types/accept-language-parser@npm:^1.5.3":
   version: 1.5.3
   resolution: "@types/accept-language-parser@npm:1.5.3"
@@ -10005,6 +10014,7 @@ __metadata:
     "@remix-run/node": ^1.3.1
     "@remix-run/react": ^1.3.1
     "@remix-run/serve": ^1.3.1
+    "@twitter-api-v2/plugin-rate-limit": ^1.0.0
     "@types/accept-language-parser": ^1.5.3
     "@types/nprogress": ^0.2.0
     "@types/pg": ^8.6.5
