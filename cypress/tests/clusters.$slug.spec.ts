@@ -1,6 +1,6 @@
 describe('Cluster PG', () => {
   it('shows the top articles for cluster', () => {
-    cy.visit('/ethereum').loading(false);
+    cy.visit('/clusters/ethereum').loading(false);
     cy.contains('a', 'hide retweets').should('have.class', 'underline');
     cy.contains('a', 'attention score').should('have.class', 'underline');
     cy.percySnapshot('Cluster');
@@ -103,14 +103,16 @@ describe('Cluster PG', () => {
     cy.url()
       .should(
         'eq',
-        'http://localhost:3000/ethereum?filter=hide_retweets&sort=tweets_count'
+        'http://localhost:3000/clusters/ethereum?filter=hide_retweets&sort=tweets_count'
       )
       .loading(false);
     cy.percySnapshot('Cluster Sorted');
   });
 
   it('shows filters and sorting from url', () => {
-    cy.visit('/ethereum?filter=show_retweets&sort=tweets_count').loading(false);
+    cy.visit(
+      '/clusters/ethereum?filter=show_retweets&sort=tweets_count'
+    ).loading(false);
     cy.percySnapshot('Cluster Filtered');
   });
 });
