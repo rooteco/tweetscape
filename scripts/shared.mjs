@@ -29,8 +29,8 @@ export const twitter = new Bottleneck({
   reservoirRefreshInterval: 15 * 60 * 1000,
   reservoirRefreshAmount: 1500,
   trackDoneStatus: true,
-  maxConcurrent: 10,
-  minTime: 250,
+  maxConcurrent: 1000,
+  minTime: 100,
 });
 const fetchFromTwitter = twitter.wrap(fetch);
 
