@@ -6,7 +6,7 @@ import type { LoaderData } from '~/root';
 import Sync from '~/components/sync';
 import TwitterIcon from '~/icons/twitter';
 
-export default function Header({ error }: { error?: boolean }) {
+export default function Header() {
   const [theme, setTheme] = useTheme();
   const { clusters, lists } = useMatches()[0].data as LoaderData;
   return (
@@ -99,7 +99,7 @@ export default function Header({ error }: { error?: boolean }) {
             </svg>
             <span>GitHub</span>
           </a>
-          <Sync error={error} />
+          <Sync />
         </nav>
       </div>
       <div className='flex mb-4'>

@@ -9,20 +9,24 @@ import {
   useTransition,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
+import { useEffect, useMemo, useState } from 'react';
 import NProgress from 'nprogress';
-import { useEffect } from 'react';
 
 import type { Cluster, Influencer, List } from '~/types';
 import { commitSession, getSession } from '~/session.server';
 import Empty from '~/components/empty';
+import { ErrorContext } from '~/error';
 import Footer from '~/components/footer';
+import Header from '~/components/header';
 import { THEME_SNIPPET } from '~/theme';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
 import styles from '~/styles/app.css';
 
-export function ErrorBoundary({ error }: { error: Error }) {
+export function ErrorBoundary({ error: e }: { error: Error }) {
+  const [error, setError] = useState<Error | undefined>(e);
+  const context = useMemo(() => ({ error, setError }), [error, setError]);
   return (
     <html lang='en'>
       <head>
@@ -33,11 +37,14 @@ export function ErrorBoundary({ error }: { error: Error }) {
       </head>
       <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
-        <Empty>
-          <p>an unexpected runtime error occurred</p>
-          <p>{error.message}</p>
-        </Empty>
-        <Footer />
+        <ErrorContext.Provider value={context}>
+          <Header />
+          <Empty>
+            <p>an unexpected runtime error occurred</p>
+            <p>{e.message}</p>
+          </Empty>
+          <Footer />
+        </ErrorContext.Provider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
@@ -118,6 +125,8 @@ export default function App() {
     const timeoutId = setTimeout(() => NProgress.start(), 500);
     return () => clearTimeout(timeoutId);
   }, [transition.state]);
+  const [error, setError] = useState<Error>();
+  const context = useMemo(() => ({ error, setError }), [error, setError]);
   return (
     <html lang='en'>
       <head>
@@ -128,8 +137,11 @@ export default function App() {
       </head>
       <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
-        <Outlet />
-        <Footer />
+        <ErrorContext.Provider value={context}>
+          <Header />
+          <Outlet />
+          <Footer />
+        </ErrorContext.Provider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

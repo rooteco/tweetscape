@@ -8,9 +8,9 @@ import { lang, log } from '~/utils.server';
 import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
-import Header from '~/components/header';
 import Nav from '~/components/nav';
 import { getClusterArticles } from '~/articles.server';
+import { useError } from '~/error';
 
 export type LoaderData = { articles: Article[]; locale: string };
 
@@ -30,9 +30,9 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 };
 
 export function ErrorBoundary({ error }: { error: Error }) {
+  useError(error);
   return (
     <main>
-      <Header error />
       <Nav />
       <Empty>
         <p>an unexpected runtime error occurred</p>
@@ -46,7 +46,6 @@ export default function Cluster() {
   const { articles } = useLoaderData<LoaderData>();
   return (
     <main>
-      <Header />
       <Nav />
       <ol className='text-sm'>
         {!articles.length && <Empty>no articles to show</Empty>}

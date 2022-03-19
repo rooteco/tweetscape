@@ -1,19 +1,21 @@
 import * as timeago from 'timeago.js';
 import { Link, useFetcher, useMatches } from 'remix';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import TimeAgo from 'timeago-react';
 import en_short from 'timeago.js/lib/lang/en_short';
 
+import { ErrorContext } from '~/error';
 import type { LoaderData } from '~/root';
 
 timeago.register('en_short', en_short);
 
 // TODO: Hike up this `<ErrorBoundary>` error prop to React context so as to
 // avoid prop drilling from the boundary to the header to this component.
-export default function Sync({ error }: { error?: boolean }) {
+export default function Sync() {
   const { user } = useMatches()[0].data as LoaderData;
+  const { error } = useContext(ErrorContext);
 
-  const [lastSynced, setLastSynced] = useState(new Date());
+  const [lastSynced, setLastSynced] = useState<Date>();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('Syncing user');
   const lists = useFetcher();
@@ -43,7 +45,7 @@ export default function Sync({ error }: { error?: boolean }) {
       setStatus('Syncing metadata');
     } else if (metadata.type === 'done') {
       setProgress(6 / 6);
-      setLastSynced(new Date());
+      setLastSynced((prev) => prev ?? new Date());
     }
   }, [error, user, tweets.type, metadata]);
 
@@ -131,7 +133,7 @@ export default function Sync({ error }: { error?: boolean }) {
         <path d='M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z' />
       </svg>
       <span>
-        Synced <TimeAgo datetime={lastSynced} locale='en_short' />
+        Synced <TimeAgo datetime={lastSynced ?? new Date()} locale='en_short' />
       </span>
     </button>
   );
