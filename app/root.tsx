@@ -15,7 +15,7 @@ import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import NProgress from 'nprogress';
 import cn from 'classnames';
 
-import type { Cluster, Influencer } from '~/types';
+import type { Cluster, Influencer, List } from '~/types';
 import { commitSession, getSession } from '~/session.server';
 import Empty from '~/components/empty';
 import Footer from '~/components/footer';
@@ -86,7 +86,11 @@ export function ErrorBoundary({ error }: { error: Error }) {
   );
 }
 
-export type LoaderData = { clusters: Cluster[]; user?: Influencer };
+export type LoaderData = {
+  clusters: Cluster[];
+  lists: List[];
+  user?: Influencer;
+};
 
 export const loader: LoaderFunction = async ({ request }) => {
   log.info('Fetching visible clusters...');
@@ -98,14 +102,28 @@ export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get('Cookie'));
   const uid = session.get('uid') as string | undefined;
   let user: Influencer | undefined;
+  let lists: List[] = [];
   if (uid) {
     log.info(`Fetching user (${uid})...`);
     const influencer = await db.influencers.findUnique({ where: { id: uid } });
     if (influencer) user = influencer;
     else log.warn(`User (${uid}) could not be found.`);
+    log.info(`Fetching lists for user ${user?.name} (${user?.id ?? uid})...`);
+    // TODO: Wrap the `uid` in some SQL injection avoidance mechanism as it's
+    // very much possible that somebody smart and devious could:
+    // a) find our cookie secret and encrypt their own (fake) session cookie;
+    // b) set the session cookie `uid` to some malicious raw SQL;
+    // c) have that SQL run here and mess up our production db.
+    lists = await redis<List>(
+      `
+      select lists.* from lists
+      left outer join list_followers on list_followers.list_id = lists.id
+      where lists.owner_id = '${uid}' or list_followers.influencer_id = '${uid}'
+      `
+    );
   }
   const headers = { 'Set-Cookie': await commitSession(session) };
-  return json<LoaderData>({ clusters, user }, { headers });
+  return json<LoaderData>({ clusters, user, lists }, { headers });
 };
 
 export const links: LinksFunction = () => [
@@ -141,7 +159,7 @@ export default function App() {
     return () => clearTimeout(timeoutId);
   }, [transition.state]);
 
-  const { clusters } = useLoaderData<LoaderData>();
+  const { clusters, lists } = useLoaderData<LoaderData>();
 
   const [theme, setTheme] = useTheme();
   const nextTheme = useMemo(
@@ -161,6 +179,26 @@ export default function App() {
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <Header>
           <nav className='font-semibold text-sm'>
+            {lists
+              .map(({ id, name }) => (
+                <NavLink
+                  key={id}
+                  className={({ isActive }) =>
+                    cn('lowercase', { underline: isActive })
+                  }
+                  to={`/lists/${id}`}
+                >
+                  {name}
+                </NavLink>
+              ))
+              .reduce((a, b) => (
+                <>
+                  {a}
+                  {' · '}
+                  {b}
+                </>
+              ))}
+            {' · '}
             {clusters
               .map(({ id, name, slug }) => (
                 <NavLink
