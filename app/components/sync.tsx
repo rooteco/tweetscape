@@ -1,5 +1,5 @@
 import * as timeago from 'timeago.js';
-import { Link, useFetcher, useMatches } from 'remix';
+import { Link, useFetcher, useLocation, useMatches } from 'remix';
 import { useContext, useEffect, useState } from 'react';
 import TimeAgo from 'timeago-react';
 import en_short from 'timeago.js/lib/lang/en_short';
@@ -48,6 +48,8 @@ export default function Sync() {
       setLastSynced((prev) => prev ?? new Date());
     }
   }, [error, user, tweets.type, metadata]);
+
+  const location = useLocation();
 
   if (!user)
     return (
@@ -114,14 +116,9 @@ export default function Sync() {
       </div>
     );
   return (
-    <button
-      type='button'
+    <a
+      href={`${location.pathname}${location.search}`}
       className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
-      onClick={() => {
-        lists.type = 'init';
-        tweets.type = 'init';
-        metadata.type = 'init';
-      }}
     >
       <svg
         className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500'
@@ -135,6 +132,6 @@ export default function Sync() {
       <span>
         Synced <TimeAgo datetime={lastSynced ?? new Date()} locale='en_short' />
       </span>
-    </button>
+    </a>
   );
 }
