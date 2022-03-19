@@ -547,16 +547,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@remix-run/react@npm:^1.3.1":
-  version: 1.3.1
-  resolution: "@remix-run/react@npm:1.3.1"
+"@remix-run/react@npm:^1.3.2":
+  version: 1.3.2
+  resolution: "@remix-run/react@npm:1.3.2"
   dependencies:
     history: ^5.3.0
     react-router-dom: ^6.2.2
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
-  checksum: c9b9d03037d336529765926975e4ae5af743b625a66daa590b3a18f1bbcf91fe2398dcb9bf2fd34accb838db1edc25a80e0b9d192ed1e2cdb2d9eb2faaee91a3
+  checksum: 65ff4ce3aad034cebf3b98b5283f15621e826212aa4ef05de006139f9270a0187cc17a3ce040439e9df9a61783332cc6027f4737d717944fde72fa441f55a5d8
   languageName: node
   linkType: hard
 
@@ -10003,7 +10003,7 @@ __metadata:
     "@prisma/client": ^3.11.0
     "@remix-run/dev": ^1.3.1
     "@remix-run/node": ^1.3.1
-    "@remix-run/react": ^1.3.1
+    "@remix-run/react": ^1.3.2
     "@remix-run/serve": ^1.3.1
     "@types/accept-language-parser": ^1.5.3
     "@types/nprogress": ^0.2.0
