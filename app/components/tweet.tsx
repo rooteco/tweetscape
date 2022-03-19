@@ -2,13 +2,13 @@ import { useLoaderData } from 'remix';
 
 import type { Influencer, Score, Tweet } from '~/types';
 import LikeIcon from '~/icons/like';
-import type { LoaderData } from '~/routes/$cluster';
+import type { LoaderData } from '~/routes/clusters.$slug';
 import ReplyIcon from '~/icons/reply';
 import TwitterIcon from '~/icons/twitter';
 
 export type TweetItemProps = Tweet & {
   author: Influencer;
-  score: Score;
+  score?: Score;
   html?: string;
 };
 
@@ -67,16 +67,20 @@ export default function TweetItem({
           <div className='text-xs text-slate-600 dark:text-slate-400'>
             <span>{retweet_count} retweets</span>
             <span className='mx-1'>·</span>
-            <a
-              data-cy='points'
-              className='hover:underline'
-              href={`https://hive.one/p/${author.username}`}
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              {Math.round(Number(score.attention_score))} points
-            </a>
-            <span className='mx-1'>·</span>
+            {score && (
+              <>
+                <a
+                  data-cy='points'
+                  className='hover:underline'
+                  href={`https://hive.one/p/${author.username}`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  {Math.round(Number(score.attention_score))} points
+                </a>
+                <span className='mx-1'>·</span>
+              </>
+            )}
             <a
               data-cy='date'
               className='hover:underline'
