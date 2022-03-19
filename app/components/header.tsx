@@ -15,7 +15,7 @@ export default function Header({ children }: HeaderProps) {
       <div>
         <h1 className='mt-2 font-extrabold tracking-tighter text-4xl'>
           tweetscape.co
-          <TwitterIcon className='inline-block w-8 h-8 ml-2.5' />
+          <TwitterIcon className='inline-block w-6 h-6 ml-1.5' />
         </h1>
         <nav className='mb-2.5 mt-1'>
           <button
