@@ -1,1 +1,1 @@
-export { loader } from '~/tweets.server';
+export { action } from '~/tweets.server';

@@ -1,4 +1,4 @@
-import type { LoaderFunction } from 'remix';
+import type { ActionFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
 import {
@@ -12,7 +12,7 @@ import { commitSession, getSession } from '~/session.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const action: ActionFunction = async ({ request }) => {
   try {
     const session = await getSession(request.headers.get('Cookie'));
     const uid = session.get('uid') as string | undefined;

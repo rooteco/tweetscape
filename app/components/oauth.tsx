@@ -30,14 +30,14 @@ export default function OAuth() {
   const lists = useFetcher();
   useEffect(() => {
     if (user && lists.type === 'init') {
-      lists.load('/sync/lists');
+      lists.submit(null, { method: 'patch', action: '/sync/lists' });
       setProgress(0.25);
     } else if (lists.type === 'done') setProgress(0.5);
   }, [user, lists]);
   const tweets = useFetcher();
   useEffect(() => {
     if (user && lists.type === 'done' && tweets.type === 'init') {
-      tweets.load('/sync/tweets');
+      tweets.submit(null, { method: 'patch', action: '/sync/tweets' });
       setProgress(0.75);
     } else if (tweets.type === 'done') setProgress(1);
   }, [user, lists.type, tweets]);

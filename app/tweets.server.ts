@@ -4,7 +4,7 @@ import type {
   TweetV2,
   UserV2,
 } from 'twitter-api-v2';
-import type { LoaderFunction } from 'remix';
+import type { ActionFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
 import {
@@ -89,7 +89,7 @@ async function insertURLs(urls: TweetEntityUrlV2[], t: TweetV2) {
   });
 }
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const action: ActionFunction = async ({ request }) => {
   try {
     const session = await getSession(request.headers.get('Cookie'));
     const uid = session.get('uid') as string | undefined;

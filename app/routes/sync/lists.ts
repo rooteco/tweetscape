@@ -1,1 +1,1 @@
-export { loader } from '~/lists.server';
+export { action } from '~/lists.server';
