@@ -8,6 +8,7 @@ import type {
 } from 'twitter-api-v2';
 import type { Decimal } from '@prisma/client/runtime';
 import { TwitterApi } from 'twitter-api-v2';
+import { TwitterApiRateLimitPlugin } from '@twitter-api-v2/plugin-rate-limit';
 import invariant from 'tiny-invariant';
 
 import type {
@@ -20,6 +21,7 @@ import type {
   TagType,
   Tweet,
 } from '~/types';
+import { TwitterApiRateLimitDBStore } from '~/limit.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
@@ -32,7 +34,10 @@ export async function getTwitterClientForUser(
   const token = await db.tokens.findUnique({ where: { influencer_id: uid } });
   invariant(token, `expected token for user (${uid})`);
   const expiration = token.updated_at.valueOf() + token.expires_in * 1000;
-  let api = new TwitterApi(token.access_token);
+  const rateLimitPlugin = new TwitterApiRateLimitPlugin(
+    new TwitterApiRateLimitDBStore(uid)
+  );
+  let api = new TwitterApi(token.access_token, { plugins: [rateLimitPlugin] });
   if (expiration < new Date().valueOf()) {
     log.info(
       `User (${uid}) access token expired at ${new Date(
@@ -43,13 +48,8 @@ export async function getTwitterClientForUser(
       clientId: process.env.OAUTH_CLIENT_ID as string,
       clientSecret: process.env.OAUTH_CLIENT_SECRET,
     });
-    const {
-      client: refreshed,
-      accessToken,
-      refreshToken,
-      expiresIn,
-      scope,
-    } = await client.refreshOAuth2Token(token.refresh_token);
+    const { accessToken, refreshToken, expiresIn, scope } =
+      await client.refreshOAuth2Token(token.refresh_token);
     log.info(`Storing refreshed token for user (${uid})...`);
     await db.tokens.update({
       data: {
@@ -61,7 +61,7 @@ export async function getTwitterClientForUser(
       },
       where: { influencer_id: uid },
     });
-    api = refreshed;
+    api = new TwitterApi(accessToken, { plugins: [rateLimitPlugin] });
   }
   return api;
 }

@@ -8,8 +8,8 @@ import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
 import {
-  TwitterApi,
   TwitterV2IncludesHelper,
+  getTwitterClientForUser,
   toAnnotation,
   toInfluencer,
   toRef,
@@ -92,9 +92,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get('Cookie'));
   const uid = session.get('uid') as string | undefined;
   invariant(uid, 'expected session uid');
-  log.info(`Fetching token for user (${uid})...`);
-  const token = await db.tokens.findUnique({ where: { influencer_id: uid } });
-  invariant(token, `expected token for user (${uid})`);
+  const api = await getTwitterClientForUser(uid);
   log.info(`Fetching followed and owned lists for user (${uid})...`);
   const [followedLists, ownedLists] = await Promise.all([
     db.list_followers.findMany({ where: { influencer_id: uid } }),
@@ -104,7 +102,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     ...followedLists.map((l) => l.list_id),
     ...ownedLists.map((l) => l.id),
   ];
-  const api = new TwitterApi(token.access_token);
   await Promise.all(
     listIds.map(async (listId) => {
       const context = `user (${uid}) list (${listId})`;
