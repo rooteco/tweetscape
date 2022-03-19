@@ -31,16 +31,23 @@ export default function OAuth() {
   useEffect(() => {
     if (user && lists.type === 'init') {
       lists.submit(null, { method: 'patch', action: '/sync/lists' });
-      setProgress(0.25);
-    } else if (lists.type === 'done') setProgress(0.5);
+      setProgress(1 / 6);
+    } else if (lists.type === 'done') setProgress(2 / 6);
   }, [user, lists]);
   const tweets = useFetcher();
   useEffect(() => {
     if (user && lists.type === 'done' && tweets.type === 'init') {
       tweets.submit(null, { method: 'patch', action: '/sync/tweets' });
-      setProgress(0.75);
-    } else if (tweets.type === 'done') setProgress(1);
+      setProgress(3 / 6);
+    } else if (tweets.type === 'done') setProgress(4 / 6);
   }, [user, lists.type, tweets]);
+  const metadata = useFetcher();
+  useEffect(() => {
+    if (user && tweets.type === 'done' && metadata.type === 'init') {
+      metadata.submit(null, { method: 'patch', action: '/sync/metadata' });
+      setProgress(5 / 6);
+    } else if (metadata.type === 'done') setProgress(6 / 6);
+  }, [user, tweets.type, metadata]);
 
   return (
     <aside
