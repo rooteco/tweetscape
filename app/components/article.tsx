@@ -17,6 +17,7 @@ export type ArticleItemProps = Article;
 
 export default function ArticleItem({
   expanded_url,
+  unwound_url,
   attention_score,
   title,
   description,
@@ -70,12 +71,13 @@ export default function ArticleItem({
         <a
           data-cy='title'
           className='font-semibold hover:underline text-base'
-          href={expanded_url}
+          href={unwound_url ?? expanded_url}
           target='_blank'
           rel='noopener noreferrer'
         >
           {substr(
-            title || expanded_url.replace(/^https?:\/\/(www\.)?/, ''),
+            title ||
+              (unwound_url ?? expanded_url).replace(/^https?:\/\/(www\.)?/, ''),
             100
           )}
         </a>{' '}
@@ -84,14 +86,16 @@ export default function ArticleItem({
           <a
             data-cy='domain'
             className='hover:underline'
-            href={`https://${new URL(expanded_url).hostname.replace(
-              /^www\./,
-              ''
-            )}`}
+            href={`https://${new URL(
+              unwound_url ?? expanded_url
+            ).hostname.replace(/^www\./, '')}`}
             target='_blank'
             rel='noopener noreferrer'
           >
-            {new URL(expanded_url).hostname.replace(/^www\./, '')}
+            {new URL(unwound_url ?? expanded_url).hostname.replace(
+              /^www\./,
+              ''
+            )}
           </a>
           )
         </span>
