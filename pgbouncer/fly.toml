@@ -15,7 +15,7 @@ DB_PORT = 5432
 AUTH_TYPE = "plain"
 LISTEN_ADDR = "::"
 POOL_MODE = "transaction"
-MAX_DB_CONNECTIONS = 1
+MAX_DB_CONNECTIONS = 30
 
 [build]
 image = "edoburu/pgbouncer:latest"
