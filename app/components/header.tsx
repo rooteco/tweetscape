@@ -1,4 +1,4 @@
-import { NavLink, useMatches } from 'remix';
+import { Link, NavLink, useFetcher, useMatches } from 'remix';
 import cn from 'classnames';
 
 import { Theme, useTheme } from '~/theme';
@@ -11,9 +11,10 @@ export default function Header() {
   const root = useMatches()[0].data as LoaderData | undefined;
   const clusters = root?.clusters ?? [];
   const lists = root?.lists ?? [];
+  const fetcher = useFetcher();
   return (
     <header className='border-b-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-between items-end'>
-      <div className='flex-none w-[300px]'>
+      <div className='flex-none w-96'>
         <h1 className='mt-2 font-extrabold tracking-tighter text-4xl'>
           tweetscape.co
           <TwitterIcon className='inline-block w-6 h-6 ml-1.5' />
@@ -101,7 +102,61 @@ export default function Header() {
             </svg>
             <span>GitHub</span>
           </a>
-          <Sync />
+          {root?.user && (
+            <button
+              type='button'
+              className='disabled:cursor-wait ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
+              onClick={() =>
+                fetcher.submit(null, { method: 'patch', action: '/logout' })
+              }
+              disabled={fetcher.state !== 'idle'}
+            >
+              <svg
+                className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500'
+                xmlns='http://www.w3.org/2000/svg'
+                height='24'
+                viewBox='0 0 24 24'
+                width='24'
+              >
+                <path d='M0 0h24v24H0z' fill='none' />
+                <path d='M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z' />
+              </svg>
+              <span>Logout</span>
+            </button>
+          )}
+          {!root?.user && (
+            <Link
+              className='ml-1.5 inline-flex truncate items-center text-white text-xs bg-[#1d9bf0] rounded px-2 h-6'
+              to='/oauth'
+            >
+              <svg
+                className='shrink-0 w-3.5 h-3.5 mr-1 fill-white'
+                viewBox='328 355 335 276'
+                xmlns='http://www.w3.org/2000/svg'
+              >
+                <path
+                  d='
+              M 630, 425
+              A 195, 195 0 0 1 331, 600
+              A 142, 142 0 0 0 428, 570
+              A  70,  70 0 0 1 370, 523
+              A  70,  70 0 0 0 401, 521
+              A  70,  70 0 0 1 344, 455
+              A  70,  70 0 0 0 372, 460
+              A  70,  70 0 0 1 354, 370
+              A 195, 195 0 0 0 495, 442
+              A  67,  67 0 0 1 611, 380
+              A 117, 117 0 0 0 654, 363
+              A  65,  65 0 0 1 623, 401
+              A 117, 117 0 0 0 662, 390
+              A  65,  65 0 0 1 630, 425
+              Z'
+                />
+              </svg>
+              <span>Login with Twitter</span>
+            </Link>
+          )}
+          {root?.user && <Sync />}
         </nav>
       </div>
       <div className='flex min-w-0 ml-4'>
