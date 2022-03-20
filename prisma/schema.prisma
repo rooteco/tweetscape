@@ -51,16 +51,14 @@ model influencers {
 }
 
 model links {
-  id           BigInt   @id @default(autoincrement())
-  url          String   @unique
-  expanded_url String   @unique
-  display_url  String
-  status       Int?
-  title        String?
-  description  String?
-  unwound_url  String?
-  images       images[]
-  urls         urls[]
+  url         String   @id
+  display_url String
+  status      Int?
+  title       String?
+  description String?
+  unwound_url String?
+  images      images[]
+  urls        urls[]
 }
 
 model mentions {
@@ -133,28 +131,27 @@ model tweets {
 
 model urls {
   tweet_id String
-  link_id  BigInt
+  link_url String
   start    Int
   end      Int
-  links    links  @relation(fields: [link_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  links    links  @relation(fields: [link_url], references: [url], onDelete: NoAction, onUpdate: NoAction)
   tweets   tweets @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([tweet_id, link_id])
+  @@id([tweet_id, link_url])
 }
 
 model images {
-  link_id BigInt
-  url     String
-  width   Int
-  height  Int
-  links   links  @relation(fields: [link_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  link_url String
+  url      String
+  width    Int
+  height   Int
+  links    links  @relation(fields: [link_url], references: [url], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([link_id, url, width, height])
+  @@id([link_url, url, width, height])
 }
 
 model tokens {
-  id            BigInt      @id @default(autoincrement())
-  influencer_id String      @unique
+  influencer_id String      @id
   token_type    String
   expires_in    Int
   access_token  String      @unique

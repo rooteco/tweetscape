@@ -12,7 +12,7 @@ timeago.register('en_short', en_short);
 // TODO: Hike up this `<ErrorBoundary>` error prop to React context so as to
 // avoid prop drilling from the boundary to the header to this component.
 export default function Sync() {
-  const { user } = useMatches()[0].data as LoaderData;
+  const user = (useMatches()[0].data as LoaderData | undefined)?.user;
   const { error } = useContext(ErrorContext);
 
   const [lastSynced, setLastSynced] = useState<Date>();

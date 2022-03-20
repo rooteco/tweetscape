@@ -59,9 +59,7 @@ export const action: ActionFunction = async ({ request }) => {
           articles.forEach((article) => {
             if (
               needsToBeFetched(article) &&
-              !articlesToFetch.some(
-                (a) => a.expanded_url === article.expanded_url
-              )
+              !articlesToFetch.some((a) => a.url === article.url)
             )
               articlesToFetch.push(article);
           });
@@ -73,7 +71,7 @@ export const action: ActionFunction = async ({ request }) => {
   const linksToUpdate: Link[] = [];
   await Promise.all(
     articlesToFetch.map(async (article) => {
-      const url = article.expanded_url;
+      const { url } = article;
       try {
         log.debug(`Fetching link (${url}) metadata...`);
         const res = await limiter.schedule({ expiration: 5000 }, fetch, url);
@@ -109,9 +107,7 @@ export const action: ActionFunction = async ({ request }) => {
           },
         });
         linksToUpdate.push({
-          id: article.id,
           url: article.url,
-          expanded_url: article.expanded_url,
           display_url: article.display_url,
           status: res.status,
           title: decode(ogTitle || title) || null,
@@ -127,11 +123,8 @@ export const action: ActionFunction = async ({ request }) => {
   // Prisma doesn't support bulk PostgreSQL updates, so I have to use this:
   // @see {@link https://github.com/prisma/prisma/issues/6862}
   await db.$transaction(
-    linksToUpdate.map((link) =>
-      db.links.update({
-        data: { ...link, id: undefined },
-        where: { id: link.id },
-      })
+    linksToUpdate.map((data) =>
+      db.links.update({ data, where: { url: data.url } })
     )
   );
   const headers = { 'Set-Cookie': await commitSession(session) };

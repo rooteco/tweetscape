@@ -16,14 +16,29 @@ if (!global.redisClient)
 let connectionPromise: Promise<void>;
 if (!redisClient.isOpen) connectionPromise = redisClient.connect();
 
+function keys(query: string): { stillGoodKey: string; responseKey: string } {
+  const key = createHash('sha256').update(query).digest('hex');
+  const stillGoodKey = `swr:stillgood:${key}`;
+  const responseKey = `swr:response:${key}`;
+  return { stillGoodKey, responseKey };
+}
+
+export async function revalidate<T>(
+  query: string,
+  maxAgeSeconds = 60
+): Promise<T[]> {
+  const { stillGoodKey, responseKey } = keys(query);
+  log.debug(`Executing PostgreSQL query (${substr(query, 50)})...`);
+  const toCache = await db.$queryRawUnsafe<T[]>(query);
+  await redisClient.set(responseKey, JSON.stringify(toCache));
+  await redisClient.setEx(stillGoodKey, maxAgeSeconds, 'true');
+  return toCache;
+}
+
 export async function swr<T>(query: string, maxAgeSeconds = 60): Promise<T[]> {
   await connectionPromise;
 
-  const key = createHash('sha256').update(query).digest('hex');
-
-  const stillGoodKey = `swr:stillgood:${key}`;
-  const responseKey = `swr:response:${key}`;
-
+  const { stillGoodKey, responseKey } = keys(query);
   const cachedStillGoodPromise = redisClient
     .get(stillGoodKey)
     .then((cachedStillGood) => !!cachedStillGood)
@@ -45,10 +60,7 @@ export async function swr<T>(query: string, maxAgeSeconds = 60): Promise<T[]> {
 
         /* eslint-disable-next-line promise/no-nesting */
         (async () => {
-          log.debug(`Executing PostgreSQL query (${substr(query, 50)})...`);
-          const toCache = await db.$queryRawUnsafe<T[]>(query);
-          await redisClient.set(responseKey, JSON.stringify(toCache));
-          await redisClient.setEx(stillGoodKey, maxAgeSeconds, 'true');
+          await revalidate(query, maxAgeSeconds);
         })().catch((e) => {
           log.error(`Failed to revalidate: ${(e as Error).stack}`);
         });

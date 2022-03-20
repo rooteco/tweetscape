@@ -3,6 +3,7 @@ import type {
   ReferencedTweetV2,
   TweetEntityAnnotationsV2,
   TweetEntityHashtagV2,
+  TweetEntityUrlV2,
   TweetV2,
   UserV2,
 } from 'twitter-api-v2';
@@ -14,12 +15,15 @@ import invariant from 'tiny-invariant';
 import type {
   Annotation,
   AnnotationType,
+  Image,
   Influencer,
+  Link,
   List,
   Ref,
   Tag,
   TagType,
   Tweet,
+  URL,
 } from '~/types';
 import { TwitterApiRateLimitDBStore } from '~/limit.server';
 import { db } from '~/db.server';
@@ -140,4 +144,33 @@ export function toTweet(tweet: TweetV2): Tweet {
     quote_count: tweet.public_metrics?.quote_count as number,
     created_at: new Date(tweet.created_at as string),
   };
+}
+
+export function toLink(u: TweetEntityUrlV2): Link {
+  return {
+    url: u.expanded_url,
+    display_url: u.display_url,
+    status: u.status ? Number(u.status) : null,
+    title: u.title ?? null,
+    description: u.description ?? null,
+    unwound_url: u.unwound_url,
+  };
+}
+
+export function toURL(u: TweetEntityUrlV2, t: TweetV2): URL {
+  return {
+    link_url: u.expanded_url,
+    tweet_id: t.id,
+    start: u.start,
+    end: u.end,
+  };
+}
+
+export function toImages(u: TweetEntityUrlV2): Image[] {
+  return (u.images ?? []).map((i) => ({
+    link_url: u.expanded_url,
+    url: i.url,
+    width: i.width,
+    height: i.height,
+  }));
 }

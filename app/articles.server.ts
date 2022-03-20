@@ -23,8 +23,8 @@ export async function getListArticles(
       json_agg(tweets.*) as tweets
     from links
       inner join (
-        select distinct on (urls.link_id, tweets.author_id)
-          urls.link_id as link_id,
+        select distinct on (urls.link_url, tweets.author_id)
+          urls.link_url as link_url,
           tweets.*
         from urls
           inner join (
@@ -37,9 +37,9 @@ export async function getListArticles(
             where list_members.list_id = '${listId}'
             ${filter === 'hide_retweets' ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
           ) as tweets on tweets.id = urls.tweet_id
-      ) as tweets on tweets.link_id = links.id
-    where expanded_url !~ '^https?:\\/\\/twitter\\.com'
-    group by links.id
+      ) as tweets on tweets.link_url = links.url
+    where url !~ '^https?:\\/\\/twitter\\.com'
+    group by links.url
     order by count(tweets) desc
     limit 20;
     `
@@ -78,8 +78,8 @@ export async function getClusterArticles(
       json_agg(tweets.*) as tweets
     from links
       inner join (
-        select distinct on (urls.link_id, tweets.author_id, tweets.cluster_id)
-          urls.link_id as link_id,
+        select distinct on (urls.link_url, tweets.author_id, tweets.cluster_id)
+          urls.link_url as link_url,
           tweets.*
         from urls
           inner join (
@@ -95,10 +95,10 @@ export async function getClusterArticles(
               inner join scores on scores.influencer_id = influencers.id
             ${filter === 'hide_retweets' ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
           ) as tweets on tweets.id = urls.tweet_id
-      ) as tweets on tweets.link_id = links.id
+      ) as tweets on tweets.link_url = links.url
       inner join clusters on clusters.id = tweets.cluster_id
-    where clusters.slug = '${clusterSlug}' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
-    group by links.id, clusters.id
+    where clusters.slug = '${clusterSlug}' and url !~ '^https?:\\/\\/twitter\\.com'
+    group by links.url, clusters.id
     order by ${sort === 'tweets_count' ? 'count(tweets)' : sort} desc
     limit 20;
     `
