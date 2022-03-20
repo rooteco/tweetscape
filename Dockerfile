@@ -13,7 +13,7 @@ FROM base as deps
 RUN mkdir /app
 WORKDIR /app
 
-ADD package.json yarn.lock .yarnrc.yml .
+ADD package.json yarn.lock .yarnrc.yml ./
 ADD .yarn .yarn
 RUN yarn install --immutable --immutable-cache
 
@@ -34,8 +34,8 @@ FROM base
 RUN mkdir /app
 WORKDIR /app
 
-COPY --from=deps /app/node_modules /app/node_modules
-COPY --from=deps /app/package.json /app/package.json
+COPY --from=build /app/node_modules /app/node_modules
+COPY --from=build /app/package.json /app/package.json
 COPY --from=build /app/build /app/build
 COPY --from=build /app/public /app/public
 
