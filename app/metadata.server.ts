@@ -6,11 +6,7 @@ import { decode } from 'html-entities';
 import invariant from 'tiny-invariant';
 
 import type { Article, Link, List } from '~/types';
-import {
-  FILTERS,
-  getListArticles,
-  getListArticlesQuery,
-} from '~/articles.server';
+import { FILTERS, getListArticles, getListArticlesQuery } from '~/query.server';
 import { commitSession, getSession } from '~/session.server';
 import { revalidate, swr } from '~/swr.server';
 import { db } from '~/db.server';

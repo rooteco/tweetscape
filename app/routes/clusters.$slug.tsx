@@ -2,14 +2,14 @@ import { json, useLoaderData } from 'remix';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
-import type { Filter, Sort } from '~/articles.server';
+import type { Filter, Sort } from '~/query.server';
 import { commitSession, getSession } from '~/session.server';
 import { lang, log } from '~/utils.server';
 import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
 import Nav from '~/components/nav';
-import { getClusterArticles } from '~/articles.server';
+import { getClusterArticles } from '~/query.server';
 import { useError } from '~/error';
 
 export type LoaderData = { articles: Article[]; locale: string };

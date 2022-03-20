@@ -7,9 +7,9 @@ import { lang, log } from '~/utils.server';
 import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
-import type { Filter } from '~/articles.server';
+import type { Filter } from '~/query.server';
 import Nav from '~/components/nav';
-import { getListArticles } from '~/articles.server';
+import { getListArticles } from '~/query.server';
 import { useError } from '~/error';
 
 export type LoaderData = { articles: Article[]; locale: string };

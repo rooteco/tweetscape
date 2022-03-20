@@ -1,7 +1,7 @@
 import { Link, useLocation, useMatches, useSearchParams } from 'remix';
 import cn from 'classnames';
 
-import type { Filter, Sort } from '~/articles.server';
+import type { Filter, Sort } from '~/query.server';
 import FilterIcon from '~/icons/filter';
 import type { LoaderData } from '~/root';
 import SortIcon from '~/icons/sort';
