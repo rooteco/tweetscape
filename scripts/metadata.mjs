@@ -24,7 +24,7 @@ limiter.on('failed', (e, job) => {
   }
 });
 limiter.on('retry', (e, job) => {
-  log.debug(`No retrying job (${job.options.id})...`);
+  log.debug(`Now retrying job (${job.options.id})...`);
 });
 
 const SORTS = ['attention_score', 'tweets_count'];

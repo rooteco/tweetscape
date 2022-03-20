@@ -38,12 +38,13 @@ limiter.on('error', (e) => {
 limiter.on('failed', (e, job) => {
   log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
   if (job.retryCount < 5) {
-    log.debug(`Retrying job (${job.options.id}) in 500ms...`);
-    return 500;
+    const wait = 500 * (job.retryCount + 1);
+    log.debug(`Retrying job (${job.options.id}) in ${wait}ms...`);
+    return wait;
   }
 });
 limiter.on('retry', (e, job) => {
-  log.debug(`No retrying job (${job.options.id})...`);
+  log.debug(`Now retrying job (${job.options.id})...`);
 });
 
 const TWEET_FIELDS = [
