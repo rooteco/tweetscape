@@ -11,12 +11,9 @@ export type Filter = 'show_retweets' | 'hide_retweets';
 export const SORTS: Sort[] = ['attention_score', 'tweets_count'];
 export const FILTERS: Filter[] = ['show_retweets', 'hide_retweets'];
 
-export async function getListArticles(
-  listId: string,
-  filter: Filter
-): Promise<Article[]> {
+export function getListArticlesQuery(listId: string, filter: Filter): string {
   /* prettier-ignore */
-  const articles = await swr<Article>(
+  return (
     `
     select
       links.*,
@@ -44,6 +41,13 @@ export async function getListArticles(
     limit 20;
     `
   );
+}
+
+export async function getListArticles(
+  listId: string,
+  filter: Filter
+): Promise<Article[]> {
+  const articles = await swr<Article>(getListArticlesQuery(listId, filter));
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
   articles.forEach((article) =>
@@ -60,13 +64,13 @@ export async function getListArticles(
   return articles;
 }
 
-export async function getClusterArticles(
+export function getClusterArticlesQuery(
   clusterSlug: string,
   filter: Filter,
   sort: Sort
-): Promise<Article[]> {
+): string {
   /* prettier-ignore */
-  const articles = await swr<Article>(
+  return (
     `
     select
       links.*,
@@ -102,6 +106,16 @@ export async function getClusterArticles(
     order by ${sort === 'tweets_count' ? 'count(tweets)' : sort} desc
     limit 20;
     `
+  );
+}
+
+export async function getClusterArticles(
+  clusterSlug: string,
+  filter: Filter,
+  sort: Sort
+): Promise<Article[]> {
+  const articles = await swr<Article>(
+    getClusterArticlesQuery(clusterSlug, filter, sort)
   );
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);

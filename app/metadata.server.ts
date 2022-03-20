@@ -6,11 +6,15 @@ import { decode } from 'html-entities';
 import invariant from 'tiny-invariant';
 
 import type { Article, Link, List } from '~/types';
-import { FILTERS, getListArticles } from '~/articles.server';
+import {
+  FILTERS,
+  getListArticles,
+  getListArticlesQuery,
+} from '~/articles.server';
 import { commitSession, getSession } from '~/session.server';
+import { revalidate, swr } from '~/swr.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
-import { swr } from '~/swr.server';
 
 const limiter = new Bottleneck({
   trackDoneStatus: true,
@@ -23,10 +27,6 @@ limiter.on('error', (e) => {
 limiter.on('failed', (e) => {
   log.warn(`Limiter job failed: ${(e as Error).stack}`);
 });
-
-function needsToBeFetched(article: Article): boolean {
-  return !article.title || !article.description;
-}
 
 export const action: ActionFunction = async ({ request }) => {
   const session = await getSession(request.headers.get('Cookie'));
@@ -57,11 +57,9 @@ export const action: ActionFunction = async ({ request }) => {
         FILTERS.map(async (filter) => {
           const articles = await getListArticles(listId, filter);
           articles.forEach((article) => {
-            if (
-              needsToBeFetched(article) &&
-              !articlesToFetch.some((a) => a.url === article.url)
-            )
-              articlesToFetch.push(article);
+            if (article.title && article.description) return;
+            if (articlesToFetch.some((a) => a.url === article.url)) return;
+            articlesToFetch.push(article);
           });
         })
       )
@@ -112,7 +110,7 @@ export const action: ActionFunction = async ({ request }) => {
           status: res.status,
           title: decode(ogTitle || title) || null,
           description: decode(ogDescription || description) || null,
-          unwound_url: res.headers.get('Location') ?? url,
+          unwound_url: res.url,
         });
       } catch (e) {
         log.error(`Error fetching link (${url}): ${(e as Error).stack}`);
@@ -126,6 +124,16 @@ export const action: ActionFunction = async ({ request }) => {
     linksToUpdate.map((data) =>
       db.links.update({ data, where: { url: data.url } })
     )
+  );
+  log.info('Revalidating SWR cache keys for new data...');
+  await Promise.all(
+    listIds
+      .map((listId) =>
+        FILTERS.map((filter) =>
+          revalidate(getListArticlesQuery(listId, filter))
+        )
+      )
+      .flat()
   );
   const headers = { 'Set-Cookie': await commitSession(session) };
   return new Response('Sync Success', { status: 200, headers });
