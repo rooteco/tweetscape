@@ -126,7 +126,12 @@ export const action: ActionFunction = async ({ request }) => {
             t.entities?.cashtags?.forEach((c) =>
               create.tags.push(toTag(c, t, 'cashtag'))
             );
-            t.referenced_tweets?.forEach((r) => create.refs.push(toRef(r, t)));
+            t.referenced_tweets?.forEach((r) => {
+              // Address edge-case where the referenced tweet may be
+              // inaccessible to us (e.g. private account) or deleted.
+              if (create.tweets.some((tw) => tw.id === r.id))
+                create.refs.push(toRef(r, t));
+            });
             t.entities?.urls?.forEach((u) => {
               create.links.push(toLink(u));
               create.urls.push(toURL(u, t));
