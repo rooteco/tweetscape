@@ -43,6 +43,7 @@ export const action: ActionFunction = async ({ request }) => {
         FILTERS.map(async (filter) => {
           const articles = await getListArticles(listId, filter);
           articles.forEach((article) => {
+            // TODO: Perhaps skip fetch if the article has a non-200 status.
             if (article.title && article.description) return;
             if (articlesToFetch.some((a) => a.url === article.url)) return;
             articlesToFetch.push(article);
