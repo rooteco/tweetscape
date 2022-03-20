@@ -4,6 +4,9 @@ FROM node:16-bullseye-slim as base
 ENV NODE_ENV=production
 ENV PORT=8080
 
+# install openssl for prisma
+RUN apt-get update && apt-get install -y openssl
+
 # install all node_modules, including dev dependencies
 FROM base as deps
 
@@ -18,6 +21,9 @@ RUN yarn install --immutable --immutable-cache
 FROM deps as build
 
 WORKDIR /app
+
+ADD prisma .
+RUN yarn prisma generate
 
 ADD . .
 RUN yarn build
