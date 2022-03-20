@@ -13,7 +13,7 @@ export default function Header() {
   const lists = root?.lists ?? [];
   return (
     <header className='border-b-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-between items-end'>
-      <div>
+      <div className='flex-none w-[300px]'>
         <h1 className='mt-2 font-extrabold tracking-tighter text-4xl'>
           tweetscape.co
           <TwitterIcon className='inline-block w-6 h-6 ml-1.5' />
@@ -104,11 +104,11 @@ export default function Header() {
           <Sync />
         </nav>
       </div>
-      <div className='flex mb-4'>
+      <div className='flex min-w-0 ml-4'>
         {!!lists.length && (
-          <div>
+          <div className='ml-4 shrink min-w-0'>
             <h2 className='uppercase text-xs text-slate-500'>Lists</h2>
-            <nav className='font-semibold text-sm'>
+            <nav className='font-semibold text-sm overflow-y-auto max-h-12 pb-2'>
               {lists
                 .map(({ id, name }) => (
                   <NavLink
@@ -132,9 +132,9 @@ export default function Header() {
           </div>
         )}
         {!!clusters.length && (
-          <div className='ml-4'>
+          <div className='ml-4 shrink-0 min-w-0'>
             <h2 className='uppercase text-xs text-slate-500'>Clusters</h2>
-            <nav className='font-semibold text-sm'>
+            <nav className='font-semibold text-sm overflow-y-auto max-h-12 pb-2'>
               {clusters
                 .map(({ id, name, slug }) => (
                   <NavLink
