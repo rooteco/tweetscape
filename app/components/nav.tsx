@@ -1,7 +1,7 @@
 import { Link, useLocation, useMatches, useSearchParams } from 'remix';
 import cn from 'classnames';
 
-import type { Filter, Sort } from '~/articles.server';
+import type { Filter, Sort } from '~/query.server';
 import FilterIcon from '~/icons/filter';
 import type { LoaderData } from '~/root';
 import SortIcon from '~/icons/sort';
@@ -32,12 +32,12 @@ export default function Nav() {
                 attention score
               </a>
               . To use this sorting algorithm, view a cluster like{' '}
-              <Link className='underline' to={`/clusters/${clusters[0].slug}`}>
-                {clusters[0].name}
+              <Link className='underline' to={`/clusters/${clusters[0]?.slug}`}>
+                {clusters[0]?.name}
               </Link>{' '}
               or{' '}
-              <Link className='underline' to={`/clusters/${clusters[1].slug}`}>
-                {clusters[1].name}
+              <Link className='underline' to={`/clusters/${clusters[1]?.slug}`}>
+                {clusters[1]?.name}
               </Link>
               .
             </p>

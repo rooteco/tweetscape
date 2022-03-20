@@ -8,7 +8,9 @@ import TwitterIcon from '~/icons/twitter';
 
 export default function Header() {
   const [theme, setTheme] = useTheme();
-  const { clusters, lists } = useMatches()[0].data as LoaderData;
+  const root = useMatches()[0].data as LoaderData | undefined;
+  const clusters = root?.clusters ?? [];
+  const lists = root?.lists ?? [];
   return (
     <header className='border-b-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-between items-end'>
       <div>

@@ -11,6 +11,8 @@ drop type if exists ref_type;
 drop table if exists tweets;
 drop table if exists scores; 
 drop table if exists tokens;
+drop table if exists list_followers;
+drop table if exists list_members;
 drop table if exists lists;
 drop table if exists limits;
 drop table if exists influencers;
@@ -69,8 +71,7 @@ create table list_followers (
   primary key ("influencer_id", "list_id")
 );
 create table tokens (
-  "id" bigint generated always as identity primary key,
-  "influencer_id" text unique references influencers(id) deferrable not null,
+  "influencer_id" text unique references influencers(id) deferrable not null primary key,
   "token_type" text not null,
   "expires_in" integer not null,
   "access_token" text not null unique,
@@ -143,9 +144,7 @@ create table tags (
   primary key ("tweet_id", "tag", "type")
 );
 create table links (
-  "id" bigint generated always as identity primary key,
-  "url" url unique not null,
-  "expanded_url" url unique not null,
+  "url" url unique not null primary key,
   "display_url" text not null,
   "status" integer,
   "title" text,
@@ -153,16 +152,16 @@ create table links (
   "unwound_url" url 
 );
 create table images (
-  "link_id" bigint references links(id) deferrable not null,
+  "link_url" url references links(url) deferrable not null,
   "url" url not null,
   "width" integer not null,
   "height" integer not null,
-  primary key ("link_id", "url", "width", "height")
+  primary key ("link_url", "url", "width", "height")
 );
 create table urls (
   "tweet_id" text references tweets(id) deferrable not null,
-  "link_id" bigint references links(id) deferrable not null,
+  "link_url" url references links(url) deferrable not null,
   "start" integer not null,
   "end" integer not null,
-  primary key ("tweet_id", "link_id")
+  primary key ("tweet_id", "link_url")
 );

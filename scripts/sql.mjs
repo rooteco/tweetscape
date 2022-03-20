@@ -164,7 +164,6 @@ export async function insertURLs(urls, t, db) {
       arr.map((o) => o.expanded_url).indexOf(u.expanded_url) === idx
   );
   const linkValues = deduped.map((u) => [
-    u.url,
     u.expanded_url,
     u.display_url,
     u.status ?? null,
@@ -179,37 +178,16 @@ export async function insertURLs(urls, t, db) {
   // `https://t.co/OmuUhSGSaI`).
   const linkQuery = format(
     `
-    WITH data (
-      "url",
-      "expanded_url",
-      "display_url",
-      "status",
-      "title",
-      "description",
-      "unwound_url"
-    ) AS (VALUES %L)
     INSERT INTO links (
       "url",
-      "expanded_url",
       "display_url",
       "status",
       "title",
       "description",
       "unwound_url"
-    ) SELECT
-      data."url",
-      COALESCE (existing.expanded_url, data.expanded_url),
-      data."display_url",
-      data."status"::INTEGER,
-      data."title",
-      data."description",
-      data."unwound_url"
-    FROM data LEFT OUTER JOIN (
-      SELECT "url", "expanded_url" FROM links
-    ) AS existing ON existing.url = data.url AND existing.expanded_url != data.expanded_url
-    ON CONFLICT (
-      expanded_url
-    ) DO UPDATE SET expanded_url = links.expanded_url RETURNING id;
+    ) VALUES %L ON CONFLICT (
+      "url"
+    ) DO UPDATE SET display_url = links.display_url RETURNING id;
     `,
     linkValues
   );

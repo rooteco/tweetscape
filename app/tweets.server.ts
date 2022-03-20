@@ -1,93 +1,35 @@
-import type {
-  TweetEntityMentionV2,
-  TweetEntityUrlV2,
-  TweetV2,
-  UserV2,
-} from 'twitter-api-v2';
 import type { ActionFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
+import type {
+  Annotation,
+  Image,
+  Influencer,
+  Link,
+  ListMember,
+  Mention,
+  Ref,
+  Tag,
+  Tweet,
+  URL,
+} from '~/types';
 import {
   ApiResponseError,
   TwitterV2IncludesHelper,
   getTwitterClientForUser,
   toAnnotation,
+  toImages,
   toInfluencer,
+  toLink,
   toRef,
   toTag,
   toTweet,
+  toURL,
 } from '~/twitter.server';
 import { commitSession, getSession } from '~/session.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
-
-async function insertMentions(
-  mentions: TweetEntityMentionV2[],
-  t: TweetV2,
-  users: UserV2[]
-) {
-  const data = mentions
-    .map((m) => ({
-      tweet_id: t.id,
-      influencer_id: users.find((u) => u.username === m.username)?.id as string,
-      start: m.start,
-      end: m.end,
-    }))
-    .filter((m) => !!m.influencer_id);
-  await db.mentions.createMany({ data, skipDuplicates: true });
-}
-
-async function insertURLs(urls: TweetEntityUrlV2[], t: TweetV2) {
-  // Prisma doesn't support `insertMany` with a `RETURNING` clause because MySQL
-  // doesn't support it (workaround: either this or use plain SQL).
-  // @see {@link https://github.com/prisma/prisma/issues/8131}
-  const links = await db.$transaction(
-    urls.map((u) =>
-      db.links.upsert({
-        create: {
-          url: u.url,
-          expanded_url: u.expanded_url,
-          display_url: u.display_url,
-          status: u.status ? Number(u.status) : undefined,
-          title: u.title,
-          description: u.description,
-          unwound_url: u.unwound_url,
-        },
-        update: {
-          url: u.url,
-          display_url: u.display_url,
-          status: u.status ? Number(u.status) : undefined,
-          title: u.title,
-          description: u.description,
-          unwound_url: u.unwound_url,
-        },
-        where: { expanded_url: u.expanded_url },
-      })
-    )
-  );
-  await db.images.createMany({
-    data: urls
-      .map((u, idx) =>
-        (u.images ?? []).map((i) => ({
-          link_id: links[idx].id,
-          url: i.url,
-          width: i.width,
-          height: i.height,
-        }))
-      )
-      .flat(),
-    skipDuplicates: true,
-  });
-  await db.urls.createMany({
-    data: urls.map((u, idx) => ({
-      tweet_id: t.id,
-      link_id: links[idx].id,
-      start: u.start,
-      end: u.end,
-    })),
-    skipDuplicates: true,
-  });
-}
+import { revalidateListsCache } from '~/query.server';
 
 export const action: ActionFunction = async ({ request }) => {
   try {
@@ -105,6 +47,20 @@ export const action: ActionFunction = async ({ request }) => {
       ...ownedLists.map((l) => l.id),
     ];
     const listTweetsLimit = await limits.v2.getRateLimit('lists/:id/tweets');
+
+    const create = {
+      influencers: [] as Influencer[],
+      list_members: [] as ListMember[],
+      tweets: [] as Tweet[],
+      mentions: [] as Mention[],
+      annotations: [] as Annotation[],
+      tags: [] as Tag[],
+      refs: [] as Ref[],
+      links: [] as Link[],
+      images: [] as Image[],
+      urls: [] as URL[],
+    };
+
     // TODO: This `Promise.all` statement along with the Twitter API rate limit
     // plugin tracker introduces race conditions: the second request may resolve
     // first and thus when the first request resolves, the rate limit is set one
@@ -141,69 +97,74 @@ export const action: ActionFunction = async ({ request }) => {
           });
           const includes = new TwitterV2IncludesHelper(res);
           const authors = includes.users.map(toInfluencer);
-          log.info(
-            `Inserting ${authors.length} tweet authors for ${context}...`
-          );
-          await db.influencers.createMany({
-            data: authors,
-            skipDuplicates: true,
-          });
-          log.info(
-            `Inserting ${authors.length} list members for ${context}...`
-          );
-          await db.list_members.createMany({
-            data: authors.map((a) => ({
+          authors.forEach((i) => create.influencers.push(i));
+          authors
+            .map((a) => ({
               list_id: listId,
               influencer_id: a.id,
-            })),
-            skipDuplicates: true,
+            }))
+            .forEach((l) => create.list_members.push(l));
+          includes.tweets.map(toTweet).forEach((r) => create.tweets.push(r));
+          res.tweets.map(toTweet).forEach((t) => create.tweets.push(t));
+          res.tweets.forEach((t) => {
+            t.entities?.mentions?.forEach((m) => {
+              const mid = authors.find((u) => u.username === m.username)?.id;
+              if (mid)
+                create.mentions.push({
+                  tweet_id: t.id,
+                  influencer_id: mid,
+                  start: m.start,
+                  end: m.end,
+                });
+            });
+            t.entities?.annotations?.forEach((a) =>
+              create.annotations.push(toAnnotation(a, t))
+            );
+            t.entities?.hashtags?.forEach((h) =>
+              create.tags.push(toTag(h, t, 'hashtag'))
+            );
+            t.entities?.cashtags?.forEach((c) =>
+              create.tags.push(toTag(c, t, 'cashtag'))
+            );
+            t.referenced_tweets?.forEach((r) => create.refs.push(toRef(r, t)));
+            t.entities?.urls?.forEach((u) => {
+              create.links.push(toLink(u));
+              create.urls.push(toURL(u, t));
+              toImages(u).forEach((i) => create.images.push(i));
+            });
           });
-          const refs = includes.tweets.map(toTweet);
-          log.info(
-            `Inserting ${refs.length} referenced tweets for ${context}...`
-          );
-          await db.tweets.createMany({ data: refs, skipDuplicates: true });
-          const tweets = res.tweets.map(toTweet);
-          log.info(`Inserting ${tweets.length} tweets for ${context}...`);
-          await db.tweets.createMany({ data: tweets, skipDuplicates: true });
-          await Promise.all(
-            res.tweets
-              .map((t) => [
-                insertURLs(t.entities?.urls ?? [], t),
-                insertMentions(t.entities?.mentions ?? [], t, includes.users),
-                db.annotations.createMany({
-                  data:
-                    t.entities?.annotations?.map((a) => toAnnotation(a, t)) ??
-                    [],
-                  skipDuplicates: true,
-                }),
-                db.tags.createMany({
-                  data:
-                    t.entities?.hashtags?.map((h) => toTag(h, t, 'hashtag')) ??
-                    [],
-                  skipDuplicates: true,
-                }),
-                db.tags.createMany({
-                  data:
-                    t.entities?.cashtags?.map((h) => toTag(h, t, 'cashtag')) ??
-                    [],
-                  skipDuplicates: true,
-                }),
-                db.refs.createMany({
-                  data: t.referenced_tweets?.map((r) => toRef(r, t)) ?? [],
-                  skipDuplicates: true,
-                }),
-              ])
-              .flat()
-          );
-        } else
-          log.warn(
-            `Rate limit hit for getting ${context} tweets, skipping until ${new Date(
-              (listTweetsLimit?.reset ?? 0) * 1000
-            ).toLocaleString()}...`
-          );
+        } else {
+          const reset = new Date((listTweetsLimit?.reset ?? 0) * 1000);
+          const msg =
+            `Rate limit hit for getting ${context} tweets, skipping ` +
+            `until ${reset.toLocaleString()}...`;
+          log.warn(msg);
+        }
       })
     );
+    log.info(`Creating ${create.influencers.length} tweet authors...`);
+    log.info(`Creating ${create.list_members.length} list members...`);
+    log.info(`Creating ${create.tweets.length} tweets...`);
+    log.info(`Creating ${create.mentions.length} mentions...`);
+    log.info(`Creating ${create.tags.length} hashtags and cashtags...`);
+    log.info(`Creating ${create.refs.length} tweet refs...`);
+    log.info(`Creating ${create.links.length} links...`);
+    log.info(`Creating ${create.images.length} link images...`);
+    log.info(`Creating ${create.urls.length} tweet urls...`);
+    const skipDuplicates = true;
+    await db.$transaction([
+      db.influencers.createMany({ data: create.influencers, skipDuplicates }),
+      db.list_members.createMany({ data: create.list_members, skipDuplicates }),
+      db.tweets.createMany({ data: create.tweets, skipDuplicates }),
+      db.mentions.createMany({ data: create.mentions, skipDuplicates }),
+      db.annotations.createMany({ data: create.annotations, skipDuplicates }),
+      db.tags.createMany({ data: create.tags, skipDuplicates }),
+      db.refs.createMany({ data: create.refs, skipDuplicates }),
+      db.links.createMany({ data: create.links, skipDuplicates }),
+      db.images.createMany({ data: create.images, skipDuplicates }),
+      db.urls.createMany({ data: create.urls, skipDuplicates }),
+    ]);
+    await revalidateListsCache(listIds);
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
   } catch (e) {

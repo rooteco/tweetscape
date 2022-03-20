@@ -65,7 +65,7 @@ async function metadata(cluster, sort, filter, db) {
           ) as tweets on tweets.link_id = links.id
           inner join clusters on clusters.id = tweets.cluster_id
         group by links.id, clusters.id
-      ) as articles where (title is null or description is null) and cluster_slug = '${cluster}' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
+      ) as articles where (title is null or description is null) and cluster_slug = '${cluster}' and url !~ '^https?:\\/\\/twitter\\.com'
       order by ${
         sort === 'tweets_count' ? 'json_array_length(tweets)' : sort
       } desc
@@ -76,7 +76,7 @@ async function metadata(cluster, sort, filter, db) {
     const values = [];
     await Promise.all(
       rows.map(async (row, idx) => {
-        const url = row.expanded_url;
+        const { url } = row;
         try {
           log.debug(`Fetching link (${url}) metadata...`);
           const res = await fetched(url);

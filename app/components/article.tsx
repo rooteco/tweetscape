@@ -16,7 +16,7 @@ type Filter = 'show_retweets' | 'hide_retweets';
 export type ArticleItemProps = Article;
 
 export default function ArticleItem({
-  expanded_url,
+  url,
   unwound_url,
   attention_score,
   title,
@@ -71,13 +71,12 @@ export default function ArticleItem({
         <a
           data-cy='title'
           className='font-semibold hover:underline text-base'
-          href={unwound_url ?? expanded_url}
+          href={unwound_url ?? url}
           target='_blank'
           rel='noopener noreferrer'
         >
           {substr(
-            title ||
-              (unwound_url ?? expanded_url).replace(/^https?:\/\/(www\.)?/, ''),
+            title || (unwound_url ?? url).replace(/^https?:\/\/(www\.)?/, ''),
             100
           )}
         </a>{' '}
@@ -86,16 +85,14 @@ export default function ArticleItem({
           <a
             data-cy='domain'
             className='hover:underline'
-            href={`https://${new URL(
-              unwound_url ?? expanded_url
-            ).hostname.replace(/^www\./, '')}`}
+            href={`https://${new URL(unwound_url ?? url).hostname.replace(
+              /^www\./,
+              ''
+            )}`}
             target='_blank'
             rel='noopener noreferrer'
           >
-            {new URL(unwound_url ?? expanded_url).hostname.replace(
-              /^www\./,
-              ''
-            )}
+            {new URL(unwound_url ?? url).hostname.replace(/^www\./, '')}
           </a>
           )
         </span>
