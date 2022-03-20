@@ -9,13 +9,12 @@ import type { Article, Link } from '~/types';
 import {
   FILTERS,
   getListArticles,
-  getListArticlesQuery,
   getLists,
+  revalidateListsCache,
 } from '~/query.server';
 import { commitSession, getSession } from '~/session.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
-import { revalidate } from '~/swr.server';
 
 const limiter = new Bottleneck({
   trackDoneStatus: true,
@@ -112,16 +111,7 @@ export const action: ActionFunction = async ({ request }) => {
       db.links.update({ data, where: { url: data.url } })
     )
   );
-  log.info('Revalidating SWR cache keys for new data...');
-  await Promise.all(
-    listIds
-      .map((listId) =>
-        FILTERS.map((filter) =>
-          revalidate(getListArticlesQuery(listId, filter))
-        )
-      )
-      .flat()
-  );
+  await revalidateListsCache(listIds);
   const headers = { 'Set-Cookie': await commitSession(session) };
   return new Response('Sync Success', { status: 200, headers });
 };

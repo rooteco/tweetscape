@@ -1,8 +1,8 @@
 import { autoLink } from 'twitter-text';
 
 import type { Article, List } from '~/types';
+import { revalidate, swr } from '~/swr.server';
 import { log } from '~/utils.server';
-import { swr } from '~/swr.server';
 
 export function getListsQuery(uid: string): string {
   // TODO: Wrap the `uid` in some SQL injection avoidance mechanism as it's
@@ -17,7 +17,7 @@ export function getListsQuery(uid: string): string {
     `;
 }
 
-export async function getLists(uid: string): Promise<List[]> {
+export function getLists(uid: string): Promise<List[]> {
   return swr<List>(getListsQuery(uid));
 }
 
@@ -79,6 +79,19 @@ export async function getListArticles(
     })
   );
   return articles;
+}
+
+export function revalidateListsCache(listIds: string[]) {
+  log.info('Revalidating SWR cache keys for new data...');
+  return Promise.all(
+    listIds
+      .map((listId) =>
+        FILTERS.map((filter) =>
+          revalidate(getListArticlesQuery(listId, filter))
+        )
+      )
+      .flat()
+  );
 }
 
 export function getClusterArticlesQuery(
