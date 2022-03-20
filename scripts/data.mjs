@@ -14,7 +14,7 @@ import {
   insertInfluencers,
   insertUsers,
 } from './sql.mjs';
-import { pool, twitter, getTweets, getInfluencers } from './shared.mjs';
+import { pool, limiter, getTweets, getInfluencers } from './shared.mjs';
 import { log } from './utils.mjs';
 
 async function data(c, start, end, db) {
@@ -22,7 +22,7 @@ async function data(c, start, end, db) {
   log.info(`Fetching ${total} influencers from Hive (in pages of 50)...`);
   const arr = Array(Math.ceil(Number(total) / 50)).fill(null);
 
-  const insert = {
+  const ins = {
     tweets: [],
     users: [],
     influencers: [],
@@ -38,7 +38,7 @@ async function data(c, start, end, db) {
     arr.map(async (_, pg) => {
       if (pg >= 1000 / 50) return; // Only import tweets from first 1000 influencers.
       const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
-      influencers.forEach((i) => insert.influencers.push(i));
+      influencers.forEach((i) => ins.influencers.push(i));
       log.info(`Fetching tweets from ${influencers.length} timelines...`);
       await Promise.all(
         influencers.map(async (i) => {
@@ -48,21 +48,21 @@ async function data(c, start, end, db) {
             (a, b) => [...a, ...(b.includes?.users ?? [])],
             []
           );
-          users.forEach((u) => insert.users.push(u));
+          users.forEach((u) => ins.users.push(u));
           const referencedTweets = data.reduce(
             (a, b) => [...a, ...(b.includes?.tweets ?? [])],
             []
           );
-          referencedTweets.forEach((t) => insert.tweets.push(t));
+          referencedTweets.forEach((t) => ins.tweets.push(t));
           const tweets = data.reduce((a, b) => [...a, ...(b.data ?? [])], []);
-          tweets.forEach((t) => insert.tweets.push(t));
+          tweets.forEach((t) => ins.tweets.push(t));
           tweets.forEach((t) => {
-            t.entities?.urls?.forEach((u) => insert.urls.push(u));
-            t.entities?.mentions?.forEach((m) => insert.mentions.push(m));
-            t.entities?.annotations?.forEach((a) => insert.annotations.push(a));
-            t.entities?.hashtags?.forEach((h) => insert.hashtags.push(h));
-            t.entities?.cashtags?.forEach((c) => insert.cashtags.push(c));
-            t.referenced_tweets?.forEach((r) => insert.refs.push(r));
+            ins.urls.push({ t, u: t.entities?.urls });
+            ins.mentions.push({ t, m: t.entities?.mentions });
+            ins.annotations.push({ t, a: ins.entities?.annotations });
+            ins.hashtags.push({ t, h: t.entities?.hashtags });
+            ins.cashtags.push({ t, c: t.entities?.cashtags });
+            ins.refs.push({ t, r: t.referenced_tweets });
           });
         })
       );
@@ -74,15 +74,15 @@ async function data(c, start, end, db) {
     await db.query('BEGIN');
     await db.query('SET CONSTRAINTS ALL DEFERRED');
     await Promise.all([
-      insertInfluencers(insert.influencers, c, db),
-      insertUsers(insert.users, db),
-      insertTweets(insert.tweets, db),
-      insertURLs(insert.urls, t, db),
-      insertMentions(insert.mentions, t, db),
-      insertAnnotations(insert.annotations, t, db),
-      insertTags(insert.hashtags, t, db, 'hashtag'),
-      insertTags(insert.cashtags, t, db, 'cashtag'),
-      insertRefs(insert.refs, t, db),
+      insertInfluencers(ins.influencers, c, db),
+      insertUsers(ins.users, db),
+      insertTweets(ins.tweets, db),
+      ...ins.urls.map(({ u, t }) => insertURLs(u ?? [], t, db)),
+      ...ins.mentions.map(({ m, t }) => insertMentions(m ?? [], t, db)),
+      ...ins.annotations.map(({ a, t }) => insertAnnotations(a ?? [], t, db)),
+      ...ins.hashtags.map(({ h, t }) => insertTags(h ?? [], t, db, 'hashtag')),
+      ...ins.cashtags.map(({ c, t }) => insertTags(c ?? [], t, db, 'cashtag')),
+      ...ins.refs.map(({ r, t }) => insertRefs(r ?? [], t, db)),
     ]);
     log.info(`Committing database transaction ${c.name} (${c.id})...`);
     await db.query('COMMIT');
@@ -107,7 +107,7 @@ async function data(c, start, end, db) {
   // we don't need to dispose of the client (it will be undefined)
   const db = await pool.connect();
   const intervalId = setInterval(() => {
-    const c = twitter.counts();
+    const c = limiter.counts();
     const msg =
       `Twitter API calls: ${c.RECEIVED} received, ${c.QUEUED} queued, ` +
       `${c.RUNNING} running, ${c.EXECUTING} executing, ${c.DONE} done.`;
@@ -119,10 +119,11 @@ async function data(c, start, end, db) {
     //await data({ id: '2300535799', name: 'Python' }, start, end, db);
     //await data({ id: '7799179292', name: 'NFT' }, start, end, db);
   } catch (e) {
+    log.error(`Caught error: ${e.stack}`);
     throw e;
   } finally {
     log.info('Releasing database connection...');
     clearInterval(intervalId);
     db.release();
   }
-})().catch((e) => log.error(`Caught error: ${e.stack}`));
+})();

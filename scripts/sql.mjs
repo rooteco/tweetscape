@@ -185,9 +185,7 @@ export async function insertURLs(urls, t, db) {
       "title",
       "description",
       "unwound_url"
-    ) VALUES %L ON CONFLICT (
-      "url"
-    ) DO UPDATE SET display_url = links.display_url RETURNING id;
+    ) VALUES %L ON CONFLICT ("url") DO NOTHING;
     `,
     linkValues
   );
@@ -196,25 +194,15 @@ export async function insertURLs(urls, t, db) {
     links = await db.query(linkQuery);
     images = deduped
       .map((u, idx) =>
-        (u.images ?? []).map((i) => [
-          Number(links.rows[idx].id),
-          i.url,
-          i.width,
-          i.height,
-        ])
+        (u.images ?? []).map((i) => [u.expanded_url, i.url, i.width, i.height])
       )
       .flat();
-    values = deduped.map((u, idx) => [
-      t.id,
-      Number(links.rows[idx].id),
-      u.start,
-      u.end,
-    ]);
+    values = deduped.map((u, idx) => [t.id, u.expanded_url, u.start, u.end]);
     query = format(
       `
       INSERT INTO urls (
         "tweet_id",
-        "link_id",
+        "link_url",
         "start",
         "end"
       ) VALUES %L ON CONFLICT ON CONSTRAINT urls_pkey DO NOTHING;
@@ -222,7 +210,7 @@ export async function insertURLs(urls, t, db) {
       ${
         images.length
           ? `INSERT INTO images (
-        "link_id",
+        "link_url",
         "url",
         "width",
         "height"
