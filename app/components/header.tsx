@@ -4,6 +4,7 @@ import cn from 'classnames';
 import { Theme, useTheme } from '~/theme';
 import type { LoaderData } from '~/root';
 import Sync from '~/components/sync';
+import Tooltip from '~/components/tooltip';
 import TwitterIcon from '~/icons/twitter';
 
 export default function Header() {
@@ -110,16 +111,17 @@ export default function Header() {
             <h2 className='uppercase text-xs text-slate-500'>Lists</h2>
             <nav className='font-semibold text-sm overflow-y-auto max-h-12 pb-2'>
               {lists
-                .map(({ id, name }) => (
-                  <NavLink
-                    key={id}
-                    className={({ isActive }) =>
-                      cn('lowercase', { underline: isActive })
-                    }
-                    to={`/lists/${id}`}
-                  >
-                    {name}
-                  </NavLink>
+                .map(({ id, name, description }) => (
+                  <Tooltip key={id} content={description}>
+                    <NavLink
+                      className={({ isActive }) =>
+                        cn('lowercase', { underline: isActive })
+                      }
+                      to={`/lists/${id}`}
+                    >
+                      {name}
+                    </NavLink>
+                  </Tooltip>
                 ))
                 .reduce((a, b) => (
                   <>
