@@ -1,8 +1,25 @@
 import { autoLink } from 'twitter-text';
 
-import type { Article } from '~/types';
+import type { Article, List } from '~/types';
 import { log } from '~/utils.server';
 import { swr } from '~/swr.server';
+
+export function getListsQuery(uid: string): string {
+  // TODO: Wrap the `uid` in some SQL injection avoidance mechanism as it's
+  // very much possible that somebody smart and devious could:
+  // a) find our cookie secret and encrypt their own (fake) session cookie;
+  // b) set the session cookie `uid` to some malicious raw SQL;
+  // c) have that SQL run here and mess up our production db.
+  return `
+    select lists.* from lists
+    left outer join list_followers on list_followers.list_id = lists.id
+    where lists.owner_id = '${uid}' or list_followers.influencer_id = '${uid}'
+    `;
+}
+
+export async function getLists(uid: string): Promise<List[]> {
+  return swr<List>(getListsQuery(uid));
+}
 
 // TODO: Instead of exporting these types and constants, I should export enums.
 export type Sort = 'attention_score' | 'tweets_count';

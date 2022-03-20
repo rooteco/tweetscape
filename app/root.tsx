@@ -20,6 +20,7 @@ import Footer from '~/components/footer';
 import Header from '~/components/header';
 import { THEME_SNIPPET } from '~/theme';
 import { db } from '~/db.server';
+import { getLists } from '~/query.server';
 import { log } from '~/utils.server';
 import styles from '~/styles/app.css';
 import { swr } from '~/swr.server';
@@ -76,18 +77,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     if (influencer) user = influencer;
     else log.warn(`User (${uid}) could not be found.`);
     log.info(`Fetching lists for user ${user?.name} (${user?.id ?? uid})...`);
-    // TODO: Wrap the `uid` in some SQL injection avoidance mechanism as it's
-    // very much possible that somebody smart and devious could:
-    // a) find our cookie secret and encrypt their own (fake) session cookie;
-    // b) set the session cookie `uid` to some malicious raw SQL;
-    // c) have that SQL run here and mess up our production db.
-    lists = await swr<List>(
-      `
-      select lists.* from lists
-      left outer join list_followers on list_followers.list_id = lists.id
-      where lists.owner_id = '${uid}' or list_followers.influencer_id = '${uid}'
-      `
-    );
+    lists = await getLists(uid);
   }
   const headers = { 'Set-Cookie': await commitSession(session) };
   return json<LoaderData>({ clusters, user, lists }, { headers });

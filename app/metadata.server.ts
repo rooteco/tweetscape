@@ -5,12 +5,17 @@ import type { IText } from 'html5parser';
 import { decode } from 'html-entities';
 import invariant from 'tiny-invariant';
 
-import type { Article, Link, List } from '~/types';
-import { FILTERS, getListArticles, getListArticlesQuery } from '~/query.server';
+import type { Article, Link } from '~/types';
+import {
+  FILTERS,
+  getListArticles,
+  getListArticlesQuery,
+  getLists,
+} from '~/query.server';
 import { commitSession, getSession } from '~/session.server';
-import { revalidate, swr } from '~/swr.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
+import { revalidate } from '~/swr.server';
 
 const limiter = new Bottleneck({
   trackDoneStatus: true,
@@ -29,22 +34,8 @@ export const action: ActionFunction = async ({ request }) => {
   const uid = session.get('uid') as string | undefined;
   invariant(uid, 'expected session uid');
   log.info(`Fetching owned and followed lists for user (${uid})...`);
-  // TODO: Move this `swr` query call into a reusable function (as it's used
-  // both here and in the `app/root.tsx` loader function).
   // TODO: Should I allow potentially stale data (from redis) to be used here?
-  // TODO: Wrap the `uid` in some SQL injection avoidance mechanism as it's
-  // very much possible that somebody smart and devious could:
-  // a) find our cookie secret and encrypt their own (fake) session cookie;
-  // b) set the session cookie `uid` to some malicious raw SQL;
-  // c) have that SQL run here and mess up our production db.
-  const lists = await swr<Pick<List, 'id'>>(
-    `
-    select lists.id from lists
-    left outer join list_followers on list_followers.list_id = lists.id
-    where lists.owner_id = '${uid}' or list_followers.influencer_id = '${uid}'
-    `
-  );
-  const listIds = lists.map((l) => l.id);
+  const listIds = (await getLists(uid)).map((l) => l.id);
   log.info(`Fetching articles for ${listIds.length} user (${uid}) lists...`);
   const articlesToFetch: Article[] = [];
   await Promise.all(
