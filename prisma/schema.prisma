@@ -31,15 +31,19 @@ model clusters {
 }
 
 model influencers {
-  id                String     @id
+  id                String           @id
   name              String
   username          String
   profile_image_url String?
   followers_count   Int?
   following_count   Int?
   tweets_count      Int?
-  created_at        DateTime?  @db.Timestamptz(6)
-  updated_at        DateTime?  @db.Timestamptz(6)
+  created_at        DateTime?        @db.Timestamptz(6)
+  updated_at        DateTime?        @db.Timestamptz(6)
+  limits            limits[]
+  list_followers    list_followers[]
+  list_members      list_members[]
+  lists             lists[]
   mentions          mentions[]
   scores            scores[]
   tokens            tokens?
@@ -47,16 +51,14 @@ model influencers {
 }
 
 model links {
-  id           BigInt   @id @default(autoincrement())
-  url          String   @unique
-  expanded_url String   @unique
-  display_url  String
-  status       Int?
-  title        String?
-  description  String?
-  unwound_url  String?
-  images       images[]
-  urls         urls[]
+  url         String   @id
+  display_url String
+  status      Int?
+  title       String?
+  description String?
+  unwound_url String?
+  images      images[]
+  urls        urls[]
 }
 
 model mentions {
@@ -129,28 +131,27 @@ model tweets {
 
 model urls {
   tweet_id String
-  link_id  BigInt
+  link_url String
   start    Int
   end      Int
-  links    links  @relation(fields: [link_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  links    links  @relation(fields: [link_url], references: [url], onDelete: NoAction, onUpdate: NoAction)
   tweets   tweets @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([tweet_id, link_id])
+  @@id([tweet_id, link_url])
 }
 
 model images {
-  link_id BigInt
-  url     String
-  width   Int
-  height  Int
-  links   links  @relation(fields: [link_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  link_url String
+  url      String
+  width    Int
+  height   Int
+  links    links  @relation(fields: [link_url], references: [url], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([link_id, url, width, height])
+  @@id([link_url, url, width, height])
 }
 
 model tokens {
-  id            BigInt      @id @default(autoincrement())
-  influencer_id String      @unique
+  influencer_id String      @id
   token_type    String
   expires_in    Int
   access_token  String      @unique
@@ -159,6 +160,51 @@ model tokens {
   created_at    DateTime    @db.Timestamptz(6)
   updated_at    DateTime    @db.Timestamptz(6)
   influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model lists {
+  id             String           @id
+  owner_id       String
+  name           String
+  description    String
+  private        Boolean
+  follower_count Int
+  member_count   Int
+  created_at     DateTime         @db.Timestamptz(6)
+  influencers    influencers      @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  list_followers list_followers[]
+  list_members   list_members[]
+}
+
+model list_followers {
+  influencer_id String
+  list_id       String
+  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lists         lists       @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([influencer_id, list_id])
+}
+
+model list_members {
+  influencer_id String
+  list_id       String
+  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lists         lists       @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([influencer_id, list_id])
+}
+
+model limits {
+  influencer_id String
+  method        String
+  endpoint      String
+  limit         Int
+  reset         Int
+  remaining     Int
+  resets_at     DateTime    @db.Timestamptz(6)
+  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([influencer_id, method, endpoint])
 }
 
 enum annotation_type {

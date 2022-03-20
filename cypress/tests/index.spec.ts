@@ -1,7 +1,7 @@
 describe('Index PG', () => {
   it('redirects to tesla by default', () => {
     cy.visit('/');
-    cy.url().should('eq', 'http://localhost:3000/tesla');
+    cy.url().should('eq', 'http://localhost:3000/clusters/tesla');
   });
 
   it('redirects to most recent view', () => {

@@ -8,12 +8,24 @@ import format from 'pg-format';
 import { decode, log } from './utils.mjs';
 import { pool } from './shared.mjs';
 
-const scheduler = new Bottleneck({
+const limiter = new Bottleneck({
   trackDoneStatus: true,
   maxConcurrent: 100,
   minTime: 250,
 });
-const fetched = scheduler.wrap(fetch);
+limiter.on('error', (e) => {
+  log.error(`Limiter error: ${e.stack}`);
+});
+limiter.on('failed', (e, job) => {
+  log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
+  if (job.retryCount < 5) {
+    log.debug(`Retrying job (${job.options.id}) in 500ms...`);
+    return 500;
+  }
+});
+limiter.on('retry', (e, job) => {
+  log.debug(`No retrying job (${job.options.id})...`);
+});
 
 const SORTS = ['attention_score', 'tweets_count'];
 const FILTERS = ['show_retweets', 'hide_retweets'];
@@ -41,8 +53,8 @@ async function metadata(cluster, sort, filter, db) {
           json_agg(tweets.*) as tweets
         from links
           inner join (
-            select distinct on (tweets.author_id, urls.link_id)
-              urls.link_id as link_id,
+            select distinct on (tweets.author_id, urls.link_url)
+              urls.link_url as link_url,
               tweets.*
             from urls
               inner join (
@@ -62,10 +74,10 @@ async function metadata(cluster, sort, filter, db) {
                     : ''
                 }
               ) as tweets on tweets.id = urls.tweet_id
-          ) as tweets on tweets.link_id = links.id
+          ) as tweets on tweets.link_url = links.url
           inner join clusters on clusters.id = tweets.cluster_id
-        group by links.id, clusters.id
-      ) as articles where (title is null or description is null) and cluster_slug = '${cluster}' and expanded_url !~ '^https?:\\/\\/twitter\\.com'
+        group by links.url, clusters.id
+      ) as articles where (title is null or description is null) and cluster_slug = '${cluster}' and url !~ '^https?:\\/\\/twitter\\.com'
       order by ${
         sort === 'tweets_count' ? 'json_array_length(tweets)' : sort
       } desc
@@ -76,10 +88,11 @@ async function metadata(cluster, sort, filter, db) {
     const values = [];
     await Promise.all(
       rows.map(async (row, idx) => {
-        const url = row.expanded_url;
+        const { url } = row;
         try {
           log.debug(`Fetching link (${url}) metadata...`);
-          const res = await fetched(url);
+          const job = { expiration: 5000, id: url };
+          const res = await limiter.schedule(job, fetch, url);
           const html = await res.text();
           log.debug(`Parsing link (${url}) metadata...`);
           const ast = parse(html);
@@ -115,8 +128,8 @@ async function metadata(cluster, sort, filter, db) {
             res.status,
             format.literal(decode(ogTitle || title) || null),
             format.literal(decode(ogDescription || description) || null),
-            format.literal(res.headers.location ?? url),
-            row.id,
+            format.literal(res.url),
+            format.literal(row.url),
           ]);
         } catch (e) {
           log.error(`Caught fetching error for link (${url}): ${e.stack}`);
@@ -132,8 +145,8 @@ async function metadata(cluster, sort, filter, db) {
         title = d.title,
         description = d.description,
         unwound_url = d.unwound_url
-      FROM (VALUES %s) AS d (status, title, description, unwound_url, id)
-      WHERE d.id = l.id;
+      FROM (VALUES %s) AS d (status, title, description, unwound_url, url)
+      WHERE d.url = l.url;
       `,
       values
     );
@@ -156,7 +169,7 @@ async function metadata(cluster, sort, filter, db) {
     const { rows } = await db.query('select * from clusters');
     log.info(`Fetching link metadata for ${rows.length} clusters...`);
     const intervalId = setInterval(() => {
-      const c = scheduler.counts();
+      const c = limiter.counts();
       const msg =
         `Fetch calls: ${c.RECEIVED} received, ${c.QUEUED} queued, ` +
         `${c.RUNNING} running, ${c.EXECUTING} executing, ${c.DONE} done.`;

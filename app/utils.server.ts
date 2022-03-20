@@ -1,7 +1,5 @@
 import { parse } from 'accept-language-parser';
 
-export { autoLink } from 'twitter-text';
-
 export function lang(request: Request): string {
   const langs = parse(request.headers.get('Accept-Language') ?? '');
   return langs.length
@@ -42,7 +40,3 @@ export class Logger {
 }
 
 export const log = new Logger(LogLevel.Debug);
-
-export function caps(str: string): string {
-  return `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
-}

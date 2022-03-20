@@ -5,7 +5,7 @@ import type { LoaderFunction } from 'remix';
 import { nanoid } from 'nanoid';
 import { redirect } from 'remix';
 
-import { oauth } from '~/cookies.server';
+import { commitSession, getSession } from '~/session.server';
 
 // Base64-URL-encoding is a minor variation on the typical Base64 encoding
 // method. It starts with the same Base64-encoding method available in most
@@ -27,7 +27,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const codeVerifier = nanoid(128);
   const codeHash = createHash('sha256').update(codeVerifier);
-  const cookie = await oauth.serialize({ stateId, codeVerifier });
+  const session = await getSession(request.headers.get('Cookie'));
+  session.flash('stateId', stateId);
+  session.flash('codeVerifier', codeVerifier);
   const params = {
     state: stateId,
     response_type: 'code',
@@ -52,5 +54,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     .map((p) => p.join('='))
     .join('&');
   const { href } = new URL(`https://twitter.com/i/oauth2/authorize?${search}`);
-  return redirect(href, { headers: { 'Set-Cookie': cookie } });
+  const headers = { 'Set-Cookie': await commitSession(session) };
+  return redirect(href, { headers });
 };

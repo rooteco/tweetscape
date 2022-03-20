@@ -24,7 +24,7 @@ const env = process.env.NODE_ENV ?? 'development';
 
 // twitter api rate limit: max 1500 timeline API requests per 15 mins per app.
 export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-export const twitter = new Bottleneck({
+export const limiter = new Bottleneck({
   reservoir: 1500,
   reservoirRefreshInterval: 15 * 60 * 1000,
   reservoirRefreshAmount: 1500,
@@ -32,7 +32,19 @@ export const twitter = new Bottleneck({
   maxConcurrent: 10,
   minTime: 250,
 });
-const fetchFromTwitter = twitter.wrap(fetch);
+limiter.on('error', (e) => {
+  log.error(`Limiter error: ${e.stack}`);
+});
+limiter.on('failed', (e, job) => {
+  log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
+  if (job.retryCount < 5) {
+    log.debug(`Retrying job (${job.options.id}) in 500ms...`);
+    return 500;
+  }
+});
+limiter.on('retry', (e, job) => {
+  log.debug(`No retrying job (${job.options.id})...`);
+});
 
 const TWEET_FIELDS = [
   'created_at',
@@ -68,7 +80,8 @@ export async function getTweets(
     `max_results=100${token ? `&pagination_token=${token}` : ''}` +
     `${lastTweetId ? `&since_id=${lastTweetId}` : ''}`;
   const headers = { authorization: `Bearer ${process.env.TWITTER_TOKEN}` };
-  const res = await fetchFromTwitter(url, { headers });
+  const job = { expiration: 5000, id: url };
+  const res = await limiter.schedule(job, fetch, url, { headers });
   const data = await res.json();
   if (data.errors && data.errors[0])
     log.error(
