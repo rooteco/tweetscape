@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import cn from 'classnames';
 
-import { DEFAULT_FILTER, Filter, Sort } from '~/query';
+import { ArticlesFilter, ArticlesSort, DEFAULT_ARTICLE_FILTER } from '~/query';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
 
@@ -36,9 +36,13 @@ export default function Nav({ header, scrollerRef }: NavProps) {
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   const isList = /lists/.test(pathname);
-  const defaultSort = isList ? Sort.TweetsCount : Sort.AttentionScore;
-  const sort = (searchParams.get('sort') ?? defaultSort) as Sort;
-  const filter = (searchParams.get('filter') ?? DEFAULT_FILTER) as Filter;
+  const defaultSort = isList
+    ? ArticlesSort.TweetsCount
+    : ArticlesSort.AttentionScore;
+  const sort = Number(searchParams.get('sort') ?? defaultSort) as ArticlesSort;
+  const filter = Number(
+    searchParams.get('filter') ?? DEFAULT_ARTICLE_FILTER
+  ) as ArticlesFilter;
   return (
     <nav
       className={cn(
@@ -53,8 +57,8 @@ export default function Nav({ header, scrollerRef }: NavProps) {
       <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
       {!isList && (
         <Link
-          className={cn({ underline: sort === Sort.AttentionScore })}
-          to={`?filter=${filter}&sort=${Sort.AttentionScore}`}
+          className={cn({ underline: sort === ArticlesSort.AttentionScore })}
+          to={`?filter=${filter}&sort=${ArticlesSort.AttentionScore}`}
         >
           attention score
         </Link>
@@ -62,22 +66,22 @@ export default function Nav({ header, scrollerRef }: NavProps) {
       {isList && <span className='cursor-not-allowed'>attention score</span>}
       {' · '}
       <Link
-        className={cn({ underline: sort === Sort.TweetsCount })}
-        to={`?filter=${filter}&sort=${Sort.TweetsCount}`}
+        className={cn({ underline: sort === ArticlesSort.TweetsCount })}
+        to={`?filter=${filter}&sort=${ArticlesSort.TweetsCount}`}
       >
         tweets count
       </Link>
       <FilterIcon className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block' />
       <Link
-        className={cn({ underline: filter === Filter.HideRetweets })}
-        to={`?filter=${Filter.HideRetweets}&sort=${sort}`}
+        className={cn({ underline: filter === ArticlesFilter.HideRetweets })}
+        to={`?filter=${ArticlesFilter.HideRetweets}&sort=${sort}`}
       >
         hide retweets
       </Link>
       {' · '}
       <Link
-        className={cn({ underline: filter === Filter.ShowRetweets })}
-        to={`?filter=${Filter.ShowRetweets}&sort=${sort}`}
+        className={cn({ underline: filter === ArticlesFilter.ShowRetweets })}
+        to={`?filter=${ArticlesFilter.ShowRetweets}&sort=${sort}`}
       >
         show retweets
       </Link>

@@ -3,24 +3,17 @@ import cn from 'classnames';
 import { useSearchParams } from 'remix';
 
 import type { Article } from '~/types';
-import { DEFAULT_FILTER } from '~/query';
+import {
+  ArticleTweetsFilter,
+  ArticleTweetsSort,
+  DEFAULT_ARTICLE_FILTER,
+} from '~/query';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
 import { TimeAgo } from '~/components/timeago';
 import TweetItem from '~/components/tweet';
 import { substr } from '~/utils';
-
-enum Sort {
-  AttentionScore,
-  RetweetCount,
-  Latest,
-  Earliest,
-}
-enum Filter {
-  ShowRetweets,
-  HideRetweets,
-}
 
 export type ArticleItemProps = Article;
 
@@ -41,36 +34,41 @@ export default function ArticleItem({
       )[0],
     [tweets]
   );
-  const [sort, setSort] = useState<Sort>(Sort.AttentionScore);
+  const [sort, setSort] = useState(ArticleTweetsSort.AttentionScore);
   const [searchParams] = useSearchParams();
   const searchParamsFilter = useMemo(
-    () => Number(searchParams.get('filter') ?? DEFAULT_FILTER) as Filter,
+    () =>
+      Number(
+        searchParams.get('filter') ?? DEFAULT_ARTICLE_FILTER
+      ) as ArticleTweetsFilter,
     [searchParams]
   );
-  const [filter, setFilter] = useState<Filter>(searchParamsFilter);
+  const [filter, setFilter] = useState(searchParamsFilter);
   useEffect(() => {
-    if (searchParamsFilter === Filter.HideRetweets)
-      setFilter(Filter.HideRetweets);
+    if (searchParamsFilter === ArticleTweetsFilter.HideRetweets)
+      setFilter(ArticleTweetsFilter.HideRetweets);
   }, [searchParamsFilter]);
   const results = useMemo(
     () =>
       Array.from(tweets)
         .filter(
-          (t) => filter === Filter.ShowRetweets || !/^RT @\w+\b:/.test(t.text)
+          (t) =>
+            filter === ArticleTweetsFilter.ShowRetweets ||
+            !/^RT @\w+\b:/.test(t.text)
         )
         .sort((a, b) => {
-          if (sort === Sort.RetweetCount)
+          if (sort === ArticleTweetsSort.RetweetCount)
             return (
               b.retweet_count +
               b.quote_count -
               (a.retweet_count + a.quote_count)
             );
-          if (sort === Sort.Latest)
+          if (sort === ArticleTweetsSort.Latest)
             return (
               new Date(b.created_at).valueOf() -
               new Date(a.created_at).valueOf()
             );
-          if (sort === Sort.Earliest)
+          if (sort === ArticleTweetsSort.Earliest)
             return (
               new Date(a.created_at).valueOf() -
               new Date(b.created_at).valueOf()
@@ -185,57 +183,63 @@ export default function ArticleItem({
           <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
           <button
             type='button'
-            aria-pressed={sort === Sort.AttentionScore}
-            className={cn({ underline: sort === Sort.AttentionScore })}
-            onClick={() => setSort(Sort.AttentionScore)}
+            aria-pressed={sort === ArticleTweetsSort.AttentionScore}
+            className={cn({
+              underline: sort === ArticleTweetsSort.AttentionScore,
+            })}
+            onClick={() => setSort(ArticleTweetsSort.AttentionScore)}
           >
             attention score
           </button>
           {' · '}
           <button
             type='button'
-            aria-pressed={sort === Sort.RetweetCount}
-            className={cn({ underline: sort === Sort.RetweetCount })}
-            onClick={() => setSort(Sort.RetweetCount)}
+            aria-pressed={sort === ArticleTweetsSort.RetweetCount}
+            className={cn({
+              underline: sort === ArticleTweetsSort.RetweetCount,
+            })}
+            onClick={() => setSort(ArticleTweetsSort.RetweetCount)}
           >
             retweet count
           </button>
           {' · '}
           <button
             type='button'
-            aria-pressed={sort === Sort.Latest}
-            className={cn({ underline: sort === Sort.Latest })}
-            onClick={() => setSort(Sort.Latest)}
+            aria-pressed={sort === ArticleTweetsSort.Latest}
+            className={cn({ underline: sort === ArticleTweetsSort.Latest })}
+            onClick={() => setSort(ArticleTweetsSort.Latest)}
           >
             latest
           </button>
           {' · '}
           <button
             type='button'
-            aria-pressed={sort === Sort.Earliest}
-            className={cn({ underline: sort === Sort.Earliest })}
-            onClick={() => setSort(Sort.Earliest)}
+            aria-pressed={sort === ArticleTweetsSort.Earliest}
+            className={cn({ underline: sort === ArticleTweetsSort.Earliest })}
+            onClick={() => setSort(ArticleTweetsSort.Earliest)}
           >
             earliest
           </button>
           <FilterIcon className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block' />
           <button
             type='button'
-            aria-pressed={filter === Filter.HideRetweets}
-            className={cn({ underline: filter === Filter.HideRetweets })}
-            onClick={() => setFilter(Filter.HideRetweets)}
+            aria-pressed={filter === ArticleTweetsFilter.HideRetweets}
+            className={cn({
+              underline: filter === ArticleTweetsFilter.HideRetweets,
+            })}
+            onClick={() => setFilter(ArticleTweetsFilter.HideRetweets)}
           >
             hide retweets
           </button>
           {' · '}
           <button
             type='button'
-            disabled={searchParamsFilter === Filter.HideRetweets}
-            aria-pressed={filter === Filter.ShowRetweets}
+            disabled={searchParamsFilter === ArticleTweetsFilter.HideRetweets}
+            aria-pressed={filter === ArticleTweetsFilter.ShowRetweets}
             className={cn('disabled:cursor-not-allowed', {
-              underline: filter === Filter.ShowRetweets,
+              underline: filter === ArticleTweetsFilter.ShowRetweets,
             })}
-            onClick={() => setFilter(Filter.ShowRetweets)}
+            onClick={() => setFilter(ArticleTweetsFilter.ShowRetweets)}
           >
             show retweets
           </button>

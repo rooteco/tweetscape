@@ -12,7 +12,7 @@ import {
   getLists,
   revalidateListsCache,
 } from '~/query.server';
-import { Filter } from '~/query';
+import { ArticlesFilter } from '~/query';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
@@ -40,7 +40,7 @@ export const action: ActionFunction = async ({ request }) => {
   await Promise.all(
     listIds
       .map((listId) =>
-        Object.values(Filter).map(async (filter) => {
+        Object.values(ArticlesFilter).map(async (filter) => {
           if (typeof filter === 'string') return;
           const articles = await getListArticles(listId, filter);
           articles.forEach((article) => {

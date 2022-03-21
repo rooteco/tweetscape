@@ -1,7 +1,7 @@
 import { autoLink } from 'twitter-text';
 
 import type { Article, List, TweetFull } from '~/types';
-import { Filter, Sort } from '~/query';
+import { ArticlesFilter, ArticlesSort } from '~/query';
 import { revalidate, swr } from '~/swr.server';
 import { log } from '~/utils.server';
 
@@ -22,7 +22,10 @@ export function getLists(uid: string): Promise<List[]> {
   return swr<List>(getListsQuery(uid));
 }
 
-export function getListArticlesQuery(listId: string, filter: Filter): string {
+export function getListArticlesQuery(
+  listId: string,
+  filter: ArticlesFilter
+): string {
   /* prettier-ignore */
   return (
     `
@@ -43,7 +46,7 @@ export function getListArticlesQuery(listId: string, filter: Filter): string {
               inner join influencers on influencers.id = tweets.author_id
               inner join list_members on list_members.influencer_id = influencers.id
             where list_members.list_id = '${listId}'
-            ${filter === Filter.HideRetweets ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
+            ${filter === ArticlesFilter.HideRetweets ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
           ) as tweets on tweets.id = urls.tweet_id
       ) as tweets on tweets.link_url = links.url
     where url !~ '^https?:\\/\\/twitter\\.com'
@@ -77,7 +80,7 @@ function getArticlesWithHTML(articles: Article[]): Article[] {
 
 export async function getListArticles(
   listId: string,
-  filter: Filter
+  filter: ArticlesFilter
 ): Promise<Article[]> {
   const articles = await swr<Article>(getListArticlesQuery(listId, filter));
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
@@ -105,7 +108,7 @@ export function revalidateListsCache(listIds: string[]) {
   return Promise.all(
     listIds
       .map((listId) =>
-        Object.values(Filter).map((filter) => {
+        Object.values(ArticlesFilter).map((filter) => {
           if (typeof filter === 'string') return;
           return revalidate(getListArticlesQuery(listId, filter));
         })
@@ -116,8 +119,8 @@ export function revalidateListsCache(listIds: string[]) {
 
 export function getClusterArticlesQuery(
   clusterSlug: string,
-  filter: Filter,
-  sort: Sort
+  filter: ArticlesFilter,
+  sort: ArticlesSort
 ): string {
   /* prettier-ignore */
   return (
@@ -147,13 +150,13 @@ export function getClusterArticlesQuery(
             from tweets
               inner join influencers on influencers.id = tweets.author_id
               inner join scores on scores.influencer_id = influencers.id
-            ${filter === Filter.HideRetweets ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
+            ${filter === ArticlesFilter.HideRetweets ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
           ) as tweets on tweets.id = urls.tweet_id
       ) as tweets on tweets.link_url = links.url
       inner join clusters on clusters.id = tweets.cluster_id
     where clusters.slug = '${clusterSlug}' and url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url, clusters.id
-    order by ${sort === Sort.TweetsCount ? 'count(tweets)' : 'attention_score'} desc
+    order by ${sort === ArticlesSort.TweetsCount ? 'count(tweets)' : 'attention_score'} desc
     limit 20;
     `
   );
@@ -161,8 +164,8 @@ export function getClusterArticlesQuery(
 
 export async function getClusterArticles(
   clusterSlug: string,
-  filter: Filter,
-  sort: Sort
+  filter: ArticlesFilter,
+  sort: ArticlesSort
 ): Promise<Article[]> {
   const articles = await swr<Article>(
     getClusterArticlesQuery(clusterSlug, filter, sort)
