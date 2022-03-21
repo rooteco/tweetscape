@@ -5,25 +5,29 @@ import { useRef } from 'react';
 
 import { DEFAULT_FILTER, Filter, Sort } from '~/query';
 import { commitSession, getSession } from '~/session.server';
+import { getClusterArticles, getListArticles } from '~/query.server';
 import { lang, log } from '~/utils.server';
 import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
 import Nav from '~/components/nav';
-import { getClusterArticles } from '~/query.server';
 import { useError } from '~/error';
 
 export type LoaderData = { articles: Article[]; locale: string };
 
 export const loader: LoaderFunction = async ({ params, request }) => {
-  invariant(params.slug, 'expected params.slug');
-  log.info(`Fetching articles for cluster (${params.slug})...`);
+  invariant(params.type, 'expected params.type');
+  invariant(params.id, 'expected params.id');
+  log.info(`Fetching articles for ${params.type} (${params.id})...`);
   const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
   session.set('href', `${url.pathname}${url.search}`);
   const sort = (url.searchParams.get('sort') ?? Sort.AttentionScore) as Sort;
   const filter = (url.searchParams.get('filter') ?? DEFAULT_FILTER) as Filter;
-  const articles = await getClusterArticles(params.slug, filter, sort);
+  const articles =
+    params.type === 'clusters'
+      ? await getClusterArticles(params.id, filter, sort)
+      : await getListArticles(params.id, filter);
   return json<LoaderData>(
     { articles, locale: lang(request) },
     { headers: { 'Set-Cookie': await commitSession(session) } }
