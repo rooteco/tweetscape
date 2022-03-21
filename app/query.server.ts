@@ -54,6 +54,23 @@ export function getListArticlesQuery(listId: string, filter: Filter): string {
   );
 }
 
+function getArticlesWithHTML(articles: Article[]): Article[] {
+  return articles.map((article) => ({
+    ...article,
+    tweets: article.tweets.map((tweet) => ({
+      ...tweet,
+      html: autoLink(tweet.text, {
+        usernameIncludeSymbol: true,
+        linkAttributeBlock(entity, attrs) {
+          attrs.target = '_blank';
+          attrs.rel = 'noopener noreferrer';
+          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
+        },
+      }),
+    })),
+  }));
+}
+
 export async function getListArticles(
   listId: string,
   filter: Filter
@@ -61,19 +78,7 @@ export async function getListArticles(
   const articles = await swr<Article>(getListArticlesQuery(listId, filter));
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
-  articles.forEach((article) =>
-    article.tweets.forEach((tweet) => {
-      tweet.html = autoLink(tweet.text, {
-        usernameIncludeSymbol: true,
-        linkAttributeBlock(entity, attrs) {
-          attrs.target = '_blank';
-          attrs.rel = 'noopener noreferrer';
-          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-        },
-      });
-    })
-  );
-  return articles;
+  return getArticlesWithHTML(articles);
 }
 
 export function revalidateListsCache(listIds: string[]) {
@@ -145,17 +150,5 @@ export async function getClusterArticles(
   );
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);
-  articles.forEach((article) =>
-    article.tweets.forEach((tweet) => {
-      tweet.html = autoLink(tweet.text, {
-        usernameIncludeSymbol: true,
-        linkAttributeBlock(entity, attrs) {
-          attrs.target = '_blank';
-          attrs.rel = 'noopener noreferrer';
-          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-        },
-      });
-    })
-  );
-  return articles;
+  return getArticlesWithHTML(articles);
 }

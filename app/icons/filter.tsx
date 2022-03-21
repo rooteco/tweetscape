@@ -1,4 +1,4 @@
-export default function Filter() {
+export default function FilterIcon() {
   return (
     <svg
       className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block'
