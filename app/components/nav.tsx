@@ -1,7 +1,8 @@
 import { Link, useLocation, useSearchParams } from 'remix';
 import cn from 'classnames';
 
-import type { Filter, Sort } from '~/query.server';
+import type { Filter, Sort } from '~/query';
+import { DEFAULT_FILTER } from '~/query';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
 
@@ -11,7 +12,7 @@ export default function Nav() {
   const isList = /lists/.test(pathname);
   const defaultSort: Sort = isList ? 'tweets_count' : 'attention_score';
   const sort = (searchParams.get('sort') ?? defaultSort) as Sort;
-  const filter = (searchParams.get('filter') ?? 'hide_retweets') as Filter;
+  const filter = (searchParams.get('filter') ?? DEFAULT_FILTER) as Filter;
   return (
     <nav className='text-xs p-3 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800'>
       <SortIcon />

@@ -1,7 +1,9 @@
 import { autoLink } from 'twitter-text';
 
 import type { Article, List } from '~/types';
+import type { Filter, Sort } from '~/query';
 import { revalidate, swr } from '~/swr.server';
+import { FILTERS } from '~/query';
 import { log } from '~/utils.server';
 
 export function getListsQuery(uid: string): string {
@@ -20,13 +22,6 @@ export function getListsQuery(uid: string): string {
 export function getLists(uid: string): Promise<List[]> {
   return swr<List>(getListsQuery(uid));
 }
-
-// TODO: Instead of exporting these types and constants, I should export enums.
-export type Sort = 'attention_score' | 'tweets_count';
-export type Filter = 'show_retweets' | 'hide_retweets';
-
-export const SORTS: Sort[] = ['attention_score', 'tweets_count'];
-export const FILTERS: Filter[] = ['show_retweets', 'hide_retweets'];
 
 export function getListArticlesQuery(listId: string, filter: Filter): string {
   /* prettier-ignore */

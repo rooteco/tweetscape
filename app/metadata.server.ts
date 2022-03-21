@@ -6,13 +6,13 @@ import { decode } from 'html-entities';
 import invariant from 'tiny-invariant';
 
 import type { Article, Link } from '~/types';
+import { commitSession, getSession } from '~/session.server';
 import {
-  FILTERS,
   getListArticles,
   getLists,
   revalidateListsCache,
 } from '~/query.server';
-import { commitSession, getSession } from '~/session.server';
+import { FILTERS } from '~/query';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 

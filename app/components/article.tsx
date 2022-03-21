@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import cn from 'classnames';
 import { useSearchParams } from 'remix';
 
 import type { Article } from '~/types';
+import { DEFAULT_FILTER } from '~/query';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
@@ -34,8 +35,14 @@ export default function ArticleItem({
   );
   const [sort, setSort] = useState<Sort>('attention_score');
   const [searchParams] = useSearchParams();
-  const searchParamsFilter = searchParams.get('filter') ?? 'hide_retweets';
+  const searchParamsFilter = useMemo(
+    () => searchParams.get('filter') ?? DEFAULT_FILTER,
+    [searchParams]
+  );
   const [filter, setFilter] = useState<Filter>(searchParamsFilter as Filter);
+  useEffect(() => {
+    if (searchParamsFilter === 'hide_retweets') setFilter('hide_retweets');
+  }, [searchParamsFilter]);
   const results = useMemo(
     () =>
       Array.from(tweets)
