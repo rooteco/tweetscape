@@ -1,12 +1,13 @@
-import { Link, useLoaderData, useSearchParams } from 'remix';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import cn from 'classnames';
+import { useSearchParams } from 'remix';
 
 import type { Article } from '~/types';
+import { DEFAULT_FILTER } from '~/query';
+import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
-import type { LoaderData } from '~/routes/clusters.$slug';
 import SortIcon from '~/icons/sort';
-import Tooltip from '~/components/tooltip';
+import { TimeAgo } from '~/components/timeago';
 import TweetItem from '~/components/tweet';
 import { substr } from '~/utils';
 
@@ -23,7 +24,6 @@ export default function ArticleItem({
   description,
   tweets,
 }: ArticleItemProps) {
-  const { locale } = useLoaderData<LoaderData>();
   const [hidden, setHidden] = useState(true);
   const earliestTweet = useMemo(
     () =>
@@ -35,9 +35,14 @@ export default function ArticleItem({
   );
   const [sort, setSort] = useState<Sort>('attention_score');
   const [searchParams] = useSearchParams();
-  const searchParamsSort = searchParams.get('sort') ?? 'attention_score';
-  const searchParamsFilter = searchParams.get('filter') ?? 'hide_retweets';
+  const searchParamsFilter = useMemo(
+    () => searchParams.get('filter') ?? DEFAULT_FILTER,
+    [searchParams]
+  );
   const [filter, setFilter] = useState<Filter>(searchParamsFilter as Filter);
+  useEffect(() => {
+    if (searchParamsFilter === 'hide_retweets') setFilter('hide_retweets');
+  }, [searchParamsFilter]);
   const results = useMemo(
     () =>
       Array.from(tweets)
@@ -46,7 +51,11 @@ export default function ArticleItem({
         )
         .sort((a, b) => {
           if (sort === 'retweet_count')
-            return b.retweet_count - a.retweet_count;
+            return (
+              b.retweet_count +
+              b.quote_count -
+              (a.retweet_count + a.quote_count)
+            );
           if (sort === 'latest')
             return (
               new Date(b.created_at).valueOf() -
@@ -66,21 +75,18 @@ export default function ArticleItem({
     [sort, filter, tweets]
   );
   return (
-    <li className='my-8'>
-      <div>
+    <li className='text-sm p-3 border-b border-slate-200 dark:border-slate-800'>
+      <div className='flex items-center'>
         <a
           data-cy='title'
-          className='font-semibold hover:underline text-base'
+          className='font-semibold hover:underline text-base truncate'
           href={unwound_url ?? url}
           target='_blank'
           rel='noopener noreferrer'
         >
-          {substr(
-            title || (unwound_url ?? url).replace(/^https?:\/\/(www\.)?/, ''),
-            100
-          )}
-        </a>{' '}
-        <span className='text-sm'>
+          {title || (unwound_url ?? url).replace(/^https?:\/\/(www\.)?/, '')}
+        </a>
+        <span className='ml-1 text-sm text-slate-500 block flex-none'>
           (
           <a
             data-cy='domain'
@@ -99,10 +105,10 @@ export default function ArticleItem({
       </div>
       {description && (
         <p data-cy='description' className='text-sm'>
-          {substr(description, 285)}
+          {substr(description, 235)}
         </p>
       )}
-      <div className='text-sm text-slate-600 dark:text-slate-400 flex items-center mt-1.5'>
+      <div className='text-sm text-slate-500 flex items-center mt-1.5'>
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
           {Array.from(tweets)
             .sort((a, b) =>
@@ -159,165 +165,83 @@ export default function ArticleItem({
           target='_blank'
           rel='noopener noreferrer'
         >
-          {new Date(earliestTweet.created_at).toLocaleString(locale, {
-            month: 'short',
-            day: 'numeric',
-          })}
-          {' · '}
-          {new Date(earliestTweet.created_at).toLocaleString(locale, {
-            hour: 'numeric',
-            minute: 'numeric',
-          })}
+          <TimeAgo datetime={earliestTweet.created_at} locale='en_short' />
         </a>
       </div>
-      <div
+      <section
         data-cy='tweets'
-        className={cn('border-b border-black dark:border-white', { hidden })}
+        className={cn('-mx-3 -mb-3 max-h-96 overflow-y-auto', { hidden })}
       >
-        <nav className='text-xs my-2.5'>
+        <nav className='text-xs p-3 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800'>
           <SortIcon />
-          <Tooltip
-            content={
-              <>
-                <p>
-                  Show tweets with higher{' '}
-                  <a
-                    className='underline'
-                    href='https://borgcollective.notion.site/FAQ-5434e4695d60456cb481acb98bb88b18'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    attention scores
-                  </a>{' '}
-                  first.
-                </p>
-                <p className='mt-1'>
-                  Each tweet’s attention score is simply the attention score of
-                  the tweet’s author. Those author attention scores are
-                  generated by{' '}
-                  <a
-                    className='underline'
-                    href='https://borgcollective.notion.site/About-15b9db2c1f414cf998c5abc58b715176'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    the Borg Collective
-                  </a>{' '}
-                  for{' '}
-                  <a
-                    className='underline'
-                    href='https://hive.one'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    Hive
-                  </a>{' '}
-                  using their{' '}
-                  <a
-                    className='underline'
-                    href='https://hivedotone.substack.com/p/algorithm-v-21-is-now-live'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    latest proprietary algorithm for trust
-                  </a>
-                  .
-                </p>
-              </>
-            }
+          <button
+            type='button'
+            aria-pressed={sort === 'attention_score'}
+            className={cn({ underline: sort === 'attention_score' })}
+            onClick={() => setSort('attention_score')}
           >
-            <button
-              type='button'
-              aria-pressed={sort === 'attention_score'}
-              className={cn({ underline: sort === 'attention_score' })}
-              onClick={() => setSort('attention_score')}
-            >
-              attention score
-            </button>
-          </Tooltip>
+            attention score
+          </button>
           {' · '}
-          <Tooltip content='Show tweets with more retweets first.'>
-            <button
-              type='button'
-              aria-pressed={sort === 'retweet_count'}
-              className={cn({ underline: sort === 'retweet_count' })}
-              onClick={() => setSort('retweet_count')}
-            >
-              retweet count
-            </button>
-          </Tooltip>
+          <button
+            type='button'
+            aria-pressed={sort === 'retweet_count'}
+            className={cn({ underline: sort === 'retweet_count' })}
+            onClick={() => setSort('retweet_count')}
+          >
+            retweet count
+          </button>
           {' · '}
-          <Tooltip content='Show the latest (last) tweets first.'>
-            <button
-              type='button'
-              aria-pressed={sort === 'latest'}
-              className={cn({ underline: sort === 'latest' })}
-              onClick={() => setSort('latest')}
-            >
-              latest
-            </button>
-          </Tooltip>
+          <button
+            type='button'
+            aria-pressed={sort === 'latest'}
+            className={cn({ underline: sort === 'latest' })}
+            onClick={() => setSort('latest')}
+          >
+            latest
+          </button>
           {' · '}
-          <Tooltip content='Show the earliest (first) tweets first.'>
-            <button
-              type='button'
-              aria-pressed={sort === 'earliest'}
-              className={cn({ underline: sort === 'earliest' })}
-              onClick={() => setSort('earliest')}
-            >
-              earliest
-            </button>
-          </Tooltip>
+          <button
+            type='button'
+            aria-pressed={sort === 'earliest'}
+            className={cn({ underline: sort === 'earliest' })}
+            onClick={() => setSort('earliest')}
+          >
+            earliest
+          </button>
           <FilterIcon />
-          <Tooltip content='Exclude retweets from the list below.'>
-            <button
-              type='button'
-              aria-pressed={filter === 'hide_retweets'}
-              className={cn({ underline: filter === 'hide_retweets' })}
-              onClick={() => setFilter('hide_retweets')}
-            >
-              hide retweets
-            </button>
-          </Tooltip>
-          {' · '}
-          <Tooltip
-            content={
-              searchParamsFilter === 'hide_retweets' ? (
-                <p>
-                  Cannot show retweets when filtering them out at the article
-                  level; click{' '}
-                  <Link
-                    className='underline'
-                    to={`?filter=show_retweets&sort=${searchParamsSort}`}
-                  >
-                    show tweets
-                  </Link>{' '}
-                  to use this filter.
-                </p>
-              ) : (
-                'Include retweets in the list below.'
-              )
-            }
+          <button
+            type='button'
+            aria-pressed={filter === 'hide_retweets'}
+            className={cn({ underline: filter === 'hide_retweets' })}
+            onClick={() => setFilter('hide_retweets')}
           >
-            <button
-              type='button'
-              disabled={searchParamsFilter === 'hide_retweets'}
-              aria-pressed={filter === 'show_retweets'}
-              className={cn('disabled:cursor-not-allowed', {
-                underline: filter === 'show_retweets',
-              })}
-              onClick={() => setFilter('show_retweets')}
-            >
-              show retweets
-            </button>
-          </Tooltip>
+            hide retweets
+          </button>
+          {' · '}
+          <button
+            type='button'
+            disabled={searchParamsFilter === 'hide_retweets'}
+            aria-pressed={filter === 'show_retweets'}
+            className={cn('disabled:cursor-not-allowed', {
+              underline: filter === 'show_retweets',
+            })}
+            onClick={() => setFilter('show_retweets')}
+          >
+            show retweets
+          </button>
         </nav>
-        <ul className='pb-2.5 flex flex-wrap overflow-auto max-h-96'>
-          {results.map((tweet) => (
-            <TweetItem {...tweet} key={tweet.id} />
-          ))}
-        </ul>
-      </div>
+        {!results.length && (
+          <Empty className='m-3 h-48'>NO TWEETS TO SHOW</Empty>
+        )}
+        {!!results.length && (
+          <ol>
+            {results.map((tweet) => (
+              <TweetItem {...tweet} key={tweet.id} />
+            ))}
+          </ol>
+        )}
+      </section>
     </li>
   );
 }

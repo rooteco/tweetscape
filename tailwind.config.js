@@ -22,6 +22,20 @@ module.exports = {
       animation: {
         rotate: 'spin 2s linear infinite',
       },
+      colors: {
+        red: {
+          550: 'rgb(249,24,128)',
+          50: 'rgba(249,24,128,0.1)',
+        },
+        green: {
+          550: 'rgb(0,186,124)',
+          50: 'rgba(0,186,124,0.1)',
+        },
+        blue: {
+          550: 'rgb(29,155,240)',
+          50: 'rgba(29,155,240,0.1)',
+        },
+      },
     },
   },
   plugins: [],

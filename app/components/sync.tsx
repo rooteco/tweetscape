@@ -1,13 +1,9 @@
-import * as timeago from 'timeago.js';
 import { useContext, useEffect, useState } from 'react';
 import { useFetcher, useLocation, useMatches } from 'remix';
-import TimeAgo from 'timeago-react';
-import en_short from 'timeago.js/lib/lang/en_short';
 
 import { ErrorContext } from '~/error';
 import type { LoaderData } from '~/root';
-
-timeago.register('en_short', en_short);
+import { TimeAgo } from '~/components/timeago';
 
 // TODO: Hike up this `<ErrorBoundary>` error prop to React context so as to
 // avoid prop drilling from the boundary to the header to this component.
@@ -55,7 +51,7 @@ export default function Sync() {
     return (
       <a
         href={`${location.pathname}${location.search}`}
-        className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
+        className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
       >
         <svg
           className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500'
@@ -72,7 +68,7 @@ export default function Sync() {
     );
   if (progress < 1)
     return (
-      <div className='cursor-wait ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'>
+      <div className='cursor-wait inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'>
         <svg
           width='16'
           height='16'
@@ -88,7 +84,7 @@ export default function Sync() {
   return (
     <a
       href={`${location.pathname}${location.search}`}
-      className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
+      className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
     >
       <svg
         className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500'

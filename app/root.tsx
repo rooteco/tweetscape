@@ -36,14 +36,20 @@ export function ErrorBoundary({ error: e }: { error: Error }) {
         <Meta />
         <Links />
       </head>
-      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
+      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-slate-100 w-full h-full dark:bg-slate-900 text-slate-900 dark:text-slate-100 fixed overflow-hidden'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <ErrorContext.Provider value={context}>
-          <Header />
-          <Empty>
-            <p>an unexpected runtime error occurred</p>
-            <p>{e.message}</p>
-          </Empty>
+          <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
+            <Header />
+            <Empty className='m-10 flex-1'>
+              <article className='max-w-md'>
+                <p className='uppercase'>
+                  an unexpected runtime error occurred
+                </p>
+                <p>{e.message}</p>
+              </article>
+            </Empty>
+          </div>
           <Footer />
         </ErrorContext.Provider>
         <ScrollRestoration />
@@ -112,7 +118,7 @@ export default function App() {
     }
     // and when it's something else it means it's either submitting a form or
     // waiting for the loaders of the next location so we start it
-    const timeoutId = setTimeout(() => NProgress.start(), 500);
+    const timeoutId = setTimeout(() => NProgress.start(), 250);
     return () => clearTimeout(timeoutId);
   }, [transition.state]);
   const [error, setError] = useState<Error>();
@@ -125,12 +131,13 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-white w-full px-4 lg:px-0 max-w-screen-lg mx-auto my-4 dark:bg-slate-900 text-slate-900 dark:text-white'>
+      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-slate-100 w-full h-full dark:bg-slate-900 text-slate-900 dark:text-slate-100 fixed overflow-hidden'>
         <script dangerouslySetInnerHTML={{ __html: THEME_SNIPPET }} />
         <ErrorContext.Provider value={context}>
-          <Header />
-          <Outlet />
-          <Footer />
+          <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
+            <Header />
+            <Outlet />
+          </div>
         </ErrorContext.Provider>
         <ScrollRestoration />
         <Scripts />
