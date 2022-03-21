@@ -1,4 +1,4 @@
-export default function Like() {
+export default function LikeIcon() {
   return (
     <svg
       className='fill-current h-3 w-3'

@@ -1,4 +1,4 @@
-export default function Sort() {
+export default function SortIcon() {
   return (
     <svg
       className='fill-current h-4 w-4 mr-1.5 inline-block'

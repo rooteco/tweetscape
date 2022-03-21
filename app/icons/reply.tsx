@@ -1,4 +1,4 @@
-export default function Reply() {
+export default function ReplyIcon() {
   return (
     <svg
       className='fill-current h-3 w-3'
