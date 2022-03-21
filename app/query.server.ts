@@ -1,6 +1,6 @@
 import { autoLink } from 'twitter-text';
 
-import type { Article, Influencer, List, Tweet } from '~/types';
+import type { Article, List, TweetFull } from '~/types';
 import { Filter, Sort } from '~/query';
 import { revalidate, swr } from '~/swr.server';
 import { log } from '~/utils.server';
@@ -54,20 +54,24 @@ export function getListArticlesQuery(listId: string, filter: Filter): string {
   );
 }
 
+function getTweetsWithHTML(tweets: TweetFull[]): TweetFull[] {
+  return tweets.map((tweet) => ({
+    ...tweet,
+    html: autoLink(tweet.text, {
+      usernameIncludeSymbol: true,
+      linkAttributeBlock(entity, attrs) {
+        attrs.target = '_blank';
+        attrs.rel = 'noopener noreferrer';
+        attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
+      },
+    }),
+  }));
+}
+
 function getArticlesWithHTML(articles: Article[]): Article[] {
   return articles.map((article) => ({
     ...article,
-    tweets: article.tweets.map((tweet) => ({
-      ...tweet,
-      html: autoLink(tweet.text, {
-        usernameIncludeSymbol: true,
-        linkAttributeBlock(entity, attrs) {
-          attrs.target = '_blank';
-          attrs.rel = 'noopener noreferrer';
-          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-        },
-      }),
-    })),
+    tweets: getTweetsWithHTML(article.tweets),
   }));
 }
 
@@ -81,10 +85,8 @@ export async function getListArticles(
   return getArticlesWithHTML(articles);
 }
 
-export async function getListTweets(
-  listId: string
-): Promise<(Tweet & { author: Influencer })[]> {
-  const tweets = await swr<Tweet & { author: Influencer }>(
+export async function getListTweets(listId: string): Promise<TweetFull[]> {
+  const tweets = await swr<TweetFull>(
     `
     select tweets.*, to_json(influencers.*) as author from tweets
     inner join influencers on influencers.id = tweets.author_id
@@ -95,7 +97,7 @@ export async function getListTweets(
   );
   log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
-  return tweets;
+  return getTweetsWithHTML(tweets);
 }
 
 export function revalidateListsCache(listIds: string[]) {
@@ -172,8 +174,8 @@ export async function getClusterArticles(
 
 export async function getClusterTweets(
   clusterSlug: string
-): Promise<(Tweet & { author: Influencer })[]> {
-  const tweets = await swr<Tweet & { author: Influencer }>(
+): Promise<TweetFull[]> {
+  const tweets = await swr<TweetFull>(
     `
     select tweets.*, to_json(influencers.*) as author from tweets
     inner join influencers on influencers.id = tweets.author_id
@@ -185,5 +187,5 @@ export async function getClusterTweets(
   );
   log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
   log.info(`Fetched ${tweets.length} tweets or cluster (${clusterSlug}).`);
-  return tweets;
+  return getTweetsWithHTML(tweets);
 }

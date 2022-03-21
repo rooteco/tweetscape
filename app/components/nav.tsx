@@ -7,9 +7,12 @@ import { DEFAULT_FILTER, Filter, Sort } from '~/query';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
 
-export type NavProps = { scrollerRef: RefObject<HTMLElement | null> };
+export type NavProps = {
+  header: string;
+  scrollerRef: RefObject<HTMLElement | null>;
+};
 
-export default function Nav({ scrollerRef }: NavProps) {
+export default function Nav({ header, scrollerRef }: NavProps) {
   const [visible, setVisible] = useState<boolean>(true);
   const lastScrollPosition = useRef<number>(0);
 
@@ -46,7 +49,8 @@ export default function Nav({ scrollerRef }: NavProps) {
         }
       )}
     >
-      <SortIcon />
+      <h2 className='inline font-semibold mr-4'>{header}</h2>
+      <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
       {!isList && (
         <Link
           className={cn({ underline: sort === Sort.AttentionScore })}
@@ -63,7 +67,7 @@ export default function Nav({ scrollerRef }: NavProps) {
       >
         tweets count
       </Link>
-      <FilterIcon />
+      <FilterIcon className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block' />
       <Link
         className={cn({ underline: filter === Filter.HideRetweets })}
         to={`?filter=${Filter.HideRetweets}&sort=${sort}`}

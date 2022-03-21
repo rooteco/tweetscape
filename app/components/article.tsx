@@ -182,7 +182,7 @@ export default function ArticleItem({
         className={cn('-mx-3 -mb-3 max-h-96 overflow-y-auto', { hidden })}
       >
         <nav className='text-xs p-3 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800'>
-          <SortIcon />
+          <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
           <button
             type='button'
             aria-pressed={sort === Sort.AttentionScore}
@@ -218,7 +218,7 @@ export default function ArticleItem({
           >
             earliest
           </button>
-          <FilterIcon />
+          <FilterIcon className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block' />
           <button
             type='button'
             aria-pressed={filter === Filter.HideRetweets}

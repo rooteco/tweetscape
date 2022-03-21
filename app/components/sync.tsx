@@ -14,36 +14,36 @@ export default function Sync() {
   const [lastSynced, setLastSynced] = useState<Date>();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('Syncing user');
-  const lists = useFetcher();
-  useEffect(() => {
-    if (error) return;
-    if (user && lists.type === 'init') {
-      lists.submit(null, { method: 'patch', action: '/sync/lists' });
-      setProgress(1 / 6);
-      setStatus('Syncing lists');
-    } else if (lists.type === 'done') setProgress(2 / 6);
-  }, [error, user, lists]);
-  const tweets = useFetcher();
-  useEffect(() => {
-    if (error) return;
-    if (user && lists.type === 'done' && tweets.type === 'init') {
-      tweets.submit(null, { method: 'patch', action: '/sync/tweets' });
-      setProgress(3 / 6);
-      setStatus('Syncing tweets');
-    } else if (tweets.type === 'done') setProgress(4 / 6);
-  }, [error, user, lists.type, tweets]);
-  const metadata = useFetcher();
-  useEffect(() => {
-    if (error) return;
-    if (user && tweets.type === 'done' && metadata.type === 'init') {
-      metadata.submit(null, { method: 'patch', action: '/sync/metadata' });
-      setProgress(5 / 6);
-      setStatus('Syncing metadata');
-    } else if (metadata.type === 'done') {
-      setProgress(6 / 6);
-      setLastSynced((prev) => prev ?? new Date());
-    }
-  }, [error, user, tweets.type, metadata]);
+  //const lists = useFetcher();
+  //useEffect(() => {
+  //if (error) return;
+  //if (user && lists.type === 'init') {
+  //lists.submit(null, { method: 'patch', action: '/sync/lists' });
+  //setProgress(1 / 6);
+  //setStatus('Syncing lists');
+  //} else if (lists.type === 'done') setProgress(2 / 6);
+  //}, [error, user, lists]);
+  //const tweets = useFetcher();
+  //useEffect(() => {
+  //if (error) return;
+  //if (user && lists.type === 'done' && tweets.type === 'init') {
+  //tweets.submit(null, { method: 'patch', action: '/sync/tweets' });
+  //setProgress(3 / 6);
+  //setStatus('Syncing tweets');
+  //} else if (tweets.type === 'done') setProgress(4 / 6);
+  //}, [error, user, lists.type, tweets]);
+  //const metadata = useFetcher();
+  //useEffect(() => {
+  //if (error) return;
+  //if (user && tweets.type === 'done' && metadata.type === 'init') {
+  //metadata.submit(null, { method: 'patch', action: '/sync/metadata' });
+  //setProgress(5 / 6);
+  //setStatus('Syncing metadata');
+  //} else if (metadata.type === 'done') {
+  //setProgress(6 / 6);
+  //setLastSynced((prev) => prev ?? new Date());
+  //}
+  //}, [error, user, tweets.type, metadata]);
 
   const location = useLocation();
 
