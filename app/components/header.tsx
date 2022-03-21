@@ -1,4 +1,4 @@
-import { Link, NavLink, useFetcher, useMatches } from 'remix';
+import { Link, NavLink, useFetcher, useMatches, useTransition } from 'remix';
 import cn from 'classnames';
 
 import { Theme, useTheme } from '~/theme';
@@ -12,6 +12,7 @@ export default function Header() {
   const clusters = root?.clusters ?? [];
   const lists = root?.lists ?? [];
   const fetcher = useFetcher();
+  const transition = useTransition();
   return (
     <nav className='shrink-0 h-full border-r border-slate-200 dark:border-slate-800 p-5 overflow-auto'>
       <h1 className='font-black text-4xl tracking-tight mb-2.5'>tweetscape</h1>
@@ -167,8 +168,9 @@ export default function Header() {
                     {
                       'border-current font-semibold dark:text-sky-400 text-sky-500':
                         isActive,
-                      'text-slate-600 dark:text-slate-400 hover:border-slate-400 transition hover:text-slate-800':
+                      'text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600 transition hover:text-slate-800 dark:hover:text-slate-200':
                         !isActive,
+                      'cursor-wait': transition.state !== 'idle',
                     }
                   )
                 }
@@ -207,8 +209,9 @@ export default function Header() {
                     {
                       'border-current font-semibold dark:text-sky-400 text-sky-500':
                         isActive,
-                      'text-slate-600 dark:text-slate-400 hover:border-slate-400 transition hover:text-slate-800':
+                      'text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600 transition hover:text-slate-800 dark:hover:text-slate-200':
                         !isActive,
+                      'cursor-wait': transition.state !== 'idle',
                     }
                   )
                 }
