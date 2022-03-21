@@ -84,7 +84,7 @@ export default function TweetItem({
           <a
             data-cy='twitter'
             className='mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:text-green-550'
-            href={`https://twitter.com/${author.username}`}
+            href={`https://twitter.com/intent/retweet?tweet_id=${id}`}
             target='_blank'
             rel='noopener noreferrer'
           >
@@ -116,7 +116,7 @@ export default function TweetItem({
           <a
             data-cy='share'
             className='mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:text-blue-550'
-            href={`https://twitter.com/intent/like?tweet_id=${id}`}
+            href={`https://twitter.com/${author.username}/status/${id}`}
             target='_blank'
             rel='noopener noreferrer'
           >
