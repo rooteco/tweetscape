@@ -44,7 +44,7 @@ body {
 }
 
 #nprogress .bar {
-  background: theme('colors.slate.900');
+  background: theme('colors.sky.500');
   position: fixed;
   z-index: 100;
   top: 0;
@@ -54,7 +54,7 @@ body {
 }
 
 .dark #nprogress .bar {
-  background: theme('colors.white');
+  background: theme('colors.sky.400');
 }
 
 #nprogress .peg {
@@ -63,8 +63,7 @@ body {
   right: 0px;
   width: 100px;
   height: 100%;
-  box-shadow: 0 0 10px theme('colors.slate.900'),
-    0 0 5px theme('colors.slate.900');
+  box-shadow: 0 0 10px theme('colors.sky.500'), 0 0 5px theme('colors.sky.500');
   opacity: 1;
 
   -webkit-transform: rotate(3deg) translate(0px, -4px);
@@ -73,7 +72,7 @@ body {
 }
 
 .dark #nprogress .peg {
-  box-shadow: 0 0 10px theme('colors.white'), 0 0 5px theme('colors.white');
+  box-shadow: 0 0 10px theme('colors.sky.400'), 0 0 5px theme('colors.sky.400');
 }
 
 #nprogress .spinner {
@@ -93,8 +92,8 @@ body {
   box-sizing: border-box;
 
   border: solid 2px transparent;
-  border-top-color: theme('colors.slate.900');
-  border-left-color: theme('colors.slate.900');
+  border-top-color: theme('colors.sky.500');
+  border-left-color: theme('colors.sky.500');
   border-radius: 50%;
 
   -webkit-animation: nprogress-spinner 400ms linear infinite;
@@ -102,8 +101,8 @@ body {
 }
 
 .dark #nprogress .spinner-icon {
-  border-top-color: theme('colors.white');
-  border-left-color: theme('colors.white');
+  border-top-color: theme('colors.sky.400');
+  border-left-color: theme('colors.sky.400');
 }
 
 @-webkit-keyframes nprogress-spinner {
