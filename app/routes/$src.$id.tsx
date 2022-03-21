@@ -125,7 +125,7 @@ export default function Cluster() {
       >
         <Nav scrollerRef={tweetsRef}>
           <div className='flex items-stretch'>
-            <h2 className='flex-none text-sm font-semibold mr-3'>Tweets</h2>
+            <h2 className='flex-none text-sm font-semibold mr-5'>Tweets</h2>
             <div className='flex-1 flex flex-wrap items-center'>
               <div className='flex-none mr-4'>
                 <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
@@ -232,7 +232,7 @@ export default function Cluster() {
       >
         <Nav scrollerRef={articlesRef}>
           <div className='flex items-stretch'>
-            <h2 className='flex-none text-sm font-semibold mr-3'>Articles</h2>
+            <h2 className='flex-none text-sm font-semibold mr-5'>Articles</h2>
             <div className='flex-1 flex flex-wrap items-center'>
               <div className='flex-none mr-4'>
                 <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
