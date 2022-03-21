@@ -1,16 +1,13 @@
-import { Link, useLocation, useSearchParams } from 'remix';
+import type { ReactNode, RefObject } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import type { RefObject } from 'react';
 import cn from 'classnames';
 
-import type { Filter, Sort } from '~/query';
-import { DEFAULT_FILTER } from '~/query';
-import FilterIcon from '~/icons/filter';
-import SortIcon from '~/icons/sort';
+export type NavProps = {
+  scrollerRef: RefObject<HTMLElement | null>;
+  children?: ReactNode;
+};
 
-export type NavProps = { scrollerRef: RefObject<HTMLElement | null> };
-
-export default function Nav({ scrollerRef }: NavProps) {
+export default function Nav({ children, scrollerRef }: NavProps) {
   const [visible, setVisible] = useState<boolean>(true);
   const lastScrollPosition = useRef<number>(0);
 
@@ -31,12 +28,6 @@ export default function Nav({ scrollerRef }: NavProps) {
     return () => scroller.removeEventListener('scroll', handleScroll);
   }, [scrollerRef]);
 
-  const { pathname } = useLocation();
-  const [searchParams] = useSearchParams();
-  const isList = /lists/.test(pathname);
-  const defaultSort: Sort = isList ? 'tweets_count' : 'attention_score';
-  const sort = (searchParams.get('sort') ?? defaultSort) as Sort;
-  const filter = (searchParams.get('filter') ?? DEFAULT_FILTER) as Filter;
   return (
     <nav
       className={cn(
@@ -47,37 +38,7 @@ export default function Nav({ scrollerRef }: NavProps) {
         }
       )}
     >
-      <SortIcon />
-      {!isList && (
-        <Link
-          className={cn({ underline: sort === 'attention_score' })}
-          to={`?filter=${filter}&sort=attention_score`}
-        >
-          attention score
-        </Link>
-      )}
-      {isList && <span className='cursor-not-allowed'>attention score</span>}
-      {' · '}
-      <Link
-        className={cn({ underline: sort === 'tweets_count' })}
-        to={`?filter=${filter}&sort=tweets_count`}
-      >
-        tweets count
-      </Link>
-      <FilterIcon />
-      <Link
-        className={cn({ underline: filter === 'hide_retweets' })}
-        to={`?filter=hide_retweets&sort=${sort}`}
-      >
-        hide retweets
-      </Link>
-      {' · '}
-      <Link
-        className={cn({ underline: filter === 'show_retweets' })}
-        to={`?filter=show_retweets&sort=${sort}`}
-      >
-        show retweets
-      </Link>
+      {children}
     </nav>
   );
 }

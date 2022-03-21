@@ -1,7 +1,7 @@
-export default function Sort() {
+export default function SortIcon({ className }: { className?: string }) {
   return (
     <svg
-      className='fill-current h-4 w-4 mr-1.5 inline-block'
+      className={className}
       xmlns='http://www.w3.org/2000/svg'
       height='24'
       viewBox='0 0 24 24'

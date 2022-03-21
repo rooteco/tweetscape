@@ -1,7 +1,7 @@
-export default function OpenIcon() {
+export default function OpenInNewIcon({ className }: { className?: string }) {
   return (
     <svg
-      className='fill-current h-4 w-4 inline-block ml-1'
+      className={className}
       xmlns='http://www.w3.org/2000/svg'
       height='24'
       viewBox='0 0 24 24'

@@ -5,8 +5,6 @@ import { ErrorContext } from '~/error';
 import type { LoaderData } from '~/root';
 import { TimeAgo } from '~/components/timeago';
 
-// TODO: Hike up this `<ErrorBoundary>` error prop to React context so as to
-// avoid prop drilling from the boundary to the header to this component.
 export default function Sync() {
   const user = (useMatches()[0].data as LoaderData | undefined)?.user;
   const { error } = useContext(ErrorContext);

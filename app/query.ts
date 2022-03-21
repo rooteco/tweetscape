@@ -1,6 +1,37 @@
-// TODO: Instead of exporting these types and constants, I should export enums.
-export type Sort = 'attention_score' | 'tweets_count';
-export type Filter = 'show_retweets' | 'hide_retweets';
-export const DEFAULT_FILTER: Filter = 'show_retweets';
-export const SORTS: Sort[] = ['attention_score', 'tweets_count'];
-export const FILTERS: Filter[] = ['show_retweets', 'hide_retweets'];
+export enum ArticlesSort {
+  AttentionScore,
+  TweetCount,
+  Latest,
+  Earliest,
+}
+export const DEFAULT_ARTICLES_SORT = ArticlesSort.AttentionScore;
+export enum ArticlesFilter {
+  HideRetweets,
+  ShowRetweets,
+}
+export const DEFAULT_ARTICLES_FILTER = ArticlesFilter.ShowRetweets;
+export enum ArticleTweetsSort {
+  AttentionScore,
+  RetweetCount,
+  Latest,
+  Earliest,
+}
+export enum ArticleTweetsFilter {
+  HideRetweets,
+  ShowRetweets,
+}
+export enum TweetsSort {
+  TweetCount,
+  RetweetCount,
+  QuoteCount,
+  LikeCount,
+  FollowerCount,
+  Latest,
+  Earliest,
+}
+export const DEFAULT_TWEETS_SORT = TweetsSort.Latest;
+export enum TweetsFilter {
+  HideRetweets,
+  ShowRetweets,
+}
+export const DEFAULT_TWEETS_FILTER = TweetsFilter.ShowRetweets;

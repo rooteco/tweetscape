@@ -1,9 +1,13 @@
 import { autoLink } from 'twitter-text';
 
-import type { Article, List } from '~/types';
-import type { Filter, Sort } from '~/query';
+import type { Article, List, TweetFull } from '~/types';
+import {
+  ArticlesFilter,
+  ArticlesSort,
+  TweetsFilter,
+  TweetsSort,
+} from '~/query';
 import { revalidate, swr } from '~/swr.server';
-import { FILTERS } from '~/query';
 import { log } from '~/utils.server';
 
 export function getListsQuery(uid: string): string {
@@ -23,7 +27,11 @@ export function getLists(uid: string): Promise<List[]> {
   return swr<List>(getListsQuery(uid));
 }
 
-export function getListArticlesQuery(listId: string, filter: Filter): string {
+export function getListArticlesQuery(
+  listId: string,
+  sort: ArticlesSort,
+  filter: ArticlesFilter
+): string {
   /* prettier-ignore */
   return (
     `
@@ -44,7 +52,7 @@ export function getListArticlesQuery(listId: string, filter: Filter): string {
               inner join influencers on influencers.id = tweets.author_id
               inner join list_members on list_members.influencer_id = influencers.id
             where list_members.list_id = '${listId}'
-            ${filter === 'hide_retweets' ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
+            ${filter === ArticlesFilter.HideRetweets ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
           ) as tweets on tweets.id = urls.tweet_id
       ) as tweets on tweets.link_url = links.url
     where url !~ '^https?:\\/\\/twitter\\.com'
@@ -55,26 +63,74 @@ export function getListArticlesQuery(listId: string, filter: Filter): string {
   );
 }
 
+function getTweetsWithHTML(tweets: TweetFull[]): TweetFull[] {
+  return tweets.map((tweet) => ({
+    ...tweet,
+    html: autoLink(tweet.text, {
+      usernameIncludeSymbol: true,
+      linkAttributeBlock(entity, attrs) {
+        attrs.target = '_blank';
+        attrs.rel = 'noopener noreferrer';
+        attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
+      },
+    }),
+  }));
+}
+
+function getArticlesWithHTML(articles: Article[]): Article[] {
+  return articles.map((article) => ({
+    ...article,
+    tweets: getTweetsWithHTML(article.tweets),
+  }));
+}
+
 export async function getListArticles(
   listId: string,
-  filter: Filter
+  sort: ArticlesSort,
+  filter: ArticlesFilter
 ): Promise<Article[]> {
-  const articles = await swr<Article>(getListArticlesQuery(listId, filter));
+  const articles = await swr<Article>(
+    getListArticlesQuery(listId, sort, filter)
+  );
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
-  articles.forEach((article) =>
-    article.tweets.forEach((tweet) => {
-      tweet.html = autoLink(tweet.text, {
-        usernameIncludeSymbol: true,
-        linkAttributeBlock(entity, attrs) {
-          attrs.target = '_blank';
-          attrs.rel = 'noopener noreferrer';
-          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-        },
-      });
-    })
+  return getArticlesWithHTML(articles);
+}
+
+export async function getListTweets(
+  listId: string,
+  sort: TweetsSort,
+  filter: TweetsFilter
+): Promise<TweetFull[]> {
+  const orderBy: Record<TweetsSort, string> = {
+    [TweetsSort.TweetCount]: '(retweet_count + quote_count) desc',
+    [TweetsSort.RetweetCount]: 'retweet_count desc',
+    [TweetsSort.QuoteCount]: 'quote_count desc',
+    [TweetsSort.LikeCount]: 'like_count desc',
+    [TweetsSort.FollowerCount]: 'influencers.followers_count desc',
+    [TweetsSort.Latest]: 'created_at desc',
+    [TweetsSort.Earliest]: 'created_at asc',
+  };
+  log.debug(`Ordering tweets by ${orderBy}...`);
+  const tweets = await swr<TweetFull>(
+    `
+    select tweets.*, to_json(influencers.*) as author from tweets
+    inner join influencers on influencers.id = tweets.author_id
+    inner join list_members on list_members.influencer_id = tweets.author_id
+    where list_members.list_id = '${listId}'
+    ${
+      filter === TweetsFilter.HideRetweets
+        ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
+        : ''
+    }
+    order by ${orderBy[sort]}
+    limit 50;
+    `,
+    0
   );
-  return articles;
+  log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
+  log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
+  return getTweetsWithHTML(tweets);
 }
 
 export function revalidateListsCache(listIds: string[]) {
@@ -82,18 +138,22 @@ export function revalidateListsCache(listIds: string[]) {
   return Promise.all(
     listIds
       .map((listId) =>
-        FILTERS.map((filter) =>
-          revalidate(getListArticlesQuery(listId, filter))
-        )
+        Object.values(ArticlesSort).map((sort) => {
+          if (typeof sort === 'string') return;
+          return Object.values(ArticlesFilter).map((filter) => {
+            if (typeof filter === 'string') return;
+            return revalidate(getListArticlesQuery(listId, sort, filter));
+          });
+        })
       )
-      .flat()
+      .flat(2)
   );
 }
 
 export function getClusterArticlesQuery(
   clusterSlug: string,
-  filter: Filter,
-  sort: Sort
+  sort: ArticlesSort,
+  filter: ArticlesFilter
 ): string {
   /* prettier-ignore */
   return (
@@ -123,13 +183,13 @@ export function getClusterArticlesQuery(
             from tweets
               inner join influencers on influencers.id = tweets.author_id
               inner join scores on scores.influencer_id = influencers.id
-            ${filter === 'hide_retweets' ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
+            ${filter === ArticlesFilter.HideRetweets ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
           ) as tweets on tweets.id = urls.tweet_id
       ) as tweets on tweets.link_url = links.url
       inner join clusters on clusters.id = tweets.cluster_id
     where clusters.slug = '${clusterSlug}' and url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url, clusters.id
-    order by ${sort === 'tweets_count' ? 'count(tweets)' : sort} desc
+    order by ${sort === ArticlesSort.TweetCount ? 'count(tweets)' : 'attention_score'} desc
     limit 20;
     `
   );
@@ -137,25 +197,49 @@ export function getClusterArticlesQuery(
 
 export async function getClusterArticles(
   clusterSlug: string,
-  filter: Filter,
-  sort: Sort
+  sort: ArticlesSort,
+  filter: ArticlesFilter
 ): Promise<Article[]> {
   const articles = await swr<Article>(
-    getClusterArticlesQuery(clusterSlug, filter, sort)
+    getClusterArticlesQuery(clusterSlug, sort, filter)
   );
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);
-  articles.forEach((article) =>
-    article.tweets.forEach((tweet) => {
-      tweet.html = autoLink(tweet.text, {
-        usernameIncludeSymbol: true,
-        linkAttributeBlock(entity, attrs) {
-          attrs.target = '_blank';
-          attrs.rel = 'noopener noreferrer';
-          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-        },
-      });
-    })
+  return getArticlesWithHTML(articles);
+}
+
+export async function getClusterTweets(
+  clusterSlug: string,
+  sort: TweetsSort,
+  filter: TweetsFilter
+): Promise<TweetFull[]> {
+  const orderBy: Record<TweetsSort, string> = {
+    [TweetsSort.TweetCount]: '(retweet_count + quote_count) desc',
+    [TweetsSort.RetweetCount]: 'retweet_count desc',
+    [TweetsSort.QuoteCount]: 'quote_count desc',
+    [TweetsSort.LikeCount]: 'like_count desc',
+    [TweetsSort.FollowerCount]: 'influencers.followers_count desc',
+    [TweetsSort.Latest]: 'created_at desc',
+    [TweetsSort.Earliest]: 'created_at asc',
+  };
+  log.debug(`Ordering tweets by ${orderBy}...`);
+  const tweets = await swr<TweetFull>(
+    `
+    select tweets.*, to_json(influencers.*) as author from tweets
+    inner join influencers on influencers.id = tweets.author_id
+    inner join scores on scores.influencer_id = tweets.author_id
+    inner join clusters on clusters.id = scores.cluster_id
+    where clusters.slug = '${clusterSlug}'
+    ${
+      filter === TweetsFilter.HideRetweets
+        ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
+        : ''
+    }
+    order by ${orderBy[sort]}
+    limit 50;
+    `
   );
-  return articles;
+  log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
+  log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
+  return getTweetsWithHTML(tweets);
 }
