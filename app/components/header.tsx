@@ -185,7 +185,7 @@ export default function Header() {
       {!root?.user && (
         <section className='text-sm mt-5'>
           <h2 className='mb-2.5 font-semibold'>Your lists</h2>
-          <Empty className='min-w-full w-0'>
+          <Empty className='min-w-full w-0 h-[50vh] max-h-96'>
             <p>
               To view tweets from your own lists,{' '}
               <Link className='underline' to='/oauth'>
