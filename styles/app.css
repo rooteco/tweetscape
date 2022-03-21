@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  scrollbar-color: theme('colors.slate.300') theme('colors.slate.100');
+}
+
+.dark body {
+  scrollbar-color: theme('colors.slate.700') theme('colors.slate.800');
+}
+
 #nprogress {
   pointer-events: none;
 }

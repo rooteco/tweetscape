@@ -32,12 +32,25 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   return (
-    <main>
-      <Nav />
-      <Empty>
-        <p>an unexpected runtime error occurred</p>
-        <p>{error.message}</p>
-      </Empty>
+    <main className='flex flex-1 overflow-hidden'>
+      <section className='flex-none flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'>
+        <Nav />
+        <Empty className='flex-1 m-5'>
+          <p className='uppercase'>an unexpected runtime error occurred</p>
+          <p>{error.message}</p>
+        </Empty>
+      </section>
+      <section className='flex-1 h-full p-10'>
+        <Empty className='w-full h-full'>
+          <article className='max-w-md'>
+            <p>COMING SOON</p>
+            <p>
+              Soon you’ll be able to explore threads, related content (from HN,
+              Product Hunt, backlinks, etc), and more!
+            </p>
+          </article>
+        </Empty>
+      </section>
     </main>
   );
 }
@@ -45,14 +58,27 @@ export function ErrorBoundary({ error }: { error: Error }) {
 export default function Cluster() {
   const { articles } = useLoaderData<LoaderData>();
   return (
-    <main>
-      <Nav />
-      <ol className='text-sm'>
-        {!articles.length && <Empty>no articles to show</Empty>}
-        {articles.map((a) => (
-          <ArticleItem {...a} key={a.url} />
-        ))}
-      </ol>
+    <main className='flex flex-1 overflow-hidden'>
+      <section className='flex-none max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'>
+        <Nav />
+        <ol>
+          {!articles.length && <Empty>NO ARTICLES TO SHOW</Empty>}
+          {articles.map((a) => (
+            <ArticleItem {...a} key={a.url} />
+          ))}
+        </ol>
+      </section>
+      <section className='flex-1 h-full p-10'>
+        <Empty className='w-full h-full'>
+          <article className='max-w-md'>
+            <p>COMING SOON</p>
+            <p>
+              Soon you’ll be able to explore threads, related content (from HN,
+              Product Hunt, backlinks, etc), and more!
+            </p>
+          </article>
+        </Empty>
+      </section>
     </main>
   );
 }
