@@ -138,12 +138,15 @@ export function revalidateListsCache(listIds: string[]) {
   return Promise.all(
     listIds
       .map((listId) =>
-        Object.values(ArticlesFilter).map((filter) => {
-          if (typeof filter === 'string') return;
-          return revalidate(getListArticlesQuery(listId, filter));
+        Object.values(ArticlesSort).map((sort) => {
+          if (typeof sort === 'string') return;
+          return Object.values(ArticlesFilter).map((filter) => {
+            if (typeof filter === 'string') return;
+            return revalidate(getListArticlesQuery(listId, sort, filter));
+          });
         })
       )
-      .flat()
+      .flat(2)
   );
 }
 

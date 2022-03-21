@@ -6,13 +6,13 @@ import { decode } from 'html-entities';
 import invariant from 'tiny-invariant';
 
 import type { Article, Link } from '~/types';
+import { ArticlesFilter, ArticlesSort } from '~/query';
 import { commitSession, getSession } from '~/session.server';
 import {
   getListArticles,
   getLists,
   revalidateListsCache,
 } from '~/query.server';
-import { ArticlesFilter } from '~/query';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
@@ -40,18 +40,21 @@ export const action: ActionFunction = async ({ request }) => {
   await Promise.all(
     listIds
       .map((listId) =>
-        Object.values(ArticlesFilter).map(async (filter) => {
-          if (typeof filter === 'string') return;
-          const articles = await getListArticles(listId, filter);
-          articles.forEach((article) => {
-            // TODO: Perhaps skip fetch if the article has a non-200 status.
-            if (article.title && article.description) return;
-            if (articlesToFetch.some((a) => a.url === article.url)) return;
-            articlesToFetch.push(article);
+        Object.values(ArticlesSort).map((sort) => {
+          if (typeof sort === 'string') return;
+          return Object.values(ArticlesFilter).map(async (filter) => {
+            if (typeof filter === 'string') return;
+            const articles = await getListArticles(listId, sort, filter);
+            articles.forEach((article) => {
+              // TODO: Perhaps skip fetch if the article has a non-200 status.
+              if (article.title && article.description) return;
+              if (articlesToFetch.some((a) => a.url === article.url)) return;
+              articlesToFetch.push(article);
+            });
           });
         })
       )
-      .flat()
+      .flat(2)
   );
   log.info(`Fetching ${articlesToFetch.length} link metadata...`);
   const linksToUpdate: Link[] = [];
