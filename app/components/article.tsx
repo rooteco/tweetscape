@@ -3,6 +3,7 @@ import cn from 'classnames';
 import { useSearchParams } from 'remix';
 
 import type { Article } from '~/types';
+import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
 import { TimeAgo } from '~/components/timeago';
@@ -223,11 +224,16 @@ export default function ArticleItem({
             show retweets
           </button>
         </nav>
-        <ol>
-          {results.map((tweet) => (
-            <TweetItem {...tweet} key={tweet.id} />
-          ))}
-        </ol>
+        {!results.length && (
+          <Empty className='m-3 h-48'>NO TWEETS TO SHOW</Empty>
+        )}
+        {!!results.length && (
+          <ol>
+            {results.map((tweet) => (
+              <TweetItem {...tweet} key={tweet.id} />
+            ))}
+          </ol>
+        )}
       </section>
     </li>
   );
