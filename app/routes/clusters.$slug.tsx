@@ -1,6 +1,7 @@
 import { json, useLoaderData } from 'remix';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
+import { useRef } from 'react';
 
 import type { Filter, Sort } from '~/query';
 import { commitSession, getSession } from '~/session.server';
@@ -32,10 +33,14 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
+  const scrollerRef = useRef<HTMLElement>(null);
   return (
     <main className='flex flex-1 overflow-hidden'>
-      <section className='flex-none flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'>
-        <Nav />
+      <section
+        ref={scrollerRef}
+        className='flex-none flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
+      >
+        <Nav scrollerRef={scrollerRef} />
         <Empty className='flex-1 m-5'>
           <p className='uppercase'>an unexpected runtime error occurred</p>
           <p>{error.message}</p>
@@ -58,10 +63,14 @@ export function ErrorBoundary({ error }: { error: Error }) {
 
 export default function Cluster() {
   const { articles } = useLoaderData<LoaderData>();
+  const scrollerRef = useRef<HTMLElement>(null);
   return (
     <main className='flex flex-1 overflow-hidden'>
-      <section className='flex-none flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'>
-        <Nav />
+      <section
+        ref={scrollerRef}
+        className='flex-none flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
+      >
+        <Nav scrollerRef={scrollerRef} />
         {!articles.length && (
           <Empty className='flex-1 m-5'>NO ARTICLES TO SHOW</Empty>
         )}
