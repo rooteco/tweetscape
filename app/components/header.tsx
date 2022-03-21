@@ -12,13 +12,40 @@ import OpenInNewIcon from '~/icons/open-in-new';
 import Sync from '~/components/sync';
 import SystemIcon from '~/icons/system';
 
+function Section({ links }: { links: { to: string; name: string }[] }) {
+  const transition = useTransition();
+  return (
+    <section className='text-sm mt-5'>
+      <h2 className='mb-2.5 font-semibold'>Hive clusters</h2>
+      <div className='border-l border-slate-200 dark:border-slate-800'>
+        {links.map(({ to, name }) => (
+          <NavLink
+            key={to}
+            className={({ isActive }) =>
+              cn('block pl-3 py-0.5 my-1 -ml-px border-l border-transparent', {
+                'border-current font-semibold dark:text-sky-400 text-sky-500':
+                  isActive,
+                'text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600 transition hover:text-slate-800 dark:hover:text-slate-200':
+                  !isActive,
+                'cursor-wait': transition.state !== 'idle',
+              })
+            }
+            to={to}
+          >
+            {name}
+          </NavLink>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function Header() {
   const [theme, setTheme] = useTheme();
   const root = useMatches()[0].data as LoaderData | undefined;
   const clusters = root?.clusters ?? [];
   const lists = root?.lists ?? [];
   const fetcher = useFetcher();
-  const transition = useTransition();
   return (
     <nav className='shrink-0 h-full border-r border-slate-200 dark:border-slate-800 p-5 overflow-auto'>
       <h1 className='font-black text-4xl tracking-tight mb-2.5'>tweetscape</h1>
@@ -83,31 +110,12 @@ export default function Header() {
         </button>
       </div>
       {!!clusters.length && (
-        <section className='text-sm mt-5'>
-          <h2 className='mb-2.5 font-semibold'>Hive clusters</h2>
-          <div className='border-l border-slate-200 dark:border-slate-800'>
-            {clusters.map(({ id, name, slug }) => (
-              <NavLink
-                key={id}
-                className={({ isActive }) =>
-                  cn(
-                    'block pl-3 py-0.5 my-1 -ml-px border-l border-transparent',
-                    {
-                      'border-current font-semibold dark:text-sky-400 text-sky-500':
-                        isActive,
-                      'text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600 transition hover:text-slate-800 dark:hover:text-slate-200':
-                        !isActive,
-                      'cursor-wait': transition.state !== 'idle',
-                    }
-                  )
-                }
-                to={`/clusters/${slug}`}
-              >
-                {name}
-              </NavLink>
-            ))}
-          </div>
-        </section>
+        <Section
+          links={clusters.map((c) => ({
+            name: c.name,
+            to: `/clusters/${c.slug}`,
+          }))}
+        />
       )}
       {!root?.user && (
         <section className='text-sm mt-5'>
@@ -124,31 +132,9 @@ export default function Header() {
         </section>
       )}
       {!!lists.length && (
-        <section className='text-sm mt-5'>
-          <h2 className='mb-2.5 font-semibold'>Your lists</h2>
-          <div className='border-l border-slate-200 dark:border-slate-800'>
-            {lists.map(({ id, name }) => (
-              <NavLink
-                key={id}
-                className={({ isActive }) =>
-                  cn(
-                    'block pl-3 py-0.5 my-1 -ml-px border-l border-transparent',
-                    {
-                      'border-current font-semibold dark:text-sky-400 text-sky-500':
-                        isActive,
-                      'text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600 transition hover:text-slate-800 dark:hover:text-slate-200':
-                        !isActive,
-                      'cursor-wait': transition.state !== 'idle',
-                    }
-                  )
-                }
-                to={`/lists/${id}`}
-              >
-                {name}
-              </NavLink>
-            ))}
-          </div>
-        </section>
+        <Section
+          links={lists.map((l) => ({ name: l.name, to: `/lists/${l.id}` }))}
+        />
       )}
     </nav>
   );
