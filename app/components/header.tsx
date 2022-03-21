@@ -163,11 +163,11 @@ export default function Header() {
                 key={id}
                 className={({ isActive }) =>
                   cn(
-                    'block pl-3 py-0.5 my-1 text-slate-600 dark:text-slate-400 -ml-px border-l border-transparent',
+                    'block pl-3 py-0.5 my-1 -ml-px border-l border-transparent',
                     {
                       'border-current font-semibold dark:text-sky-400 text-sky-500':
                         isActive,
-                      'hover:border-slate-400 transition hover:text-slate-800':
+                      'text-slate-600 dark:text-slate-400 hover:border-slate-400 transition hover:text-slate-800':
                         !isActive,
                     }
                   )
@@ -203,11 +203,11 @@ export default function Header() {
                 key={id}
                 className={({ isActive }) =>
                   cn(
-                    'block pl-3 py-0.5 my-1 text-slate-600 dark:text-slate-400 -ml-px border-l border-transparent',
+                    'block pl-3 py-0.5 my-1 -ml-px border-l border-transparent',
                     {
                       'border-current font-semibold dark:text-sky-400 text-sky-500':
                         isActive,
-                      'hover:border-slate-400 dark:hover:border-slate-600 transition hover:text-slate-800 dark:hover:text-slate-200':
+                      'text-slate-600 dark:text-slate-400 hover:border-slate-400 transition hover:text-slate-800':
                         !isActive,
                     }
                   )
