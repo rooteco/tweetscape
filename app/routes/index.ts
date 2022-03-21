@@ -18,6 +18,10 @@ export const loader: LoaderFunction = async ({ request }) => {
         clientId: process.env.OAUTH_CLIENT_ID as string,
         clientSecret: process.env.OAUTH_CLIENT_SECRET,
       });
+      // Fly flattens all requests to HTTP in its private network.
+      // @see {@link https://fly.io/blog/always-be-connecting-with-https}
+      const proto = request.headers.get('X-Forwarded-Proto');
+      const protocol = proto ? `${proto}:` : url.protocol;
       const {
         client: api,
         scope,
@@ -27,7 +31,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       } = await client.loginWithOAuth2({
         code,
         codeVerifier: session.get('codeVerifier') as string,
-        redirectUri: `${url.protocol}//${url.host}`,
+        redirectUri: `${protocol}//${url.host}`,
       });
       log.info('Fetching logged in user from Twitter API...');
       const { data: user } = await api.v2.me({

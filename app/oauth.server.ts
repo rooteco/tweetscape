@@ -30,11 +30,15 @@ export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get('Cookie'));
   session.flash('stateId', stateId);
   session.flash('codeVerifier', codeVerifier);
+  // Fly flattens all requests to HTTP in its private network.
+  // @see {@link https://fly.io/blog/always-be-connecting-with-https}
+  const proto = request.headers.get('X-Forwarded-Proto');
+  const protocol = proto ? `${proto}:` : url.protocol;
   const params = {
     state: stateId,
     response_type: 'code',
     client_id: process.env.OAUTH_CLIENT_ID,
-    redirect_uri: encodeURIComponent(`${url.protocol}//${url.host}`),
+    redirect_uri: encodeURIComponent(`${protocol}//${url.host}`),
     scope: [
       'tweet.read',
       'tweet.write',
