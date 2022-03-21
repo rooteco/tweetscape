@@ -118,7 +118,7 @@ export default function App() {
     }
     // and when it's something else it means it's either submitting a form or
     // waiting for the loaders of the next location so we start it
-    const timeoutId = setTimeout(() => NProgress.start(), 500);
+    const timeoutId = setTimeout(() => NProgress.start(), 250);
     return () => clearTimeout(timeoutId);
   }, [transition.state]);
   const [error, setError] = useState<Error>();
