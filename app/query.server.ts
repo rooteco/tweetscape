@@ -70,10 +70,11 @@ export async function getListArticles(
   articles.forEach((article) =>
     article.tweets.forEach((tweet) => {
       tweet.html = autoLink(tweet.text, {
+        usernameIncludeSymbol: true,
         linkAttributeBlock(entity, attrs) {
           attrs.target = '_blank';
           attrs.rel = 'noopener noreferrer';
-          attrs.class = 'hover:underline';
+          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
         },
       });
     })
@@ -152,10 +153,11 @@ export async function getClusterArticles(
   articles.forEach((article) =>
     article.tweets.forEach((tweet) => {
       tweet.html = autoLink(tweet.text, {
+        usernameIncludeSymbol: true,
         linkAttributeBlock(entity, attrs) {
           attrs.target = '_blank';
           attrs.rel = 'noopener noreferrer';
-          attrs.class = 'hover:underline';
+          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
         },
       });
     })

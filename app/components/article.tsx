@@ -1,11 +1,11 @@
-import { Link, useLoaderData, useSearchParams } from 'remix';
 import { useMemo, useState } from 'react';
 import cn from 'classnames';
+import { useSearchParams } from 'remix';
 
 import type { Article } from '~/types';
 import FilterIcon from '~/icons/filter';
-import type { LoaderData } from '~/routes/clusters.$slug';
 import SortIcon from '~/icons/sort';
+import { TimeAgo } from '~/components/timeago';
 import TweetItem from '~/components/tweet';
 import { substr } from '~/utils';
 
@@ -22,7 +22,6 @@ export default function ArticleItem({
   description,
   tweets,
 }: ArticleItemProps) {
-  const { locale } = useLoaderData<LoaderData>();
   const [hidden, setHidden] = useState(true);
   const earliestTweet = useMemo(
     () =>
@@ -34,7 +33,6 @@ export default function ArticleItem({
   );
   const [sort, setSort] = useState<Sort>('attention_score');
   const [searchParams] = useSearchParams();
-  const searchParamsSort = searchParams.get('sort') ?? 'attention_score';
   const searchParamsFilter = searchParams.get('filter') ?? 'hide_retweets';
   const [filter, setFilter] = useState<Filter>(searchParamsFilter as Filter);
   const results = useMemo(
@@ -45,7 +43,11 @@ export default function ArticleItem({
         )
         .sort((a, b) => {
           if (sort === 'retweet_count')
-            return b.retweet_count - a.retweet_count;
+            return (
+              b.retweet_count +
+              b.quote_count -
+              (a.retweet_count + a.quote_count)
+            );
           if (sort === 'latest')
             return (
               new Date(b.created_at).valueOf() -
@@ -155,15 +157,7 @@ export default function ArticleItem({
           target='_blank'
           rel='noopener noreferrer'
         >
-          {new Date(earliestTweet.created_at).toLocaleString(locale, {
-            month: 'short',
-            day: 'numeric',
-          })}
-          {' · '}
-          {new Date(earliestTweet.created_at).toLocaleString(locale, {
-            hour: 'numeric',
-            minute: 'numeric',
-          })}
+          <TimeAgo datetime={earliestTweet.created_at} locale='en_short' />
         </a>
       </div>
       <section

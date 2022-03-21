@@ -59,14 +59,18 @@ export default function Cluster() {
   const { articles } = useLoaderData<LoaderData>();
   return (
     <main className='flex flex-1 overflow-hidden'>
-      <section className='flex-none max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'>
+      <section className='flex-none flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'>
         <Nav />
-        <ol>
-          {!articles.length && <Empty>NO ARTICLES TO SHOW</Empty>}
-          {articles.map((a) => (
-            <ArticleItem {...a} key={a.url} />
-          ))}
-        </ol>
+        {!articles.length && (
+          <Empty className='flex-1 m-5'>NO ARTICLES TO SHOW</Empty>
+        )}
+        {!!articles.length && (
+          <ol>
+            {articles.map((a) => (
+              <ArticleItem {...a} key={a.url} />
+            ))}
+          </ol>
+        )}
       </section>
       <section className='flex-1 h-full p-10'>
         <Empty className='w-full h-full'>

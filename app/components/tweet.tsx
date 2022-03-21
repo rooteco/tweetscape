@@ -1,7 +1,5 @@
-import { useLoaderData } from 'remix';
-
 import type { Influencer, Tweet } from '~/types';
-import type { LoaderData } from '~/routes/clusters.$slug';
+import { TimeAgo } from '~/components/timeago';
 
 export type TweetItemProps = Tweet & {
   author: Influencer;
@@ -18,7 +16,6 @@ export default function TweetItem({
   text,
   html,
 }: TweetItemProps) {
-  const { locale } = useLoaderData<LoaderData>();
   return (
     <li className='flex w-full text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800 p-3'>
       <a
@@ -33,42 +30,34 @@ export default function TweetItem({
           alt=''
         />
       </a>
-      <article className='flex-1'>
-        <header className='mb-0.5'>
+      <article className='flex-1 min-w-0'>
+        <header className='mb-0.5 flex'>
           <a
-            href={`https://twitter.com/${author.username}`}
+            href={`https://hive.one/p/${author.username}`}
             target='_blank'
             rel='noopener noreferrer'
-            className='hover:underline font-semibold'
+            className='hover:underline block font-semibold min-w-0 shrink truncate'
           >
             {author.name}
           </a>
           <a
             data-cy='author'
-            className='text-slate-500 ml-1'
-            href={`https://hive.one/p/${author.username}`}
+            className='text-slate-500 ml-1 block flex-none'
+            href={`https://twitter.com/${author.username}`}
             target='_blank'
             rel='noopener noreferrer'
           >
             @{author.username}
           </a>
-          <span className='mx-1 text-slate-500'>·</span>
+          <span className='mx-1 text-slate-500 block flex-none'>·</span>
           <a
             data-cy='date'
-            className='text-slate-500'
+            className='hover:underline text-slate-500 block flex-none'
             href={`https://twitter.com/${author.username}/status/${id}`}
             target='_blank'
             rel='noopener noreferrer'
           >
-            {new Date(created_at).toLocaleString(locale, {
-              month: 'short',
-              day: 'numeric',
-            })}
-            {' · '}
-            {new Date(created_at).toLocaleString(locale, {
-              hour: 'numeric',
-              minute: 'numeric',
-            })}
+            <TimeAgo datetime={created_at} locale='en_short' />
           </a>
         </header>
         <p
@@ -76,7 +65,7 @@ export default function TweetItem({
           className='mb-3'
           dangerouslySetInnerHTML={{ __html: html ?? text }}
         />
-        <div className='-m-1.5 flex items-center justify-between text-slate-500 max-w-md'>
+        <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-slate-500 max-w-md'>
           <a
             data-cy='reply'
             className='inline-flex justify-center items-center transition duration-[0.2s] group hover:text-blue-550'

@@ -42,8 +42,12 @@ export function ErrorBoundary({ error: e }: { error: Error }) {
           <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
             <Header />
             <Empty className='m-10 flex-1'>
-              <p className='uppercase'>an unexpected runtime error occurred</p>
-              <p>{e.message}</p>
+              <article className='max-w-md'>
+                <p className='uppercase'>
+                  an unexpected runtime error occurred
+                </p>
+                <p>{e.message}</p>
+              </article>
             </Empty>
           </div>
           <Footer />
