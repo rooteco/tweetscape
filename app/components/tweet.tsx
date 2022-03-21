@@ -65,10 +65,10 @@ export default function TweetItem({
           className='mb-3'
           dangerouslySetInnerHTML={{ __html: html ?? text }}
         />
-        <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-slate-500 max-w-md'>
+        <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-slate-500'>
           <a
             data-cy='reply'
-            className='inline-flex justify-center items-center transition duration-[0.2s] group hover:text-blue-550'
+            className='mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:text-blue-550'
             href={`https://twitter.com/intent/tweet?in_reply_to=${id}`}
             target='_blank'
             rel='noopener noreferrer'
@@ -83,7 +83,7 @@ export default function TweetItem({
           </a>
           <a
             data-cy='twitter'
-            className='inline-flex justify-center items-center transition duration-[0.2s] group hover:text-green-550'
+            className='mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:text-green-550'
             href={`https://twitter.com/${author.username}`}
             target='_blank'
             rel='noopener noreferrer'
@@ -99,7 +99,7 @@ export default function TweetItem({
           </a>
           <a
             data-cy='like'
-            className='inline-flex justify-center items-center transition duration-[0.2s] group hover:text-red-550'
+            className='mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:text-red-550'
             href={`https://twitter.com/intent/like?tweet_id=${id}`}
             target='_blank'
             rel='noopener noreferrer'
@@ -115,7 +115,7 @@ export default function TweetItem({
           </a>
           <a
             data-cy='share'
-            className='inline-flex justify-center items-center transition duration-[0.2s] group hover:text-blue-550'
+            className='mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:text-blue-550'
             href={`https://twitter.com/intent/like?tweet_id=${id}`}
             target='_blank'
             rel='noopener noreferrer'
