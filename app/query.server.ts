@@ -1,6 +1,6 @@
 import { autoLink } from 'twitter-text';
 
-import type { Article, List } from '~/types';
+import type { Article, Influencer, List, Tweet } from '~/types';
 import { Filter, Sort } from '~/query';
 import { revalidate, swr } from '~/swr.server';
 import { log } from '~/utils.server';
@@ -81,6 +81,23 @@ export async function getListArticles(
   return getArticlesWithHTML(articles);
 }
 
+export async function getListTweets(
+  listId: string
+): Promise<(Tweet & { author: Influencer })[]> {
+  const tweets = await swr<Tweet & { author: Influencer }>(
+    `
+    select tweets.*, to_json(influencers.*) as author from tweets
+    inner join influencers on influencers.id = tweets.author_id
+    inner join list_members on list_members.influencer_id = tweets.author_id
+    where list_members.list_id = '${listId}'
+    limit 50;
+    `
+  );
+  log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
+  log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
+  return tweets;
+}
+
 export function revalidateListsCache(listIds: string[]) {
   log.info('Revalidating SWR cache keys for new data...');
   return Promise.all(
@@ -151,4 +168,22 @@ export async function getClusterArticles(
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);
   return getArticlesWithHTML(articles);
+}
+
+export async function getClusterTweets(
+  clusterSlug: string
+): Promise<(Tweet & { author: Influencer })[]> {
+  const tweets = await swr<Tweet & { author: Influencer }>(
+    `
+    select tweets.*, to_json(influencers.*) as author from tweets
+    inner join influencers on influencers.id = tweets.author_id
+    inner join scores on scores.influencer_id = tweets.author_id
+    inner join clusters on clusters.id = scores.cluster_id
+    where clusters.slug = '${clusterSlug}'
+    limit 50;
+    `
+  );
+  log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
+  log.info(`Fetched ${tweets.length} tweets or cluster (${clusterSlug}).`);
+  return tweets;
 }

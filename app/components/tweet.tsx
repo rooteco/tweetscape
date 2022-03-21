@@ -18,7 +18,7 @@ function Action({ count, color, icon, href }: ActionProps) {
   return (
     <a
       data-cy='share'
-      className={`mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:${color}-550`}
+      className={`mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:text-${color}-550`}
       href={href}
       target='_blank'
       rel='noopener noreferrer'

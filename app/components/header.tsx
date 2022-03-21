@@ -113,7 +113,7 @@ export default function Header() {
         <Section
           links={clusters.map((c) => ({
             name: c.name,
-            to: `/clusters/${c.slug}`,
+            to: `/clusters/${c.slug}/tweets`,
           }))}
         />
       )}
@@ -133,7 +133,10 @@ export default function Header() {
       )}
       {!!lists.length && (
         <Section
-          links={lists.map((l) => ({ name: l.name, to: `/lists/${l.id}` }))}
+          links={lists.map((l) => ({
+            name: l.name,
+            to: `/lists/${l.id}/tweets`,
+          }))}
         />
       )}
     </nav>
