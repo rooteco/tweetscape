@@ -12,11 +12,12 @@ import OpenInNewIcon from '~/icons/open-in-new';
 import Sync from '~/components/sync';
 import SystemIcon from '~/icons/system';
 
-function Section({ links }: { links: { to: string; name: string }[] }) {
+type SectionProps = { header: string; links: { to: string; name: string }[] };
+function Section({ header, links }: SectionProps) {
   const transition = useTransition();
   return (
     <section className='text-sm mt-5'>
-      <h2 className='mb-2.5 font-semibold'>Hive clusters</h2>
+      <h2 className='mb-2.5 font-semibold'>{header}</h2>
       <div className='border-l border-slate-200 dark:border-slate-800'>
         {links.map(({ to, name }) => (
           <NavLink
@@ -111,6 +112,7 @@ export default function Header() {
       </div>
       {!!clusters.length && (
         <Section
+          header='Hive clusters'
           links={clusters.map((c) => ({
             name: c.name,
             to: `/clusters/${c.slug}`,
@@ -133,6 +135,7 @@ export default function Header() {
       )}
       {!!lists.length && (
         <Section
+          header='Your lists'
           links={lists.map((l) => ({
             name: l.name,
             to: `/lists/${l.id}`,
