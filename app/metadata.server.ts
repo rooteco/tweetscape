@@ -12,7 +12,7 @@ import {
   getLists,
   revalidateListsCache,
 } from '~/query.server';
-import { FILTERS } from '~/query';
+import { Filter } from '~/query';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
@@ -40,7 +40,8 @@ export const action: ActionFunction = async ({ request }) => {
   await Promise.all(
     listIds
       .map((listId) =>
-        FILTERS.map(async (filter) => {
+        Object.values(Filter).map(async (filter) => {
+          if (typeof filter === 'string') return;
           const articles = await getListArticles(listId, filter);
           articles.forEach((article) => {
             // TODO: Perhaps skip fetch if the article has a non-200 status.

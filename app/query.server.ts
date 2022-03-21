@@ -1,9 +1,8 @@
 import { autoLink } from 'twitter-text';
 
 import type { Article, List } from '~/types';
-import type { Filter, Sort } from '~/query';
+import { Filter, Sort } from '~/query';
 import { revalidate, swr } from '~/swr.server';
-import { FILTERS } from '~/query';
 import { log } from '~/utils.server';
 
 export function getListsQuery(uid: string): string {
@@ -44,7 +43,7 @@ export function getListArticlesQuery(listId: string, filter: Filter): string {
               inner join influencers on influencers.id = tweets.author_id
               inner join list_members on list_members.influencer_id = influencers.id
             where list_members.list_id = '${listId}'
-            ${filter === 'hide_retweets' ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
+            ${filter === Filter.HideRetweets ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
           ) as tweets on tweets.id = urls.tweet_id
       ) as tweets on tweets.link_url = links.url
     where url !~ '^https?:\\/\\/twitter\\.com'
@@ -82,9 +81,10 @@ export function revalidateListsCache(listIds: string[]) {
   return Promise.all(
     listIds
       .map((listId) =>
-        FILTERS.map((filter) =>
-          revalidate(getListArticlesQuery(listId, filter))
-        )
+        Object.values(Filter).map((filter) => {
+          if (typeof filter === 'string') return;
+          return revalidate(getListArticlesQuery(listId, filter));
+        })
       )
       .flat()
   );
@@ -123,13 +123,13 @@ export function getClusterArticlesQuery(
             from tweets
               inner join influencers on influencers.id = tweets.author_id
               inner join scores on scores.influencer_id = influencers.id
-            ${filter === 'hide_retweets' ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
+            ${filter === Filter.HideRetweets ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')` : ''}
           ) as tweets on tweets.id = urls.tweet_id
       ) as tweets on tweets.link_url = links.url
       inner join clusters on clusters.id = tweets.cluster_id
     where clusters.slug = '${clusterSlug}' and url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url, clusters.id
-    order by ${sort === 'tweets_count' ? 'count(tweets)' : sort} desc
+    order by ${sort === Sort.TweetsCount ? 'count(tweets)' : 'attention_score'} desc
     limit 20;
     `
   );

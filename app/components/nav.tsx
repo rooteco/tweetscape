@@ -3,8 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import cn from 'classnames';
 
-import type { Filter, Sort } from '~/query';
-import { DEFAULT_FILTER } from '~/query';
+import { DEFAULT_FILTER, Filter, Sort } from '~/query';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
 
@@ -34,7 +33,7 @@ export default function Nav({ scrollerRef }: NavProps) {
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   const isList = /lists/.test(pathname);
-  const defaultSort: Sort = isList ? 'tweets_count' : 'attention_score';
+  const defaultSort = isList ? Sort.TweetsCount : Sort.AttentionScore;
   const sort = (searchParams.get('sort') ?? defaultSort) as Sort;
   const filter = (searchParams.get('filter') ?? DEFAULT_FILTER) as Filter;
   return (
@@ -50,8 +49,8 @@ export default function Nav({ scrollerRef }: NavProps) {
       <SortIcon />
       {!isList && (
         <Link
-          className={cn({ underline: sort === 'attention_score' })}
-          to={`?filter=${filter}&sort=attention_score`}
+          className={cn({ underline: sort === Sort.AttentionScore })}
+          to={`?filter=${filter}&sort=${Sort.AttentionScore}`}
         >
           attention score
         </Link>
@@ -59,22 +58,22 @@ export default function Nav({ scrollerRef }: NavProps) {
       {isList && <span className='cursor-not-allowed'>attention score</span>}
       {' · '}
       <Link
-        className={cn({ underline: sort === 'tweets_count' })}
-        to={`?filter=${filter}&sort=tweets_count`}
+        className={cn({ underline: sort === Sort.TweetsCount })}
+        to={`?filter=${filter}&sort=${Sort.TweetsCount}`}
       >
         tweets count
       </Link>
       <FilterIcon />
       <Link
-        className={cn({ underline: filter === 'hide_retweets' })}
-        to={`?filter=hide_retweets&sort=${sort}`}
+        className={cn({ underline: filter === Filter.HideRetweets })}
+        to={`?filter=${Filter.HideRetweets}&sort=${sort}`}
       >
         hide retweets
       </Link>
       {' · '}
       <Link
-        className={cn({ underline: filter === 'show_retweets' })}
-        to={`?filter=show_retweets&sort=${sort}`}
+        className={cn({ underline: filter === Filter.ShowRetweets })}
+        to={`?filter=${Filter.ShowRetweets}&sort=${sort}`}
       >
         show retweets
       </Link>

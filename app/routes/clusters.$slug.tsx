@@ -3,12 +3,11 @@ import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 import { useRef } from 'react';
 
-import type { Filter, Sort } from '~/query';
+import { DEFAULT_FILTER, Filter, Sort } from '~/query';
 import { commitSession, getSession } from '~/session.server';
 import { lang, log } from '~/utils.server';
 import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
-import { DEFAULT_FILTER } from '~/query';
 import Empty from '~/components/empty';
 import Nav from '~/components/nav';
 import { getClusterArticles } from '~/query.server';
@@ -22,7 +21,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
   session.set('href', `${url.pathname}${url.search}`);
-  const sort = (url.searchParams.get('sort') ?? 'attention_score') as Sort;
+  const sort = (url.searchParams.get('sort') ?? Sort.AttentionScore) as Sort;
   const filter = (url.searchParams.get('filter') ?? DEFAULT_FILTER) as Filter;
   const articles = await getClusterArticles(params.slug, filter, sort);
   return json<LoaderData>(

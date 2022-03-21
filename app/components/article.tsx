@@ -11,8 +11,16 @@ import { TimeAgo } from '~/components/timeago';
 import TweetItem from '~/components/tweet';
 import { substr } from '~/utils';
 
-type Sort = 'attention_score' | 'retweet_count' | 'latest' | 'earliest';
-type Filter = 'show_retweets' | 'hide_retweets';
+enum Sort {
+  AttentionScore,
+  RetweetCount,
+  Latest,
+  Earliest,
+}
+enum Filter {
+  ShowRetweets,
+  HideRetweets,
+}
 
 export type ArticleItemProps = Article;
 
@@ -33,35 +41,36 @@ export default function ArticleItem({
       )[0],
     [tweets]
   );
-  const [sort, setSort] = useState<Sort>('attention_score');
+  const [sort, setSort] = useState<Sort>(Sort.AttentionScore);
   const [searchParams] = useSearchParams();
   const searchParamsFilter = useMemo(
-    () => searchParams.get('filter') ?? DEFAULT_FILTER,
+    () => Number(searchParams.get('filter') ?? DEFAULT_FILTER) as Filter,
     [searchParams]
   );
-  const [filter, setFilter] = useState<Filter>(searchParamsFilter as Filter);
+  const [filter, setFilter] = useState<Filter>(searchParamsFilter);
   useEffect(() => {
-    if (searchParamsFilter === 'hide_retweets') setFilter('hide_retweets');
+    if (searchParamsFilter === Filter.HideRetweets)
+      setFilter(Filter.HideRetweets);
   }, [searchParamsFilter]);
   const results = useMemo(
     () =>
       Array.from(tweets)
         .filter(
-          (t) => filter === 'show_retweets' || !/^RT @\w+\b:/.test(t.text)
+          (t) => filter === Filter.ShowRetweets || !/^RT @\w+\b:/.test(t.text)
         )
         .sort((a, b) => {
-          if (sort === 'retweet_count')
+          if (sort === Sort.RetweetCount)
             return (
               b.retweet_count +
               b.quote_count -
               (a.retweet_count + a.quote_count)
             );
-          if (sort === 'latest')
+          if (sort === Sort.Latest)
             return (
               new Date(b.created_at).valueOf() -
               new Date(a.created_at).valueOf()
             );
-          if (sort === 'earliest')
+          if (sort === Sort.Earliest)
             return (
               new Date(a.created_at).valueOf() -
               new Date(b.created_at).valueOf()
@@ -176,57 +185,57 @@ export default function ArticleItem({
           <SortIcon />
           <button
             type='button'
-            aria-pressed={sort === 'attention_score'}
-            className={cn({ underline: sort === 'attention_score' })}
-            onClick={() => setSort('attention_score')}
+            aria-pressed={sort === Sort.AttentionScore}
+            className={cn({ underline: sort === Sort.AttentionScore })}
+            onClick={() => setSort(Sort.AttentionScore)}
           >
             attention score
           </button>
           {' · '}
           <button
             type='button'
-            aria-pressed={sort === 'retweet_count'}
-            className={cn({ underline: sort === 'retweet_count' })}
-            onClick={() => setSort('retweet_count')}
+            aria-pressed={sort === Sort.RetweetCount}
+            className={cn({ underline: sort === Sort.RetweetCount })}
+            onClick={() => setSort(Sort.RetweetCount)}
           >
             retweet count
           </button>
           {' · '}
           <button
             type='button'
-            aria-pressed={sort === 'latest'}
-            className={cn({ underline: sort === 'latest' })}
-            onClick={() => setSort('latest')}
+            aria-pressed={sort === Sort.Latest}
+            className={cn({ underline: sort === Sort.Latest })}
+            onClick={() => setSort(Sort.Latest)}
           >
             latest
           </button>
           {' · '}
           <button
             type='button'
-            aria-pressed={sort === 'earliest'}
-            className={cn({ underline: sort === 'earliest' })}
-            onClick={() => setSort('earliest')}
+            aria-pressed={sort === Sort.Earliest}
+            className={cn({ underline: sort === Sort.Earliest })}
+            onClick={() => setSort(Sort.Earliest)}
           >
             earliest
           </button>
           <FilterIcon />
           <button
             type='button'
-            aria-pressed={filter === 'hide_retweets'}
-            className={cn({ underline: filter === 'hide_retweets' })}
-            onClick={() => setFilter('hide_retweets')}
+            aria-pressed={filter === Filter.HideRetweets}
+            className={cn({ underline: filter === Filter.HideRetweets })}
+            onClick={() => setFilter(Filter.HideRetweets)}
           >
             hide retweets
           </button>
           {' · '}
           <button
             type='button'
-            disabled={searchParamsFilter === 'hide_retweets'}
-            aria-pressed={filter === 'show_retweets'}
+            disabled={searchParamsFilter === Filter.HideRetweets}
+            aria-pressed={filter === Filter.ShowRetweets}
             className={cn('disabled:cursor-not-allowed', {
-              underline: filter === 'show_retweets',
+              underline: filter === Filter.ShowRetweets,
             })}
-            onClick={() => setFilter('show_retweets')}
+            onClick={() => setFilter(Filter.ShowRetweets)}
           >
             show retweets
           </button>
