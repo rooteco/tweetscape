@@ -6,7 +6,7 @@ import type { Article } from '~/types';
 import {
   ArticleTweetsFilter,
   ArticleTweetsSort,
-  DEFAULT_ARTICLE_FILTER,
+  DEFAULT_ARTICLES_FILTER,
 } from '~/query';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
@@ -39,7 +39,7 @@ export default function ArticleItem({
   const searchParamsFilter = useMemo(
     () =>
       Number(
-        searchParams.get('filter') ?? DEFAULT_ARTICLE_FILTER
+        searchParams.get('filter') ?? DEFAULT_ARTICLES_FILTER
       ) as ArticleTweetsFilter,
     [searchParams]
   );

@@ -1,7 +1,12 @@
 import { autoLink } from 'twitter-text';
 
 import type { Article, List, TweetFull } from '~/types';
-import { ArticlesFilter, ArticlesSort } from '~/query';
+import {
+  ArticlesFilter,
+  ArticlesSort,
+  TweetsFilter,
+  TweetsSort,
+} from '~/query';
 import { revalidate, swr } from '~/swr.server';
 import { log } from '~/utils.server';
 
@@ -24,6 +29,7 @@ export function getLists(uid: string): Promise<List[]> {
 
 export function getListArticlesQuery(
   listId: string,
+  sort: ArticlesSort,
   filter: ArticlesFilter
 ): string {
   /* prettier-ignore */
@@ -80,23 +86,47 @@ function getArticlesWithHTML(articles: Article[]): Article[] {
 
 export async function getListArticles(
   listId: string,
+  sort: ArticlesSort,
   filter: ArticlesFilter
 ): Promise<Article[]> {
-  const articles = await swr<Article>(getListArticlesQuery(listId, filter));
+  const articles = await swr<Article>(
+    getListArticlesQuery(listId, sort, filter)
+  );
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
   return getArticlesWithHTML(articles);
 }
 
-export async function getListTweets(listId: string): Promise<TweetFull[]> {
+export async function getListTweets(
+  listId: string,
+  sort: TweetsSort,
+  filter: TweetsFilter
+): Promise<TweetFull[]> {
+  const orderBy: Record<TweetsSort, string> = {
+    [TweetsSort.TweetCount]: '(retweet_count + quote_count) desc',
+    [TweetsSort.RetweetCount]: 'retweet_count desc',
+    [TweetsSort.QuoteCount]: 'quote_count desc',
+    [TweetsSort.LikeCount]: 'like_count desc',
+    [TweetsSort.FollowerCount]: 'influencers.followers_count desc',
+    [TweetsSort.Latest]: 'created_at desc',
+    [TweetsSort.Earliest]: 'created_at asc',
+  };
+  log.debug(`Ordering tweets by ${orderBy}...`);
   const tweets = await swr<TweetFull>(
     `
     select tweets.*, to_json(influencers.*) as author from tweets
     inner join influencers on influencers.id = tweets.author_id
     inner join list_members on list_members.influencer_id = tweets.author_id
     where list_members.list_id = '${listId}'
+    ${
+      filter === TweetsFilter.HideRetweets
+        ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
+        : ''
+    }
+    order by ${orderBy[sort]}
     limit 50;
-    `
+    `,
+    0
   );
   log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
@@ -119,8 +149,8 @@ export function revalidateListsCache(listIds: string[]) {
 
 export function getClusterArticlesQuery(
   clusterSlug: string,
-  filter: ArticlesFilter,
-  sort: ArticlesSort
+  sort: ArticlesSort,
+  filter: ArticlesFilter
 ): string {
   /* prettier-ignore */
   return (
@@ -156,7 +186,7 @@ export function getClusterArticlesQuery(
       inner join clusters on clusters.id = tweets.cluster_id
     where clusters.slug = '${clusterSlug}' and url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url, clusters.id
-    order by ${sort === ArticlesSort.TweetsCount ? 'count(tweets)' : 'attention_score'} desc
+    order by ${sort === ArticlesSort.TweetCount ? 'count(tweets)' : 'attention_score'} desc
     limit 20;
     `
   );
@@ -164,11 +194,11 @@ export function getClusterArticlesQuery(
 
 export async function getClusterArticles(
   clusterSlug: string,
-  filter: ArticlesFilter,
-  sort: ArticlesSort
+  sort: ArticlesSort,
+  filter: ArticlesFilter
 ): Promise<Article[]> {
   const articles = await swr<Article>(
-    getClusterArticlesQuery(clusterSlug, filter, sort)
+    getClusterArticlesQuery(clusterSlug, sort, filter)
   );
   log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);
@@ -176,8 +206,20 @@ export async function getClusterArticles(
 }
 
 export async function getClusterTweets(
-  clusterSlug: string
+  clusterSlug: string,
+  sort: TweetsSort,
+  filter: TweetsFilter
 ): Promise<TweetFull[]> {
+  const orderBy: Record<TweetsSort, string> = {
+    [TweetsSort.TweetCount]: '(retweet_count + quote_count) desc',
+    [TweetsSort.RetweetCount]: 'retweet_count desc',
+    [TweetsSort.QuoteCount]: 'quote_count desc',
+    [TweetsSort.LikeCount]: 'like_count desc',
+    [TweetsSort.FollowerCount]: 'influencers.followers_count desc',
+    [TweetsSort.Latest]: 'created_at desc',
+    [TweetsSort.Earliest]: 'created_at asc',
+  };
+  log.debug(`Ordering tweets by ${orderBy}...`);
   const tweets = await swr<TweetFull>(
     `
     select tweets.*, to_json(influencers.*) as author from tweets
@@ -185,10 +227,16 @@ export async function getClusterTweets(
     inner join scores on scores.influencer_id = tweets.author_id
     inner join clusters on clusters.id = scores.cluster_id
     where clusters.slug = '${clusterSlug}'
+    ${
+      filter === TweetsFilter.HideRetweets
+        ? `and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
+        : ''
+    }
+    order by ${orderBy[sort]}
     limit 50;
     `
   );
   log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
-  log.info(`Fetched ${tweets.length} tweets or cluster (${clusterSlug}).`);
+  log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
   return getTweetsWithHTML(tweets);
 }

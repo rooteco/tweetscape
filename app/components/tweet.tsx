@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import cn from 'classnames';
 
 import type { Influencer, Tweet } from '~/types';
 import LikeIcon from '~/icons/like';
@@ -18,13 +19,24 @@ function Action({ count, color, icon, href }: ActionProps) {
   return (
     <a
       data-cy='share'
-      className={`mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:text-${color}-550`}
+      className={cn(
+        'mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group',
+        {
+          'hover:text-red-550': color === 'red',
+          'hover:text-blue-550': color === 'blue',
+          'hover:text-green-550': color === 'green',
+        }
+      )}
       href={href}
       target='_blank'
       rel='noopener noreferrer'
     >
       <div
-        className={`p-1.5 mr-0.5 rounded-full transition duration-[0.2s] group-hover:bg-${color}-50`}
+        className={cn('p-1.5 mr-0.5 rounded-full transition duration-[0.2s]', {
+          'group-hover:bg-red-50': color === 'red',
+          'group-hover:bg-blue-50': color === 'blue',
+          'group-hover:bg-green-50': color === 'green',
+        })}
       >
         {icon}
       </div>
