@@ -10,9 +10,7 @@ import {
 } from '~/twitter.server';
 import { commitSession, getSession } from '~/session.server';
 import { db } from '~/db.server';
-import { getListsQuery } from '~/query.server';
 import { log } from '~/utils.server';
-import { revalidate } from '~/swr.server';
 
 export const action: ActionFunction = async ({ request }) => {
   try {
@@ -94,9 +92,6 @@ export const action: ActionFunction = async ({ request }) => {
           (listFollowedLimit?.reset ?? 0) * 1000
         ).toLocaleString()}...`
       );
-
-    log.info(`Revalidating lists cache for user (${uid})...`);
-    await revalidate(getListsQuery(uid));
 
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });

@@ -7,8 +7,8 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
+import { Prisma, db } from '~/db.server';
 import { revalidate, swr } from '~/swr.server';
-import { Prisma } from '~/db.server';
 import { log } from '~/utils.server';
 
 export function getListsQuery(uid: string): Prisma.Sql {
@@ -25,7 +25,7 @@ export function getListsQuery(uid: string): Prisma.Sql {
 }
 
 export function getLists(uid: string): Promise<List[]> {
-  return swr<List>(getListsQuery(uid));
+  return db.$queryRaw<List[]>(getListsQuery(uid));
 }
 
 export function getListArticlesQuery(
@@ -109,7 +109,7 @@ export async function getListTweets(
     [TweetsSort.Earliest]: Prisma.sql`created_at asc`,
   };
   log.debug(`Ordering tweets by ${orderBy[sort].sql}...`);
-  const tweets = await swr<TweetFull>(Prisma.sql`
+  const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
     select tweets.*, to_json(influencers.*) as author from tweets
     inner join influencers on influencers.id = tweets.author_id
     inner join list_members on list_members.influencer_id = tweets.author_id
@@ -211,7 +211,7 @@ export async function getClusterTweets(
     [TweetsSort.Earliest]: Prisma.sql`created_at asc`,
   };
   log.debug(`Ordering tweets by ${orderBy[sort].sql}...`);
-  const tweets = await swr<TweetFull>(Prisma.sql`
+  const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
     select tweets.*, to_json(influencers.*) as author from tweets
     inner join influencers on influencers.id = tweets.author_id
     inner join scores on scores.influencer_id = tweets.author_id
