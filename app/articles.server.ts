@@ -46,7 +46,7 @@ export const action: ActionFunction = async ({ request }) => {
             if (typeof filter === 'string') return;
             const articles = await getListArticles(listId, sort, filter);
             articles.forEach((article) => {
-              // TODO: Perhaps skip fetch if the article has a non-200 status.
+              if (article.status === 200) return;
               if (article.title && article.description) return;
               if (articlesToFetch.some((a) => a.url === article.url)) return;
               articlesToFetch.push(article);

@@ -30,18 +30,18 @@ export default function Sync() {
       setStatus('Syncing tweets');
     } else if (tweets.type === 'done') setProgress(4 / 6);
   }, [error, user, lists.type, tweets]);
-  const metadata = useFetcher();
+  const articles = useFetcher();
   useEffect(() => {
     if (error) return;
-    if (user && tweets.type === 'done' && metadata.type === 'init') {
-      metadata.submit(null, { method: 'patch', action: '/sync/metadata' });
+    if (user && tweets.type === 'done' && articles.type === 'init') {
+      articles.submit(null, { method: 'patch', action: '/sync/articles' });
       setProgress(5 / 6);
-      setStatus('Syncing metadata');
-    } else if (metadata.type === 'done') {
+      setStatus('Syncing articles');
+    } else if (articles.type === 'done') {
       setProgress(6 / 6);
       setLastSynced((prev) => prev ?? new Date());
     }
-  }, [error, user, tweets.type, metadata]);
+  }, [error, user, tweets.type, articles]);
 
   const location = useLocation();
 
