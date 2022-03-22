@@ -1,34 +1,47 @@
 import { createHash } from 'crypto';
 
+import type { Prisma } from '~/db.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
-import { substr } from '~/utils';
 
 let connectionPromise: Promise<void>;
 if (!redis.isOpen) connectionPromise = redis.connect();
 
-function keys(query: string): { stillGoodKey: string; responseKey: string } {
-  const key = createHash('sha256').update(query).digest('hex');
+function keys(query: Prisma.Sql): {
+  stillGoodKey: string;
+  responseKey: string;
+} {
+  const hash = createHash('sha256');
+  hash.update(query.sql);
+  hash.update(JSON.stringify(query.values));
+  const key = hash.digest('hex');
   const stillGoodKey = `swr:stillgood:${key}`;
   const responseKey = `swr:response:${key}`;
   return { stillGoodKey, responseKey };
 }
 
+function logQueryExecute(query: Prisma.Sql) {
+  const msg = query.sql.replace(/\n/g, '').replace(/\s\s+/g, ' ').substr(0, 50);
+  log.debug(`Executing PostgreSQL query ( ${msg.trim()} )...`);
+}
+
 export async function revalidate<T>(
-  query: string,
+  query: Prisma.Sql,
   maxAgeSeconds = 60
 ): Promise<T[]> {
   const { stillGoodKey, responseKey } = keys(query);
-  const msg = substr(query.replace(/\n/g, '').replace(/\s\s+/g, ' '), 20);
-  log.debug(`Executing PostgreSQL query (${msg})...`);
-  const toCache = await db.$queryRawUnsafe<T[]>(query);
+  logQueryExecute(query);
+  const toCache = await db.$queryRaw<T[]>(query);
   await redis.set(responseKey, JSON.stringify(toCache));
   await redis.setEx(stillGoodKey, maxAgeSeconds, 'true');
   return toCache;
 }
 
-export async function swr<T>(query: string, maxAgeSeconds = 60): Promise<T[]> {
+export async function swr<T>(
+  query: Prisma.Sql,
+  maxAgeSeconds = 60
+): Promise<T[]> {
   await connectionPromise;
 
   const { stillGoodKey, responseKey } = keys(query);
@@ -65,9 +78,8 @@ export async function swr<T>(query: string, maxAgeSeconds = 60): Promise<T[]> {
 
   if (!response) {
     log.debug(`Redis cache miss for (${responseKey}), querying...`);
-    const msg = substr(query.replace(/\n/g, '').replace(/\s\s+/g, ' '), 20);
-    log.debug(`Executing PostgreSQL query (${msg})...`);
-    response = await db.$queryRawUnsafe<T[]>(query);
+    logQueryExecute(query);
+    response = await db.$queryRaw<T[]>(query);
 
     (async () => {
       await redis.set(responseKey, JSON.stringify(response));

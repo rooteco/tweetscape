@@ -13,13 +13,13 @@ import { useEffect, useMemo, useState } from 'react';
 import NProgress from 'nprogress';
 
 import type { Cluster, Influencer, List } from '~/types';
+import { Prisma, db } from '~/db.server';
 import { commitSession, getSession } from '~/session.server';
 import Empty from '~/components/empty';
 import { ErrorContext } from '~/error';
 import Footer from '~/components/footer';
 import Header from '~/components/header';
 import { THEME_SNIPPET } from '~/theme';
-import { db } from '~/db.server';
 import { getLists } from '~/query.server';
 import { log } from '~/utils.server';
 import styles from '~/styles/app.css';
@@ -69,7 +69,7 @@ export type LoaderData = {
 export const loader: LoaderFunction = async ({ request }) => {
   log.info('Fetching visible clusters...');
   const clusters = await swr<Cluster>(
-    'select * from clusters where visible = true'
+    Prisma.sql`select * from clusters where visible = true`
   );
   log.info(`Fetched ${clusters.length} visible clusters.`);
   const session = await getSession(request.headers.get('Cookie'));
