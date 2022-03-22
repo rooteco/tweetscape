@@ -1,4 +1,5 @@
-import { Link, json, useLoaderData, useSearchParams } from 'remix';
+import { Link, json, useLoaderData, useLocation, useSearchParams } from 'remix';
+import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
@@ -11,6 +12,7 @@ import {
   DEFAULT_ARTICLES_FILTER,
   DEFAULT_ARTICLES_SORT,
   DEFAULT_TWEETS_FILTER,
+  DEFAULT_TWEETS_LIMIT,
   DEFAULT_TWEETS_SORT,
   TweetsFilter,
   TweetsSort,
@@ -58,14 +60,15 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const tweetsFilter = Number(
     url.searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
+  const tweetsLimit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
   const articles =
     params.src === 'clusters'
       ? await getClusterArticles(params.id, articlesSort, articlesFilter)
       : await getListArticles(params.id, articlesSort, articlesFilter);
   const tweets =
     params.src === 'clusters'
-      ? await getClusterTweets(params.id, tweetsSort, tweetsFilter)
-      : await getListTweets(params.id, tweetsSort, tweetsFilter);
+      ? await getClusterTweets(params.id, tweetsSort, tweetsFilter, tweetsLimit)
+      : await getListTweets(params.id, tweetsSort, tweetsFilter, tweetsLimit);
   return json<LoaderData>(
     { articles, tweets, locale: lang(request) },
     { headers: { 'Set-Cookie': await commitSession(session) } }
@@ -129,7 +132,7 @@ export default function Cluster() {
   const tweetsRef = useRef<HTMLElement>(null);
   const articlesRef = useRef<HTMLElement>(null);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const articlesSort = Number(
     searchParams.get('a') ?? DEFAULT_ARTICLES_SORT
   ) as ArticlesSort;
@@ -143,10 +146,13 @@ export default function Cluster() {
     searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
 
+  const isList = /lists/.test(useLocation().pathname);
+
   return (
     <main className='flex flex-1 overflow-hidden'>
       <section
         ref={tweetsRef}
+        id='tweets'
         className='flex-1 flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={tweetsRef} header='Tweets'>
@@ -250,57 +256,60 @@ export default function Cluster() {
         )}
         {!!tweets.length && (
           <ol>
-            {tweets.map((t) => (
-              <TweetItem {...t} key={t.id} />
-            ))}
+            <InfiniteScroll
+              dataLength={tweets.length}
+              next={() =>
+                setSearchParams({
+                  ...Object.fromEntries(searchParams.entries()),
+                  l: (Number(searchParams.get('l') ?? 50) + 50).toString(),
+                })
+              }
+              loader={Array(3)
+                .fill(null)
+                .map((_, idx) => (
+                  <TweetItem key={idx} />
+                ))}
+              scrollableTarget='tweets'
+              hasMore
+            >
+              {tweets.map((t) => (
+                <TweetItem {...t} key={t.id} />
+              ))}
+            </InfiniteScroll>
           </ol>
         )}
       </section>
       <section
         ref={articlesRef}
+        id='articles'
         className='flex-1 flex flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={articlesRef} header='Articles'>
           <div className='flex-none mr-4'>
             <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-            <NavLink
-              articlesSort={ArticlesSort.AttentionScore}
-              articlesFilter={articlesFilter}
-              tweetsSort={tweetsSort}
-              tweetsFilter={tweetsFilter}
-              active={articlesSort === ArticlesSort.AttentionScore}
-            >
-              attention score
-            </NavLink>
+            {!isList && (
+              <NavLink
+                articlesSort={ArticlesSort.AttentionScore}
+                articlesFilter={articlesFilter}
+                tweetsSort={tweetsSort}
+                tweetsFilter={tweetsFilter}
+                active={articlesSort === ArticlesSort.AttentionScore}
+              >
+                attention score
+              </NavLink>
+            )}
+            {isList && (
+              <span className='cursor-not-allowed'>attention score</span>
+            )}
             {' · '}
             <NavLink
               articlesSort={ArticlesSort.TweetCount}
               articlesFilter={articlesFilter}
               tweetsSort={tweetsSort}
               tweetsFilter={tweetsFilter}
-              active={articlesSort === ArticlesSort.TweetCount}
+              active={articlesSort === ArticlesSort.TweetCount || isList}
             >
               tweets
-            </NavLink>
-            {' · '}
-            <NavLink
-              articlesSort={ArticlesSort.Latest}
-              articlesFilter={articlesFilter}
-              tweetsSort={tweetsSort}
-              tweetsFilter={tweetsFilter}
-              active={articlesSort === ArticlesSort.Latest}
-            >
-              latest
-            </NavLink>
-            {' · '}
-            <NavLink
-              articlesSort={ArticlesSort.Earliest}
-              articlesFilter={articlesFilter}
-              tweetsSort={tweetsSort}
-              tweetsFilter={tweetsFilter}
-              active={articlesSort === ArticlesSort.Earliest}
-            >
-              earliest
             </NavLink>
           </div>
           <div className='flex-none'>

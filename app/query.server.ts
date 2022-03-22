@@ -11,6 +11,20 @@ import { Prisma, db } from '~/db.server';
 import { revalidate, swr } from '~/swr.server';
 import { log } from '~/utils.server';
 
+const TWEETS_ORDER_BY: Record<TweetsSort, Prisma.Sql> = {
+  [TweetsSort.TweetCount]: Prisma.sql`(retweet_count + quote_count) desc`,
+  [TweetsSort.RetweetCount]: Prisma.sql`retweet_count desc`,
+  [TweetsSort.QuoteCount]: Prisma.sql`quote_count desc`,
+  [TweetsSort.LikeCount]: Prisma.sql`like_count desc`,
+  [TweetsSort.FollowerCount]: Prisma.sql`influencers.followers_count desc`,
+  [TweetsSort.Latest]: Prisma.sql`created_at desc`,
+  [TweetsSort.Earliest]: Prisma.sql`created_at asc`,
+};
+const ARTICLES_ORDER_BY: Record<ArticlesSort, Prisma.Sql> = {
+  [ArticlesSort.TweetCount]: Prisma.sql`count(tweets)`,
+  [ArticlesSort.AttentionScore]: Prisma.sql`attention_score`,
+};
+
 export function getListsQuery(uid: string): Prisma.Sql {
   // TODO: Wrap the `uid` in some SQL injection avoidance mechanism as it's
   // very much possible that somebody smart and devious could:
@@ -97,18 +111,10 @@ export async function getListArticles(
 export async function getListTweets(
   listId: string,
   sort: TweetsSort,
-  filter: TweetsFilter
+  filter: TweetsFilter,
+  limit: number
 ): Promise<TweetFull[]> {
-  const orderBy: Record<TweetsSort, Prisma.Sql> = {
-    [TweetsSort.TweetCount]: Prisma.sql`(retweet_count + quote_count) desc`,
-    [TweetsSort.RetweetCount]: Prisma.sql`retweet_count desc`,
-    [TweetsSort.QuoteCount]: Prisma.sql`quote_count desc`,
-    [TweetsSort.LikeCount]: Prisma.sql`like_count desc`,
-    [TweetsSort.FollowerCount]: Prisma.sql`influencers.followers_count desc`,
-    [TweetsSort.Latest]: Prisma.sql`created_at desc`,
-    [TweetsSort.Earliest]: Prisma.sql`created_at asc`,
-  };
-  log.debug(`Ordering tweets by ${orderBy[sort].sql}...`);
+  log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
   const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
     select tweets.*, to_json(influencers.*) as author from tweets
     inner join influencers on influencers.id = tweets.author_id
@@ -119,8 +125,8 @@ export async function getListTweets(
         ? Prisma.sql`and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
         : Prisma.empty
     }
-    order by ${orderBy[sort]}
-    limit 50;`);
+    order by ${TWEETS_ORDER_BY[sort]}
+    limit ${limit};`);
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
   return getTweetsWithHTML(tweets);
 }
@@ -180,7 +186,7 @@ export function getClusterArticlesQuery(
       inner join clusters on clusters.id = tweets.cluster_id
     where clusters.slug = ${clusterSlug} and url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url, clusters.id
-    order by ${sort === ArticlesSort.TweetCount ? Prisma.sql`count(tweets)` : Prisma.sql`attention_score`} desc
+    order by ${ARTICLES_ORDER_BY[sort]} desc
     limit 20;`;
 }
 
@@ -199,18 +205,10 @@ export async function getClusterArticles(
 export async function getClusterTweets(
   clusterSlug: string,
   sort: TweetsSort,
-  filter: TweetsFilter
+  filter: TweetsFilter,
+  limit: number
 ): Promise<TweetFull[]> {
-  const orderBy: Record<TweetsSort, Prisma.Sql> = {
-    [TweetsSort.TweetCount]: Prisma.sql`(retweet_count + quote_count) desc`,
-    [TweetsSort.RetweetCount]: Prisma.sql`retweet_count desc`,
-    [TweetsSort.QuoteCount]: Prisma.sql`quote_count desc`,
-    [TweetsSort.LikeCount]: Prisma.sql`like_count desc`,
-    [TweetsSort.FollowerCount]: Prisma.sql`influencers.followers_count desc`,
-    [TweetsSort.Latest]: Prisma.sql`created_at desc`,
-    [TweetsSort.Earliest]: Prisma.sql`created_at asc`,
-  };
-  log.debug(`Ordering tweets by ${orderBy[sort].sql}...`);
+  log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
   const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
     select tweets.*, to_json(influencers.*) as author from tweets
     inner join influencers on influencers.id = tweets.author_id
@@ -222,8 +220,8 @@ export async function getClusterTweets(
         ? Prisma.sql`and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
         : Prisma.empty
     }
-    order by ${orderBy[sort]}
-    limit 50;
+    order by ${TWEETS_ORDER_BY[sort]}
+    limit ${limit};
     `);
   log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
   return getTweetsWithHTML(tweets);

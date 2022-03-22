@@ -1,8 +1,6 @@
 export enum ArticlesSort {
   AttentionScore,
   TweetCount,
-  Latest,
-  Earliest,
 }
 export const DEFAULT_ARTICLES_SORT = ArticlesSort.AttentionScore;
 export enum ArticlesFilter {
@@ -20,6 +18,7 @@ export enum ArticleTweetsFilter {
   HideRetweets,
   ShowRetweets,
 }
+export const DEFAULT_TWEETS_LIMIT = 50;
 export enum TweetsSort {
   TweetCount,
   RetweetCount,
