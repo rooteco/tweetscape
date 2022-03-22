@@ -19,26 +19,28 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
 
   public constructor(private uid: string) {}
 
-  private key(endpoint: string, method?: string) {
+  private key(endpoint: string, method = 'GET') {
     const hash = createHash('sha256');
     hash.update(this.uid);
     hash.update(endpoint);
-    if (method) hash.update(method);
+    hash.update(method);
     return `limit:${hash.digest('hex')}`;
   }
 
   public async get(args: ITwitterApiRateLimitGetArgs) {
-    log.trace(`Getting rate limit for: ${args.method} ${args.endpoint}`);
+    const method = args.method ?? 'GET';
+    log.trace(`Getting rate limit for: ${method} ${args.endpoint}`);
     await connectionPromise;
     const mem = this.store.get(args);
     if (mem) return mem;
-    const cache = await redis.get(this.key(args.endpoint, args.method));
+    const cache = await redis.get(this.key(args.endpoint, method));
     if (cache) return JSON.parse(cache) as TwitterRateLimit;
     return undefined;
   }
 
   public async set(args: ITwitterApiRateLimitSetArgs) {
-    log.trace(`Setting rate limit for: ${args.method} ${args.endpoint}`);
+    const lim = `(${args.rateLimit.remaining}/${args.rateLimit.limit})`;
+    log.trace(`Setting rate limit ${lim} for: ${args.method} ${args.endpoint}`);
     this.store.set(args);
     await redis.setEx(
       this.key(args.endpoint, args.method),
