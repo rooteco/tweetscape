@@ -269,6 +269,7 @@ export default function Cluster() {
                 .map((_, idx) => (
                   <TweetItem key={idx} />
                 ))}
+              scrollThreshold={0.65}
               scrollableTarget='tweets'
               hasMore
             >
