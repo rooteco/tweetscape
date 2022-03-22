@@ -110,7 +110,7 @@ export async function getListTweets(
     [TweetsSort.Latest]: 'created_at desc',
     [TweetsSort.Earliest]: 'created_at asc',
   };
-  log.debug(`Ordering tweets by ${orderBy}...`);
+  log.debug(`Ordering tweets by ${orderBy[sort]}...`);
   const tweets = await swr<TweetFull>(
     `
     select tweets.*, to_json(influencers.*) as author from tweets
@@ -218,7 +218,7 @@ export async function getClusterTweets(
     [TweetsSort.Latest]: 'created_at desc',
     [TweetsSort.Earliest]: 'created_at asc',
   };
-  log.debug(`Ordering tweets by ${orderBy}...`);
+  log.debug(`Ordering tweets by ${orderBy[sort]}...`);
   const tweets = await swr<TweetFull>(
     `
     select tweets.*, to_json(influencers.*) as author from tweets
