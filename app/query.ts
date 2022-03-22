@@ -1,8 +1,6 @@
 export enum ArticlesSort {
   AttentionScore,
   TweetCount,
-  Latest,
-  Earliest,
 }
 export const DEFAULT_ARTICLES_SORT = ArticlesSort.AttentionScore;
 export enum ArticlesFilter {

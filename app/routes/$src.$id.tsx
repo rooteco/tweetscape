@@ -1,4 +1,4 @@
-import { Link, json, useLoaderData, useSearchParams } from 'remix';
+import { Link, json, useLoaderData, useLocation, useSearchParams } from 'remix';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
@@ -146,6 +146,8 @@ export default function Cluster() {
     searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
 
+  const isList = /lists/.test(useLocation().pathname);
+
   return (
     <main className='flex flex-1 overflow-hidden'>
       <section
@@ -285,44 +287,29 @@ export default function Cluster() {
         <Nav scrollerRef={articlesRef} header='Articles'>
           <div className='flex-none mr-4'>
             <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-            <NavLink
-              articlesSort={ArticlesSort.AttentionScore}
-              articlesFilter={articlesFilter}
-              tweetsSort={tweetsSort}
-              tweetsFilter={tweetsFilter}
-              active={articlesSort === ArticlesSort.AttentionScore}
-            >
-              attention score
-            </NavLink>
+            {!isList && (
+              <NavLink
+                articlesSort={ArticlesSort.AttentionScore}
+                articlesFilter={articlesFilter}
+                tweetsSort={tweetsSort}
+                tweetsFilter={tweetsFilter}
+                active={articlesSort === ArticlesSort.AttentionScore}
+              >
+                attention score
+              </NavLink>
+            )}
+            {isList && (
+              <span className='cursor-not-allowed'>attention score</span>
+            )}
             {' · '}
             <NavLink
               articlesSort={ArticlesSort.TweetCount}
               articlesFilter={articlesFilter}
               tweetsSort={tweetsSort}
               tweetsFilter={tweetsFilter}
-              active={articlesSort === ArticlesSort.TweetCount}
+              active={articlesSort === ArticlesSort.TweetCount || isList}
             >
               tweets
-            </NavLink>
-            {' · '}
-            <NavLink
-              articlesSort={ArticlesSort.Latest}
-              articlesFilter={articlesFilter}
-              tweetsSort={tweetsSort}
-              tweetsFilter={tweetsFilter}
-              active={articlesSort === ArticlesSort.Latest}
-            >
-              latest
-            </NavLink>
-            {' · '}
-            <NavLink
-              articlesSort={ArticlesSort.Earliest}
-              articlesFilter={articlesFilter}
-              tweetsSort={tweetsSort}
-              tweetsFilter={tweetsFilter}
-              active={articlesSort === ArticlesSort.Earliest}
-            >
-              earliest
             </NavLink>
           </div>
           <div className='flex-none'>
