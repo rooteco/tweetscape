@@ -1,4 +1,5 @@
 import { Link, json, useLoaderData, useSearchParams } from 'remix';
+import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
@@ -147,6 +148,7 @@ export default function Cluster() {
     <main className='flex flex-1 overflow-hidden'>
       <section
         ref={tweetsRef}
+        id='tweets'
         className='flex-1 flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={tweetsRef} header='Tweets'>
@@ -250,14 +252,28 @@ export default function Cluster() {
         )}
         {!!tweets.length && (
           <ol>
-            {tweets.map((t) => (
-              <TweetItem {...t} key={t.id} />
-            ))}
+            <InfiniteScroll
+              dataLength={tweets.length}
+              next={() => console.log('Next called!')}
+              scrollThreshold={0.65}
+              loader={Array(10)
+                .fill(null)
+                .map((_, idx) => (
+                  <TweetItem key={idx} />
+                ))}
+              scrollableTarget='tweets'
+              hasMore
+            >
+              {tweets.map((t) => (
+                <TweetItem {...t} key={t.id} />
+              ))}
+            </InfiniteScroll>
           </ol>
         )}
       </section>
       <section
         ref={articlesRef}
+        id='articles'
         className='flex-1 flex flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={articlesRef} header='Articles'>
