@@ -124,8 +124,7 @@ export async function getListTweets(
     }
     order by ${orderBy[sort]}
     limit 50;
-    `,
-    0
+    `
   );
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
   return getTweetsWithHTML(tweets);
