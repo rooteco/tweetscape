@@ -14,7 +14,6 @@ drop table if exists tokens;
 drop table if exists list_followers;
 drop table if exists list_members;
 drop table if exists lists;
-drop table if exists limits;
 drop table if exists influencers;
 drop domain if exists url;
 drop table if exists clusters;
@@ -39,16 +38,6 @@ create table influencers (
   "tweets_count" integer,
   "created_at" timestamptz,
   "updated_at" timestamptz
-);
-create table limits (
-  "influencer_id" text references influencers(id) deferrable not null,
-  "method" text not null,
-  "endpoint" text not null,
-  "limit" integer not null,
-  "reset" integer not null,
-  "remaining" integer not null,
-  "resets_at" timestamptz not null,
-  primary key ("influencer_id", "method", "endpoint")
 );
 create table lists (
   "id" text unique not null primary key,
