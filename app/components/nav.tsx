@@ -5,9 +5,10 @@ import cn from 'classnames';
 export type NavProps = {
   scrollerRef: RefObject<HTMLElement | null>;
   children?: ReactNode;
+  header: string;
 };
 
-export default function Nav({ children, scrollerRef }: NavProps) {
+export default function Nav({ header, children, scrollerRef }: NavProps) {
   const [visible, setVisible] = useState<boolean>(true);
   const lastScrollPosition = useRef<number>(0);
 
@@ -38,7 +39,10 @@ export default function Nav({ children, scrollerRef }: NavProps) {
         }
       )}
     >
-      {children}
+      <div className='flex items-stretch'>
+        <h2 className='flex-none text-sm font-semibold mr-5'>{header}</h2>
+        <div className='flex-1 flex flex-wrap items-center'>{children}</div>
+      </div>
     </nav>
   );
 }

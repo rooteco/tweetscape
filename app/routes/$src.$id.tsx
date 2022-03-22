@@ -82,19 +82,45 @@ export function ErrorBoundary({ error }: { error: Error }) {
         ref={tweetsRef}
         className='flex-1 flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
-        <Nav scrollerRef={tweetsRef} />
+        <Nav scrollerRef={tweetsRef} header='Tweets' />
       </section>
       <section
         ref={articlesRef}
         className='flex-1 flex flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
-        <Nav scrollerRef={articlesRef} />
+        <Nav scrollerRef={articlesRef} header='Articles' />
         <Empty className='flex-1 m-5'>
           <p className='uppercase'>an unexpected runtime error occurred</p>
           <p>{error.message}</p>
         </Empty>
       </section>
     </main>
+  );
+}
+
+type NavLinkProps = {
+  active: boolean;
+  children: string;
+  articlesSort: ArticlesSort;
+  articlesFilter: ArticlesFilter;
+  tweetsSort: TweetsSort;
+  tweetsFilter: TweetsFilter;
+};
+function NavLink({
+  active,
+  children,
+  articlesSort,
+  articlesFilter,
+  tweetsSort,
+  tweetsFilter,
+}: NavLinkProps) {
+  return (
+    <Link
+      className={cn({ underline: active })}
+      to={`?a=${articlesSort}&b=${articlesFilter}&c=${tweetsSort}&d=${tweetsFilter}`}
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -123,96 +149,100 @@ export default function Cluster() {
         ref={tweetsRef}
         className='flex-1 flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
-        <Nav scrollerRef={tweetsRef}>
-          <div className='flex items-stretch'>
-            <h2 className='flex-none text-sm font-semibold mr-5'>Tweets</h2>
-            <div className='flex-1 flex flex-wrap items-center'>
-              <div className='flex-none mr-4'>
-                <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-                <Link
-                  className={cn({
-                    underline: tweetsSort === TweetsSort.TweetCount,
-                  })}
-                  to={`?a=${articlesSort}&b=${articlesFilter}&c=${TweetsSort.TweetCount}&d=${tweetsFilter}`}
-                >
-                  tweets
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: tweetsSort === TweetsSort.RetweetCount,
-                  })}
-                  to={`?a=${articlesSort}&b=${articlesFilter}&c=${TweetsSort.RetweetCount}&d=${tweetsFilter}`}
-                >
-                  retweets
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: tweetsSort === TweetsSort.QuoteCount,
-                  })}
-                  to={`?a=${articlesSort}&b=${articlesFilter}&c=${TweetsSort.QuoteCount}&d=${tweetsFilter}`}
-                >
-                  quotes
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: tweetsSort === TweetsSort.LikeCount,
-                  })}
-                  to={`?a=${articlesSort}&b=${articlesFilter}&c=${TweetsSort.LikeCount}&d=${tweetsFilter}`}
-                >
-                  likes
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: tweetsSort === TweetsSort.FollowerCount,
-                  })}
-                  to={`?a=${articlesSort}&b=${articlesFilter}&c=${TweetsSort.FollowerCount}&d=${tweetsFilter}`}
-                >
-                  followers
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: tweetsSort === TweetsSort.Latest,
-                  })}
-                  to={`?a=${articlesSort}&b=${articlesFilter}&c=${TweetsSort.Latest}&d=${tweetsFilter}`}
-                >
-                  latest
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: tweetsSort === TweetsSort.Earliest,
-                  })}
-                  to={`?a=${articlesSort}&b=${articlesFilter}&c=${TweetsSort.Earliest}&d=${tweetsFilter}`}
-                >
-                  earliest
-                </Link>
-              </div>
-              <div className='flex-none'>
-                <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-                <Link
-                  className={cn({
-                    underline: tweetsFilter === TweetsFilter.HideRetweets,
-                  })}
-                  to={`?a=${articlesSort}&b=${articlesFilter}&c=${tweetsSort}&d=${TweetsFilter.HideRetweets}`}
-                >
-                  hide retweets
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: tweetsFilter === TweetsFilter.ShowRetweets,
-                  })}
-                  to={`?a=${articlesSort}&b=${articlesFilter}&c=${tweetsSort}&d=${TweetsFilter.ShowRetweets}`}
-                >
-                  show retweets
-                </Link>
-              </div>
-            </div>
+        <Nav scrollerRef={tweetsRef} header='Tweets'>
+          <div className='flex-none mr-4'>
+            <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={articlesFilter}
+              tweetsSort={TweetsSort.TweetCount}
+              tweetsFilter={tweetsFilter}
+              active={tweetsSort === TweetsSort.TweetCount}
+            >
+              tweets
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={articlesFilter}
+              tweetsSort={TweetsSort.RetweetCount}
+              tweetsFilter={tweetsFilter}
+              active={tweetsSort === TweetsSort.RetweetCount}
+            >
+              retweets
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={articlesFilter}
+              tweetsSort={TweetsSort.QuoteCount}
+              tweetsFilter={tweetsFilter}
+              active={tweetsSort === TweetsSort.QuoteCount}
+            >
+              quotes
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={articlesFilter}
+              tweetsSort={TweetsSort.LikeCount}
+              tweetsFilter={tweetsFilter}
+              active={tweetsSort === TweetsSort.LikeCount}
+            >
+              likes
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={articlesFilter}
+              tweetsSort={TweetsSort.FollowerCount}
+              tweetsFilter={tweetsFilter}
+              active={tweetsSort === TweetsSort.FollowerCount}
+            >
+              followers
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={articlesFilter}
+              tweetsSort={TweetsSort.Latest}
+              tweetsFilter={tweetsFilter}
+              active={tweetsSort === TweetsSort.Latest}
+            >
+              latest
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={articlesFilter}
+              tweetsSort={TweetsSort.Earliest}
+              tweetsFilter={tweetsFilter}
+              active={tweetsSort === TweetsSort.Earliest}
+            >
+              earliest
+            </NavLink>
+          </div>
+          <div className='flex-none'>
+            <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={articlesFilter}
+              tweetsSort={tweetsSort}
+              tweetsFilter={TweetsFilter.HideRetweets}
+              active={tweetsFilter === TweetsFilter.HideRetweets}
+            >
+              hide retweets
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={articlesFilter}
+              tweetsSort={tweetsSort}
+              tweetsFilter={TweetsFilter.ShowRetweets}
+              active={tweetsFilter === TweetsFilter.ShowRetweets}
+            >
+              show retweets
+            </NavLink>
           </div>
         </Nav>
         {!tweets.length && (
@@ -230,69 +260,70 @@ export default function Cluster() {
         ref={articlesRef}
         className='flex-1 flex flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
-        <Nav scrollerRef={articlesRef}>
-          <div className='flex items-stretch'>
-            <h2 className='flex-none text-sm font-semibold mr-5'>Articles</h2>
-            <div className='flex-1 flex flex-wrap items-center'>
-              <div className='flex-none mr-4'>
-                <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-                <Link
-                  className={cn({
-                    underline: articlesSort === ArticlesSort.AttentionScore,
-                  })}
-                  to={`?a=${ArticlesSort.AttentionScore}&b=${articlesFilter}&c=${tweetsSort}&d=${tweetsFilter}`}
-                >
-                  attention score
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: articlesSort === ArticlesSort.TweetCount,
-                  })}
-                  to={`?a=${ArticlesSort.TweetCount}&b=${articlesFilter}&c=${tweetsSort}&d=${tweetsFilter}`}
-                >
-                  tweets
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: articlesSort === ArticlesSort.Latest,
-                  })}
-                  to={`?a=${ArticlesSort.Latest}&b=${articlesFilter}&c=${tweetsSort}&d=${tweetsFilter}`}
-                >
-                  latest
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: articlesSort === ArticlesSort.Earliest,
-                  })}
-                  to={`?a=${ArticlesSort.Earliest}&b=${articlesFilter}&c=${tweetsSort}&d=${tweetsFilter}`}
-                >
-                  earliest
-                </Link>
-              </div>
-              <div className='flex-none'>
-                <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-                <Link
-                  className={cn({
-                    underline: articlesFilter === ArticlesFilter.HideRetweets,
-                  })}
-                  to={`?a=${articlesSort}&b=${ArticlesFilter.HideRetweets}&c=${tweetsSort}&d=${tweetsFilter}`}
-                >
-                  hide retweets
-                </Link>
-                {' · '}
-                <Link
-                  className={cn({
-                    underline: articlesFilter === ArticlesFilter.ShowRetweets,
-                  })}
-                  to={`?a=${articlesSort}&b=${ArticlesFilter.ShowRetweets}&c=${tweetsSort}&d=${tweetsFilter}`}
-                >
-                  show retweets
-                </Link>
-              </div>
-            </div>
+        <Nav scrollerRef={articlesRef} header='Articles'>
+          <div className='flex-none mr-4'>
+            <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
+            <NavLink
+              articlesSort={ArticlesSort.AttentionScore}
+              articlesFilter={articlesFilter}
+              tweetsSort={tweetsSort}
+              tweetsFilter={tweetsFilter}
+              active={articlesSort === ArticlesSort.AttentionScore}
+            >
+              attention score
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={ArticlesSort.TweetCount}
+              articlesFilter={articlesFilter}
+              tweetsSort={tweetsSort}
+              tweetsFilter={tweetsFilter}
+              active={articlesSort === ArticlesSort.TweetCount}
+            >
+              tweets
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={ArticlesSort.Latest}
+              articlesFilter={articlesFilter}
+              tweetsSort={tweetsSort}
+              tweetsFilter={tweetsFilter}
+              active={articlesSort === ArticlesSort.Latest}
+            >
+              latest
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={ArticlesSort.Earliest}
+              articlesFilter={articlesFilter}
+              tweetsSort={tweetsSort}
+              tweetsFilter={tweetsFilter}
+              active={articlesSort === ArticlesSort.Earliest}
+            >
+              earliest
+            </NavLink>
+          </div>
+          <div className='flex-none'>
+            <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={ArticlesFilter.HideRetweets}
+              tweetsSort={tweetsSort}
+              tweetsFilter={tweetsFilter}
+              active={articlesFilter === ArticlesFilter.HideRetweets}
+            >
+              hide retweets
+            </NavLink>
+            {' · '}
+            <NavLink
+              articlesSort={articlesSort}
+              articlesFilter={ArticlesFilter.ShowRetweets}
+              tweetsSort={tweetsSort}
+              tweetsFilter={tweetsFilter}
+              active={articlesFilter === ArticlesFilter.ShowRetweets}
+            >
+              show retweets
+            </NavLink>
           </div>
         </Nav>
         {!articles.length && (
