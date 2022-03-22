@@ -20,7 +20,8 @@ export async function revalidate<T>(
   maxAgeSeconds = 60
 ): Promise<T[]> {
   const { stillGoodKey, responseKey } = keys(query);
-  log.debug(`Executing PostgreSQL query (${substr(query, 50)})...`);
+  const msg = substr(query.replace(/\n/g, '').replace(/\s\s+/g, ' '), 20);
+  log.debug(`Executing PostgreSQL query (${msg})...`);
   const toCache = await db.$queryRawUnsafe<T[]>(query);
   await redis.set(responseKey, JSON.stringify(toCache));
   await redis.setEx(stillGoodKey, maxAgeSeconds, 'true');
@@ -64,7 +65,8 @@ export async function swr<T>(query: string, maxAgeSeconds = 60): Promise<T[]> {
 
   if (!response) {
     log.debug(`Redis cache miss for (${responseKey}), querying...`);
-    log.debug(`Executing PostgreSQL query (${substr(query, 50)})...`);
+    const msg = substr(query.replace(/\n/g, '').replace(/\s\s+/g, ' '), 20);
+    log.debug(`Executing PostgreSQL query (${msg})...`);
     response = await db.$queryRawUnsafe<T[]>(query);
 
     (async () => {
