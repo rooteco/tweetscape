@@ -31,7 +31,7 @@ export default function Nav({ children, scrollerRef }: NavProps) {
   return (
     <nav
       className={cn(
-        'text-xs p-3 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-all',
+        'text-xs p-3 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-[opacity] transition-[top]',
         {
           'opacity-0 -top-5 pointer-events-none': !visible,
           'opacity-1 top-0': visible,
