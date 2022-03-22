@@ -71,7 +71,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   const clusters = await swr<Cluster>(
     'select * from clusters where visible = true'
   );
-  log.trace(`Clusters: ${JSON.stringify(clusters, null, 2)}`);
   log.info(`Fetched ${clusters.length} visible clusters.`);
   const session = await getSession(request.headers.get('Cookie'));
   const uid = session.get('uid') as string | undefined;

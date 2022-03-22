@@ -39,4 +39,6 @@ export class Logger {
   }
 }
 
-export const log = new Logger(LogLevel.Debug);
+export const log = new Logger(
+  process.env.NODE_ENV === 'production' ? LogLevel.Trace : LogLevel.Debug
+);

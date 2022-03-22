@@ -92,7 +92,6 @@ export async function getListArticles(
   const articles = await swr<Article>(
     getListArticlesQuery(listId, sort, filter)
   );
-  log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
   return getArticlesWithHTML(articles);
 }
@@ -128,7 +127,6 @@ export async function getListTweets(
     `,
     0
   );
-  log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
   return getTweetsWithHTML(tweets);
 }
@@ -203,7 +201,6 @@ export async function getClusterArticles(
   const articles = await swr<Article>(
     getClusterArticlesQuery(clusterSlug, sort, filter)
   );
-  log.trace(`Articles: ${JSON.stringify(articles, null, 2)}`);
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);
   return getArticlesWithHTML(articles);
 }
@@ -239,7 +236,6 @@ export async function getClusterTweets(
     limit 50;
     `
   );
-  log.trace(`Tweets: ${JSON.stringify(tweets, null, 2)}`);
   log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
   return getTweetsWithHTML(tweets);
 }

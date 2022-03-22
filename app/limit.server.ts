@@ -8,6 +8,7 @@ import type {
 import { TwitterApiRateLimitMemoryStore } from '@twitter-api-v2/plugin-rate-limit';
 import type { TwitterRateLimit } from 'twitter-api-v2';
 
+import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
 
 let connectionPromise: Promise<void>;
@@ -27,6 +28,7 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
   }
 
   public async get(args: ITwitterApiRateLimitGetArgs) {
+    log.trace(`Getting rate limit for: ${args.method} ${args.endpoint}`);
     await connectionPromise;
     const mem = this.store.get(args);
     if (mem) return mem;
@@ -36,6 +38,7 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
   }
 
   public async set(args: ITwitterApiRateLimitSetArgs) {
+    log.trace(`Setting rate limit for: ${args.method} ${args.endpoint}`);
     this.store.set(args);
     await redis.setEx(
       this.key(args.endpoint, args.method),
