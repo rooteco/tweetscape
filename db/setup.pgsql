@@ -1,22 +1,22 @@
-drop table if exists urls;
-drop table if exists images;
-drop table if exists links;
-drop table if exists tags;
-drop type if exists tag_type;
-drop table if exists annotations;
-drop type if exists annotation_type;
-drop table if exists mentions;
-drop table if exists refs;
-drop type if exists ref_type;
-drop table if exists tweets;
-drop table if exists scores; 
-drop table if exists tokens;
-drop table if exists list_followers;
-drop table if exists list_members;
-drop table if exists lists;
-drop table if exists influencers;
-drop domain if exists url;
-drop table if exists clusters;
+drop table if exists urls cascade;
+drop table if exists images cascade;
+drop table if exists links cascade;
+drop table if exists tags cascade;
+drop type if exists tag_type cascade;
+drop table if exists annotations cascade;
+drop type if exists annotation_type cascade;
+drop table if exists mentions cascade;
+drop table if exists refs cascade;
+drop type if exists ref_type cascade;
+drop table if exists tweets cascade;
+drop table if exists scores cascade; 
+drop table if exists tokens cascade;
+drop table if exists list_followers cascade;
+drop table if exists list_members cascade;
+drop table if exists lists cascade;
+drop table if exists influencers cascade;
+drop domain if exists url cascade;
+drop table if exists clusters cascade;
 
 create table clusters (
   "id" text unique not null primary key, 
