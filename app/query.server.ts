@@ -97,7 +97,8 @@ export async function getListArticles(
 export async function getListTweets(
   listId: string,
   sort: TweetsSort,
-  filter: TweetsFilter
+  filter: TweetsFilter,
+  limit: number
 ): Promise<TweetFull[]> {
   const orderBy: Record<TweetsSort, Prisma.Sql> = {
     [TweetsSort.TweetCount]: Prisma.sql`(retweet_count + quote_count) desc`,
@@ -120,7 +121,7 @@ export async function getListTweets(
         : Prisma.empty
     }
     order by ${orderBy[sort]}
-    limit 50;`);
+    limit ${limit};`);
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
   return getTweetsWithHTML(tweets);
 }
@@ -199,7 +200,8 @@ export async function getClusterArticles(
 export async function getClusterTweets(
   clusterSlug: string,
   sort: TweetsSort,
-  filter: TweetsFilter
+  filter: TweetsFilter,
+  limit: number
 ): Promise<TweetFull[]> {
   const orderBy: Record<TweetsSort, Prisma.Sql> = {
     [TweetsSort.TweetCount]: Prisma.sql`(retweet_count + quote_count) desc`,
@@ -223,7 +225,7 @@ export async function getClusterTweets(
         : Prisma.empty
     }
     order by ${orderBy[sort]}
-    limit 50;
+    limit ${limit};
     `);
   log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
   return getTweetsWithHTML(tweets);

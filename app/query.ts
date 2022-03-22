@@ -20,6 +20,7 @@ export enum ArticleTweetsFilter {
   HideRetweets,
   ShowRetweets,
 }
+export const DEFAULT_TWEETS_LIMIT = 50;
 export enum TweetsSort {
   TweetCount,
   RetweetCount,

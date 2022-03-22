@@ -12,6 +12,7 @@ import {
   DEFAULT_ARTICLES_FILTER,
   DEFAULT_ARTICLES_SORT,
   DEFAULT_TWEETS_FILTER,
+  DEFAULT_TWEETS_LIMIT,
   DEFAULT_TWEETS_SORT,
   TweetsFilter,
   TweetsSort,
@@ -59,14 +60,15 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const tweetsFilter = Number(
     url.searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
+  const tweetsLimit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
   const articles =
     params.src === 'clusters'
       ? await getClusterArticles(params.id, articlesSort, articlesFilter)
       : await getListArticles(params.id, articlesSort, articlesFilter);
   const tweets =
     params.src === 'clusters'
-      ? await getClusterTweets(params.id, tweetsSort, tweetsFilter)
-      : await getListTweets(params.id, tweetsSort, tweetsFilter);
+      ? await getClusterTweets(params.id, tweetsSort, tweetsFilter, tweetsLimit)
+      : await getListTweets(params.id, tweetsSort, tweetsFilter, tweetsLimit);
   return json<LoaderData>(
     { articles, tweets, locale: lang(request) },
     { headers: { 'Set-Cookie': await commitSession(session) } }
@@ -130,7 +132,7 @@ export default function Cluster() {
   const tweetsRef = useRef<HTMLElement>(null);
   const articlesRef = useRef<HTMLElement>(null);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const articlesSort = Number(
     searchParams.get('a') ?? DEFAULT_ARTICLES_SORT
   ) as ArticlesSort;
@@ -254,9 +256,13 @@ export default function Cluster() {
           <ol>
             <InfiniteScroll
               dataLength={tweets.length}
-              next={() => console.log('Next called!')}
-              scrollThreshold={0.65}
-              loader={Array(10)
+              next={() =>
+                setSearchParams({
+                  ...Object.fromEntries(searchParams.entries()),
+                  l: (Number(searchParams.get('l') ?? 50) + 50).toString(),
+                })
+              }
+              loader={Array(3)
                 .fill(null)
                 .map((_, idx) => (
                   <TweetItem key={idx} />
