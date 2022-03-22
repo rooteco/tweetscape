@@ -8,6 +8,13 @@ import { log } from '~/utils.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
+
+  // Fly flattens all requests to HTTP in its private network.
+  // @see {@link https://fly.io/blog/always-be-connecting-with-https}
+  const proto = request.headers.get('X-Forwarded-Proto');
+  const protocol = proto ? `${proto}:` : url.protocol;
+  const base = `${protocol}//${url.host}`;
+
   const stateId = url.searchParams.get('state');
   const code = url.searchParams.get('code');
   const session = await getSession(request.headers.get('Cookie'));
@@ -18,10 +25,6 @@ export const loader: LoaderFunction = async ({ request }) => {
         clientId: process.env.OAUTH_CLIENT_ID as string,
         clientSecret: process.env.OAUTH_CLIENT_SECRET,
       });
-      // Fly flattens all requests to HTTP in its private network.
-      // @see {@link https://fly.io/blog/always-be-connecting-with-https}
-      const proto = request.headers.get('X-Forwarded-Proto');
-      const protocol = proto ? `${proto}:` : url.protocol;
       const {
         client: api,
         scope,
@@ -31,7 +34,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       } = await client.loginWithOAuth2({
         code,
         codeVerifier: session.get('codeVerifier') as string,
-        redirectUri: `${protocol}//${url.host}`,
+        redirectUri: base,
       });
       log.info('Fetching logged in user from Twitter API...');
       const { data: user } = await api.v2.me({
@@ -81,7 +84,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       session.set('uid', user.id);
     }
   }
-  return redirect((session.get('href') as string) ?? '/clusters/ethereum', {
-    headers: { 'Set-Cookie': await commitSession(session) },
-  });
+  const headers = { 'Set-Cookie': await commitSession(session) };
+  const dest = new URL(`${base}${session.get('href') ?? '/clusters/ethereum'}`);
+  dest.searchParams.delete('l'); // Reset infinite scroller query limit.
+  return redirect(dest.href, { headers });
 };
