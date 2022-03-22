@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 import type { ActionFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
@@ -73,6 +75,16 @@ export const action: ActionFunction = async ({ request }) => {
         const context = `user (${uid}) list (${listId})`;
         if ((listTweetsLimit?.remaining ?? listIds.length) > idx) {
           log.info(`Fetching tweets for ${context}...`);
+          const hash = createHash('sha256');
+          hash.update(listId);
+          hash.update(uid);
+          const key = `latest-tweet-id:list-tweets:${hash.digest('hex')}`;
+          const latestTweetId = await redis.get(key);
+          log.debug(`Found the latest tweet (${listId}): ${latestTweetId}`);
+          const check = await api.v2.listTweets(listId, { max_results: 1 });
+          if (check.tweets[0].id === latestTweetId)
+            return log.info(`Skipping fetch for ${context}...`);
+          await redis.set(key, check.tweets[0].id);
           const res = await api.v2.listTweets(listId, {
             'tweet.fields': [
               'created_at',
