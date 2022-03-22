@@ -34,6 +34,7 @@ model influencers {
   id                String           @id
   name              String
   username          String
+  description       String?
   profile_image_url String?
   followers_count   Int?
   following_count   Int?

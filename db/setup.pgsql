@@ -32,6 +32,7 @@ create table influencers (
   "id" text unique not null primary key,
   "name" text not null,
   "username" text not null,
+  "description" text,
   "profile_image_url" url,
   "followers_count" integer,
   "following_count" integer,

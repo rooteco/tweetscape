@@ -82,9 +82,10 @@ export const action: ActionFunction = async ({ request }) => {
           const latestTweetId = await redis.get(key);
           log.debug(`Found the latest tweet (${listId}): ${latestTweetId}`);
           const check = await api.v2.listTweets(listId, { max_results: 1 });
-          if (check.tweets[0].id === latestTweetId)
+          const latestTweet = check.tweets[0];
+          if (latestTweet && latestTweet.id === latestTweetId)
             return log.info(`Skipping fetch for ${context}...`);
-          await redis.set(key, check.tweets[0].id);
+          if (latestTweet) await redis.set(key, check.tweets[0].id);
           const res = await api.v2.listTweets(listId, {
             'tweet.fields': [
               'created_at',
@@ -102,6 +103,7 @@ export const action: ActionFunction = async ({ request }) => {
               'id',
               'name',
               'username',
+              'description',
               'profile_image_url',
               'public_metrics',
               'created_at',

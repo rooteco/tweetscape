@@ -92,6 +92,7 @@ export function toInfluencer(u: UserV2): Influencer {
     id: u.id,
     name: u.name,
     username: u.username,
+    description: u.description ?? null,
     profile_image_url: u.profile_image_url ?? null,
     followers_count: u.public_metrics?.followers_count ?? null,
     following_count: u.public_metrics?.following_count ?? null,
