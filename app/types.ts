@@ -4,7 +4,6 @@ import type {
   clusters,
   images,
   influencers,
-  limits,
   links,
   list_followers,
   list_members,
@@ -35,7 +34,6 @@ export type Token = tokens;
 export type List = lists;
 export type ListFollower = list_followers;
 export type ListMember = list_members;
-export type Limit = limits;
 export type AnnotationType = annotation_type;
 export type RefType = ref_type;
 export type TagType = tag_type;
