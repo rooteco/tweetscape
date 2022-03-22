@@ -70,7 +70,9 @@ export default function TweetItem({
         key={id}
       >
         <img
-          src={`/img/${encodeURIComponent(author.profile_image_url ?? '')}`}
+          src={`/img/${encodeURIComponent(
+            author.profile_image_url ?? ''
+          )}?width=48&height=48&fit=cover`}
           alt=''
         />
       </a>
