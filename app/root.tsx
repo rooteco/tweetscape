@@ -6,11 +6,9 @@ import {
   Scripts,
   ScrollRestoration,
   json,
-  useTransition,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
-import { useEffect, useMemo, useState } from 'react';
-import NProgress from 'nprogress';
+import { useMemo, useState } from 'react';
 
 import type { Cluster, Influencer, List } from '~/types';
 import { Prisma, db } from '~/db.server';
@@ -108,18 +106,6 @@ export const links: LinksFunction = () => [
 export const meta: MetaFunction = () => ({ title: 'Tweetscape' });
 
 export default function App() {
-  const transition = useTransition();
-  useEffect(() => {
-    if (transition.state === 'idle') {
-      // when the state is idle then we can to complete the progress bar
-      NProgress.done();
-      return () => {};
-    }
-    // and when it's something else it means it's either submitting a form or
-    // waiting for the loaders of the next location so we start it
-    const timeoutId = setTimeout(() => NProgress.start(), 250);
-    return () => clearTimeout(timeoutId);
-  }, [transition.state]);
   const [error, setError] = useState<Error>();
   const context = useMemo(() => ({ error, setError }), [error, setError]);
   return (
