@@ -36,6 +36,7 @@ async function data(c, start, end, db) {
 
   await Promise.all(
     arr.map(async (_, pg) => {
+      if (pg > 0) return;
       if (pg >= 1000 / 50) return; // Only import tweets from first 1000 influencers.
       const { influencers } = pg === 0 ? data : await getInfluencers(c, pg);
       influencers.forEach((i) => ins.influencers.push(i));
@@ -114,10 +115,10 @@ async function data(c, start, end, db) {
     log.debug(msg);
   }, 2500);
   try {
-    //await data({ id: '2300535630', name: 'Tesla' }, start, end, db);
+    await data({ id: '2300535630', name: 'Tesla' }, start, end, db);
     //await data({ id: '2209261', name: 'Ethereum' }, start, end, db);
     //await data({ id: '2300535799', name: 'Python' }, start, end, db);
-    await data({ id: '7799179292', name: 'NFT' }, start, end, db);
+    //await data({ id: '7799179292', name: 'NFT' }, start, end, db);
   } catch (e) {
     log.error(`Caught error: ${e.stack}`);
     throw e;

@@ -289,7 +289,8 @@ export async function insertInfluencers(influencers, c, db) {
       s.id,
       s.name ?? '',
       s.screen_name,
-      s.profile_image_url ?? 'https://tweetscape.co/pics/placeholder.png',
+      s.description ?? null,
+      s.profile_image_url ?? null,
       Number(s.followers_count ?? 0),
       Number(s.following_count ?? 0),
       Number(s.tweets_count ?? 0),
@@ -320,23 +321,14 @@ export async function insertInfluencers(influencers, c, db) {
       "id",
       "name",
       "username",
+      "description",
       "profile_image_url",
       "followers_count",
       "following_count",
       "tweets_count",
       "created_at",
       "updated_at"
-    ) VALUES %L ON CONFLICT (id) DO UPDATE SET (
-      "id",
-      "name",
-      "username",
-      "profile_image_url",
-      "followers_count",
-      "following_count",
-      "tweets_count",
-      "created_at",
-      "updated_at"
-    ) = ROW (excluded.*) WHERE influencers IS DISTINCT FROM excluded;
+    ) VALUES %L ON CONFLICT (id) DO NOTHING; 
 
     INSERT INTO scores (
       "id",
@@ -382,14 +374,32 @@ export async function insertUsers(users, db) {
   log.debug(`Inserting ${users.length} users...`);
   const values = users.map((u) => {
     log.trace(`Inserting user ${u.name} (${u.id})...`);
-    return [u.id, u.name, u.username];
+    return [
+      u.id,
+      u.name,
+      u.username,
+      u.description,
+      u.profile_image_url ?? null,
+      u.public_metrics?.followers_count ?? null,
+      u.public_metrics?.following_count ?? null,
+      u.public_metrics?.tweet_count ?? null,
+      u.created_at ? new Date(u.created_at) : null,
+      new Date(),
+    ];
   });
   const query = format(
     `
     INSERT INTO influencers (
       "id",
       "name",
-      "username"
+      "username",
+      "description",
+      "profile_image_url",
+      "followers_count",
+      "following_count",
+      "tweets_count",
+      "created_at",
+      "updated_at"
     ) VALUES %L ON CONFLICT (id) DO NOTHING;
     `,
     values
