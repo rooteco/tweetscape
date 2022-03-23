@@ -8,6 +8,7 @@ drop type if exists annotation_type cascade;
 drop table if exists mentions cascade;
 drop table if exists refs cascade;
 drop type if exists ref_type cascade;
+drop table if exists retweets cascade;
 drop table if exists likes cascade;
 drop table if exists tweets cascade;
 drop table if exists scores cascade; 
@@ -96,6 +97,11 @@ create table tweets (
   "created_at" timestamptz not null
 );
 create table likes (
+  "tweet_id" text references tweets(id) deferrable not null,
+  "influencer_id" text references influencers(id) deferrable not null,
+  primary key ("tweet_id", "influencer_id")
+);
+create table retweets (
   "tweet_id" text references tweets(id) deferrable not null,
   "influencer_id" text references influencers(id) deferrable not null,
   primary key ("tweet_id", "influencer_id")

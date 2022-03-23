@@ -46,6 +46,7 @@ model influencers {
   list_members      list_members[]
   lists             lists[]
   mentions          mentions[]
+  retweets          retweets[]
   scores            scores[]
   tokens            tokens?
   tweets            tweets[]
@@ -127,6 +128,7 @@ model tweets {
   mentions                              mentions[]
   refs_refs_referenced_tweet_idTotweets refs[]        @relation("refs_referenced_tweet_idTotweets")
   refs_refs_referencer_tweet_idTotweets refs[]        @relation("refs_referencer_tweet_idTotweets")
+  retweets                              retweets[]
   tags                                  tags[]
   urls                                  urls[]
 }
@@ -197,6 +199,15 @@ model list_members {
 }
 
 model likes {
+  tweet_id      String
+  influencer_id String
+  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tweets        tweets      @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([tweet_id, influencer_id])
+}
+
+model retweets {
   tweet_id      String
   influencer_id String
   influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)

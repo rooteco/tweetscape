@@ -11,10 +11,10 @@ export const action: ActionFunction = async ({ request, params }) => {
   const { api } = await getTwitterClientForUser(uid);
   switch (request.method) {
     case 'POST': {
-      log.info(`Liking tweet (${params.id}) for user (${uid})...`);
-      await api.v2.like(uid, params.id);
-      log.info(`Inserting like for tweet (${params.id}) by user (${uid})...`);
-      await db.likes.upsert({
+      log.info(`Retweeting tweet (${params.id}) for user (${uid})...`);
+      await api.v2.retweet(uid, params.id);
+      log.info(`Inserting retweet for (${params.id}) by user (${uid})...`);
+      await db.retweets.upsert({
         create: { tweet_id: params.id, influencer_id: uid },
         update: {},
         where: {
@@ -27,10 +27,10 @@ export const action: ActionFunction = async ({ request, params }) => {
       break;
     }
     case 'DELETE': {
-      log.info(`Unliking tweet (${params.id}) for user (${uid})...`);
-      await api.v2.unlike(uid, params.id);
-      log.info(`Deleting like for tweet (${params.id}) by user (${uid})...`);
-      await db.likes.delete({
+      log.info(`Unretweeting tweet (${params.id}) for user (${uid})...`);
+      await api.v2.unretweet(uid, params.id);
+      log.info(`Deleting retweet for (${params.id}) by user (${uid})...`);
+      await db.retweets.delete({
         where: {
           tweet_id_influencer_id: {
             tweet_id: params.id,

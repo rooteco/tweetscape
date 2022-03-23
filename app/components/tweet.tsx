@@ -7,6 +7,7 @@ import LikedIcon from '~/icons/liked';
 import Profile from '~/components/profile';
 import ReplyIcon from '~/icons/reply';
 import RetweetIcon from '~/icons/retweet';
+import RetweetedIcon from '~/icons/retweeted';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
 import type { TweetFull } from '~/types';
@@ -67,11 +68,13 @@ function Action({ active, count, color, icon, action, id }: ActionProps) {
 function TweetInner({
   id,
   author,
+  reply_count,
   retweet_count,
   quote_count,
   like_count,
   created_at,
   liked,
+  retweeted,
   text,
   html,
 }: Partial<TweetFull>) {
@@ -150,17 +153,24 @@ function TweetInner({
           dangerouslySetInnerHTML={{ __html: html ?? text ?? '' }}
         />
         <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-slate-500'>
-          <Action color='blue' icon={<ReplyIcon />} action='reply' id={id} />
+          <Action
+            color='blue'
+            icon={<ReplyIcon />}
+            action='reply'
+            id={id}
+            count={reply_count}
+          />
           <Action
             color='green'
-            icon={<RetweetIcon />}
+            icon={retweeted ? <RetweetedIcon /> : <RetweetIcon />}
             action='retweet'
             id={id}
             count={
               retweet_count !== undefined && quote_count !== undefined
-                ? retweet_count + quote_count
+                ? retweet_count + quote_count + (retweeted ? 1 : 0)
                 : undefined
             }
+            active={retweeted}
           />
           <Action
             color='red'
