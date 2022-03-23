@@ -32,9 +32,16 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
     log.trace(`Getting rate limit for: ${method} ${args.endpoint}`);
     await connectionPromise;
     const mem = this.store.get(args);
-    if (mem) return mem;
-    const cache = await redis.get(this.key(args.endpoint, method));
-    if (cache) return JSON.parse(cache) as TwitterRateLimit;
+    if (mem) {
+      log.trace(`Got rate limit from memory for: ${method} ${args.endpoint}`);
+      return mem;
+    }
+    const key = this.key(args.endpoint, method);
+    const cache = await redis.get(key);
+    if (cache) {
+      log.trace(`Got rate limit from redis key: ${key}`);
+      return JSON.parse(cache) as TwitterRateLimit;
+    }
     return undefined;
   }
 
@@ -44,7 +51,7 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
     this.store.set(args);
     await redis.setEx(
       this.key(args.endpoint, args.method),
-      args.rateLimit.reset,
+      Math.ceil(args.rateLimit.reset - new Date().valueOf() / 1000),
       JSON.stringify(args.rateLimit)
     );
   }
