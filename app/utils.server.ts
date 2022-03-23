@@ -21,10 +21,14 @@ export function getBaseURL(req: Request) {
   return `${protocol}//${url.host}`;
 }
 
-export async function redirectToLastVisited(req: Request, session: Session) {
+export async function redirectToLastVisited(
+  req: Request,
+  session: Session,
+  reset = true
+) {
   const url = getBaseURL(req);
   const dest = new URL(`${url}${session.get('href') ?? '/clusters/ethereum'}`);
-  dest.searchParams.delete('l'); // Reset infinite scroller query limit.
+  if (reset) dest.searchParams.delete('l'); // Reset infinite scroller limit.
   const headers = { 'Set-Cookie': await commitSession(session) };
   return redirect(dest.href, { headers });
 }

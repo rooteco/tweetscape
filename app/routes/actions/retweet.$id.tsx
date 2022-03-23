@@ -43,5 +43,5 @@ export const action: ActionFunction = async ({ request, params }) => {
     default:
       return new Response('Method Not Allowed', { status: 405 });
   }
-  return redirectToLastVisited(request, session);
+  return redirectToLastVisited(request, session, false);
 };
