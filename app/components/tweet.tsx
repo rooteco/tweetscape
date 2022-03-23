@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 import cn from 'classnames';
 
-import type { Influencer, Tweet } from '~/types';
 import LikeIcon from '~/icons/like';
+import OpenInNewIcon from '~/icons/open-in-new';
 import ReplyIcon from '~/icons/reply';
 import RetweetIcon from '~/icons/retweet';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
+import type { TweetFull } from '~/types';
 
 function num(n: number): string {
   if (n > 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -51,11 +52,6 @@ function Action({ count, color, icon, href }: ActionProps) {
   );
 }
 
-export type TweetItemProps = Partial<Tweet> & {
-  author?: Influencer;
-  html?: string;
-};
-
 export default function TweetItem({
   id,
   author,
@@ -65,7 +61,7 @@ export default function TweetItem({
   created_at,
   text,
   html,
-}: TweetItemProps) {
+}: Partial<TweetFull>) {
   return (
     <li className='relative flex w-full text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800 p-3'>
       <a
@@ -73,11 +69,7 @@ export default function TweetItem({
           'block flex-none mr-3 w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden',
           { 'animate-pulse': !id }
         )}
-        href={
-          author && id
-            ? `https://twitter.com/${author.username}/status/${id}`
-            : ''
-        }
+        href={author ? `https://twitter.com/${author.username}` : ''}
         rel='noopener noreferrer'
         target='_blank'
         key={id}
@@ -94,7 +86,7 @@ export default function TweetItem({
       <article className='flex-1 min-w-0'>
         <header className='mb-0.5 flex items-end'>
           <a
-            href={author ? `https://hive.one/p/${author.username}` : ''}
+            href={author ? `https://twitter.com/${author.username}` : ''}
             target='_blank'
             rel='noopener noreferrer'
             className={cn(
@@ -141,7 +133,7 @@ export default function TweetItem({
                 <div className='flex justify-between items-start'>
                   <a
                     className='block w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden'
-                    href={`https://twitter.com/${author.username}/status/${id}`}
+                    href={`https://twitter.com/${author.username}`}
                     rel='noopener noreferrer'
                     target='_blank'
                   >
@@ -171,16 +163,31 @@ export default function TweetItem({
                 >
                   {author.name}
                 </a>
-                <a
-                  className='block mt-1 leading-none text-slate-500'
-                  href={`https://twitter.com/${author.username}`}
-                  rel='noopener noreferrer'
-                  target='_blank'
-                >
-                  @{author.username}
-                </a>
+                <div className='mt-1 leading-none text-slate-500'>
+                  <a
+                    href={`https://twitter.com/${author.username}`}
+                    rel='noopener noreferrer'
+                    target='_blank'
+                  >
+                    @{author.username}
+                  </a>
+                  <span className='mx-1'>·</span>
+                  <a
+                    href={`https://hive.one/p/${author.username}`}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    hive.one
+                    <OpenInNewIcon className='inline fill-current w-3.5 h-3.5 ml-0.5 mb-0.5' />
+                  </a>
+                </div>
               </header>
-              <p className='my-3'>{author.description}</p>
+              <p
+                className='my-3'
+                dangerouslySetInnerHTML={{
+                  __html: author.html ?? author.description ?? '',
+                }}
+              />
               <p>
                 <a
                   className='hover:underline mr-3'
