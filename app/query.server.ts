@@ -68,14 +68,16 @@ export async function getListTweets(
       ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
       to_json(influencers.*) as author,
       to_json(retweets.*) as retweet,
+      ${uid ? Prisma.sql`retweet_likes is not null as retweet_liked,` : Prisma.empty}
       to_json(retweet_authors.*) as retweet_author
     from tweets
       inner join influencers on influencers.id = tweets.author_id
       inner join list_members on list_members.influencer_id = tweets.author_id
+      ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
       left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted'
       left outer join tweets retweets on retweets.id = refs.referenced_tweet_id
       left outer join influencers retweet_authors on retweet_authors.id = retweets.author_id
-      ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
+      ${uid ? Prisma.sql`left outer join likes retweet_likes on retweet_likes.tweet_id = refs.referenced_tweet_id and retweet_likes.influencer_id = ${uid}` : Prisma.empty}
     where list_members.list_id = ${listId}
     ${filter === TweetsFilter.HideRetweets ? Prisma.sql`and refs is null` : Prisma.empty}
     order by ${TWEETS_ORDER_BY[sort]}
@@ -99,15 +101,17 @@ export async function getClusterTweets(
       ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
       to_json(influencers.*) as author,
       to_json(retweets.*) as retweet,
+      ${uid ? Prisma.sql`retweet_likes is not null as retweet_liked,` : Prisma.empty}
       to_json(retweet_authors.*) as retweet_author
     from tweets
       inner join influencers on influencers.id = tweets.author_id
       inner join scores on scores.influencer_id = tweets.author_id
       inner join clusters on clusters.id = scores.cluster_id      
+      ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
       left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted'
       left outer join tweets retweets on retweets.id = refs.referenced_tweet_id
       left outer join influencers retweet_authors on retweet_authors.id = retweets.author_id
-      ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
+      ${uid ? Prisma.sql`left outer join likes retweet_likes on retweet_likes.tweet_id = refs.referenced_tweet_id and retweet_likes.influencer_id = ${uid}` : Prisma.empty}
     where clusters.slug = ${clusterSlug}
     ${filter === TweetsFilter.HideRetweets ? Prisma.sql`and refs is null` : Prisma.empty}
     order by ${TWEETS_ORDER_BY[sort]}

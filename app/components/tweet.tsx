@@ -199,6 +199,8 @@ export default function TweetItem({
   id,
   retweet,
   retweet_author,
+  retweet_liked,
+  retweet_retweeted,
   author,
   created_at,
   ...tweet
@@ -235,7 +237,14 @@ export default function TweetItem({
           </a>
         </header>
       )}
-      {retweet && <TweetInner {...retweet} author={retweet_author} />}
+      {retweet && (
+        <TweetInner
+          {...retweet}
+          author={retweet_author}
+          liked={retweet_liked}
+          retweeted={retweet_retweeted}
+        />
+      )}
       {!retweet && (
         <TweetInner
           {...tweet}
