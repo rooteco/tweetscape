@@ -1,5 +1,6 @@
 import { Link, NavLink, useFetcher, useMatches, useTransition } from 'remix';
 import cn from 'classnames';
+import { useState } from 'react';
 
 import { Theme, useTheme } from '~/theme';
 import BirdIcon from '~/icons/bird';
@@ -8,6 +9,8 @@ import Empty from '~/components/empty';
 import LightIcon from '~/icons/light';
 import type { LoaderData } from '~/root';
 import LogoutIcon from '~/icons/logout';
+import MenuIcon from '~/icons/menu';
+import MenuOpenIcon from '~/icons/menu-open';
 import OpenInNewIcon from '~/icons/open-in-new';
 import Sync from '~/components/sync';
 import SystemIcon from '~/icons/system';
@@ -47,10 +50,26 @@ export default function Header() {
   const clusters = root?.clusters ?? [];
   const lists = root?.lists ?? [];
   const fetcher = useFetcher();
+  const [open, setOpen] = useState(false);
   return (
-    <nav className='shrink-0 h-full border-r border-slate-200 dark:border-slate-800 p-5 overflow-auto'>
-      <h1 className='font-black text-4xl tracking-tight mb-2.5'>tweetscape</h1>
-      <div className='h-6 w-60'>
+    <nav
+      className={cn(
+        'shrink-0 h-full border-r border-slate-200 dark:border-slate-800 pl-5 pt-5 pb-5 overflow-auto lg:static absolute w-64 inset-y-0 lg:shadow-none shadow-2xl transition-[left,box-shadow] duration-[0.25s,0.15s] ease-out bg-white dark:bg-slate-900 z-40',
+        { 'left-0': open, '-left-64': !open }
+      )}
+    >
+      <button
+        type='button'
+        className='lg:hidden fixed top-0 left-0 w-14 h-14 inline-flex items-center justify-center'
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        {open && <MenuOpenIcon className='fill-current' />}
+        {!open && <MenuIcon className='fill-current' />}
+      </button>
+      <h1 className='font-black text-4xl tracking-tight mb-2.5 lg:mt-0 mt-6'>
+        tweetscape
+      </h1>
+      <div className='h-6'>
         {root?.user && (
           <button
             type='button'

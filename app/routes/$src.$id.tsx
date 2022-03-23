@@ -89,7 +89,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
       </section>
       <section
         ref={articlesRef}
-        className='flex-1 flex flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
+        className='flex-1 lg:flex hidden flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={articlesRef} header='Articles' />
         <Empty className='flex-1 m-5'>
@@ -284,7 +284,7 @@ export default function Cluster() {
       <section
         ref={articlesRef}
         id='articles'
-        className='flex-1 flex flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
+        className='flex-1 lg:flex hidden flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={articlesRef} header='Articles'>
           <div className='flex-none mr-4'>

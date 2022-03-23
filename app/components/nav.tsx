@@ -32,7 +32,7 @@ export default function Nav({ header, children, scrollerRef }: NavProps) {
   return (
     <nav
       className={cn(
-        'z-30 text-xs p-3 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-[opacity] transition-[top]',
+        'z-30 text-xs p-3 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-[opacity,top]',
         {
           'opacity-0 -top-5 pointer-events-none': !visible,
           'opacity-1 top-0': visible,
@@ -40,8 +40,12 @@ export default function Nav({ header, children, scrollerRef }: NavProps) {
       )}
     >
       <div className='flex items-stretch'>
-        <h2 className='flex-none text-sm font-semibold mr-5'>{header}</h2>
-        <div className='flex-1 flex flex-wrap items-center'>{children}</div>
+        <h2 className='flex-none text-sm font-semibold mr-4 lg:block hidden'>
+          {header}
+        </h2>
+        <div className='flex-1 flex flex-wrap items-center lg:ml-0 ml-10'>
+          {children}
+        </div>
       </div>
     </nav>
   );
