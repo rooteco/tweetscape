@@ -8,9 +8,9 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
-import { revalidate, swr } from '~/swr.server';
-import { Prisma } from '~/db.server';
+import { Prisma, db } from '~/db.server';
 import { log } from '~/utils.server';
+import { revalidate } from '~/swr.server';
 
 const TWEETS_ORDER_BY: Record<TweetsSort, Prisma.Sql> = {
   [TweetsSort.TweetCount]: Prisma.sql`(tweets.retweet_count + tweets.quote_count) desc`,
@@ -100,7 +100,7 @@ export async function getListTweets(
   uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
-  const tweets = await swr<TweetFull>(
+  const tweets = await db.$queryRaw<TweetFull[]>(
     getListTweetsQuery(listId, sort, filter, limit, uid)
   );
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
@@ -164,7 +164,7 @@ export async function getClusterTweets(
   uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
-  const tweets = await swr<TweetFull>(
+  const tweets = await db.$queryRaw<TweetFull[]>(
     getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid)
   );
   log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
@@ -195,7 +195,8 @@ function getListsQuery(uid: string): Prisma.Sql {
     where lists.owner_id = ${uid} or list_followers.influencer_id = ${uid}
     `;
 }
-export const getLists = (uid: string) => swr<List>(getListsQuery(uid));
+export const getLists = (uid: string) =>
+  db.$queryRaw<List[]>(getListsQuery(uid));
 export const revalidateLists = (uid: string) => revalidate(getListsQuery(uid));
 
 function getListArticlesQuery(
@@ -249,7 +250,7 @@ export async function getListArticles(
   filter: ArticlesFilter,
   uid?: string
 ): Promise<Article[]> {
-  const articles = await swr<Article>(
+  const articles = await db.$queryRaw<Article[]>(
     getListArticlesQuery(listId, sort, filter, uid)
   );
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
@@ -325,7 +326,7 @@ export async function getClusterArticles(
   filter: ArticlesFilter,
   uid?: string
 ): Promise<Article[]> {
-  const articles = await swr<Article>(
+  const articles = await db.$queryRaw<Article[]>(
     getClusterArticlesQuery(clusterSlug, sort, filter, uid)
   );
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);

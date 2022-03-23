@@ -6,11 +6,7 @@ import { decode } from 'html-entities';
 
 import type { Article, Link } from '~/types';
 import { ArticlesFilter, ArticlesSort } from '~/query';
-import {
-  getListArticles,
-  getLists,
-  revalidateListArticles,
-} from '~/query.server';
+import { getListArticles, getLists } from '~/query.server';
 import { getLoggedInSession, log } from '~/utils.server';
 import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
@@ -113,7 +109,6 @@ export const action: ActionFunction = async ({ request }) => {
       db.links.update({ data, where: { url: data.url } })
     )
   );
-  await Promise.all(listIds.map((listId) => revalidateListArticles(listId)));
   const headers = { 'Set-Cookie': await commitSession(session) };
   return new Response('Sync Success', { status: 200, headers });
 };
