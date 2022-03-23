@@ -74,7 +74,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       }) as unknown as Response;
     }
 
-    log.info(`Cache skipped for: ${src}`);
+    log.trace(`Cache skipped for: ${src}`);
   } catch (e) {
     log.error(`Cache error: ${(e as Error).stack}`);
   }
