@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import cn from 'classnames';
 import { useSearchParams } from 'remix';
 
-import type { Article } from '~/types';
 import {
   ArticleTweetsFilter,
   ArticleTweetsSort,
   DEFAULT_ARTICLES_FILTER,
 } from '~/query';
+import type { Article } from '~/types';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
 import SortIcon from '~/icons/sort';
@@ -179,7 +179,7 @@ export default function ArticleItem({
         data-cy='tweets'
         className={cn('-mx-3 -mb-3 max-h-96 overflow-y-auto', { hidden })}
       >
-        <nav className='text-xs p-3 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800'>
+        <nav className='text-xs p-3 sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800'>
           <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
           <button
             type='button'

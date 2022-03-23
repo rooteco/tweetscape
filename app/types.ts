@@ -37,9 +37,10 @@ export type ListMember = list_members;
 export type AnnotationType = annotation_type;
 export type RefType = ref_type;
 export type TagType = tag_type;
+export type InfluencerFull = Influencer & { html?: string };
 export type TweetFull = Tweet & {
   html?: string;
-  author: Influencer;
+  author: InfluencerFull;
   score?: Score;
 };
 export type Article = Link & {

@@ -75,7 +75,7 @@ export function getListArticlesQuery(
     limit 20;`;
 }
 
-function getTweetsWithHTML(tweets: TweetFull[]): TweetFull[] {
+function getTweetsFull(tweets: TweetFull[]): TweetFull[] {
   return tweets.map((tweet) => ({
     ...tweet,
     html: autoLink(tweet.text, {
@@ -86,13 +86,24 @@ function getTweetsWithHTML(tweets: TweetFull[]): TweetFull[] {
         attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
       },
     }),
+    author: {
+      ...tweet.author,
+      html: autoLink(tweet.author.description ?? '', {
+        usernameIncludeSymbol: true,
+        linkAttributeBlock(entity, attrs) {
+          attrs.target = '_blank';
+          attrs.rel = 'noopener noreferrer';
+          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
+        },
+      }),
+    },
   }));
 }
 
 function getArticlesWithHTML(articles: Article[]): Article[] {
   return articles.map((article) => ({
     ...article,
-    tweets: getTweetsWithHTML(article.tweets),
+    tweets: getTweetsFull(article.tweets),
   }));
 }
 
@@ -128,7 +139,7 @@ export async function getListTweets(
     order by ${TWEETS_ORDER_BY[sort]}
     limit ${limit};`);
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
-  return getTweetsWithHTML(tweets);
+  return getTweetsFull(tweets);
 }
 
 export function revalidateListsCache(listIds: string[]) {
@@ -224,5 +235,5 @@ export async function getClusterTweets(
     limit ${limit};
     `);
   log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
-  return getTweetsWithHTML(tweets);
+  return getTweetsFull(tweets);
 }
