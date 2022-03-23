@@ -8,6 +8,7 @@ import RetweetIcon from '~/icons/retweet';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
 import type { TweetFull } from '~/types';
+import { num } from '~/utils';
 
 type ActionProps = {
   count?: number;
@@ -41,7 +42,7 @@ function Action({ count, color, icon, href }: ActionProps) {
       >
         {icon}
       </div>
-      {count}
+      {!!count && num(count)}
     </a>
   );
 }

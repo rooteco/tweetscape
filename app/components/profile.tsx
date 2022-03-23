@@ -1,11 +1,6 @@
 import type { InfluencerFull } from '~/types';
 import OpenInNewIcon from '~/icons/open-in-new';
-
-function num(n: number): string {
-  if (n > 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n > 1000) return `${(n / 1000).toFixed(1)}K`;
-  return n.toString();
-}
+import { num } from '~/utils';
 
 export default function Profile({
   name,
