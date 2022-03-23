@@ -64,8 +64,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const limit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
   const articles =
     params.src === 'clusters'
-      ? await getClusterArticles(params.id, articlesSort, articlesFilter)
-      : await getListArticles(params.id, articlesSort, articlesFilter);
+      ? await getClusterArticles(params.id, articlesSort, articlesFilter, uid)
+      : await getListArticles(params.id, articlesSort, articlesFilter, uid);
   const tweets =
     params.src === 'clusters'
       ? await getClusterTweets(params.id, tweetsSort, tweetsFilter, limit, uid)
