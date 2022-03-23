@@ -25,28 +25,31 @@ const ARTICLES_ORDER_BY: Record<ArticlesSort, Prisma.Sql> = {
   [ArticlesSort.AttentionScore]: Prisma.sql`attention_score`,
 };
 
+function html(text: string): string {
+  return autoLink(text, {
+    usernameIncludeSymbol: true,
+    linkAttributeBlock(entity, attrs) {
+      attrs.target = '_blank';
+      attrs.rel = 'noopener noreferrer';
+      attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
+    },
+  });
+}
+
 function getTweetsFull(tweets: TweetFull[]): TweetFull[] {
   return tweets.map((tweet) => ({
     ...tweet,
-    html: autoLink(tweet.text, {
-      usernameIncludeSymbol: true,
-      linkAttributeBlock(entity, attrs) {
-        attrs.target = '_blank';
-        attrs.rel = 'noopener noreferrer';
-        attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-      },
-    }),
-    author: {
-      ...tweet.author,
-      html: autoLink(tweet.author.description ?? '', {
-        usernameIncludeSymbol: true,
-        linkAttributeBlock(entity, attrs) {
-          attrs.target = '_blank';
-          attrs.rel = 'noopener noreferrer';
-          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-        },
-      }),
-    },
+    html: html(tweet.text),
+    author: { ...tweet.author, html: html(tweet.author.description ?? '') },
+    retweet: tweet.retweet
+      ? { ...tweet.retweet, html: html(tweet.retweet.text) }
+      : undefined,
+    retweet_author: tweet.retweet_author
+      ? {
+          ...tweet.retweet_author,
+          html: html(tweet.retweet_author.description ?? ''),
+        }
+      : undefined,
   }));
 }
 
