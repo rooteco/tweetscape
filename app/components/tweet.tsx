@@ -107,8 +107,36 @@ export default function TweetItem({
           >
             {author?.name}
           </a>
+          <span className='block peer pl-1 h-5' />
+          <a
+            data-cy='author'
+            className={cn('peer text-slate-500 block flex-none', {
+              'h-2.5 w-32 mb-1.5 ml-1.5 bg-slate-200 dark:bg-slate-700 animate-pulse rounded':
+                !id,
+            })}
+            href={author ? `https://twitter.com/${author.username}` : ''}
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            {author ? `@${author.username}` : ''}
+          </a>
+          {id && <span className='mx-1 text-slate-500 block flex-none'>·</span>}
+          <a
+            data-cy='date'
+            className='hover:underline text-slate-500 block flex-none'
+            href={
+              author && id
+                ? `https://twitter.com/${author.username}/status/${id}`
+                : ''
+            }
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            {created_at && <TimeAgo datetime={created_at} locale='en_short' />}
+          </a>
           {author && (
-            <article className='peer-hover:opacity-100 peer-hover:visible peer-hover:shadow-lg hover:opacity-100 hover:visible hover:shadow-lg invisible opacity-0 transition-[shadow,opacity,visibility] absolute top-10 z-10 delay-500 w-72 p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg'>
+            <article className='peer-hover:opacity-100 peer-hover:visible hover:opacity-100 hover:visible shadow-xl invisible opacity-0 transition-[opacity,visibility] absolute top-10 left-10 z-10 hover:delay-500 peer-hover:delay-500 duration-300 ease-in-out w-72 p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg'>
+              <div className='absolute -top-2.5 left-0 right-0 h-2.5 transparent' />
               <header>
                 <div className='flex justify-between items-start'>
                   <a
@@ -179,32 +207,6 @@ export default function TweetItem({
               </p>
             </article>
           )}
-          <a
-            data-cy='author'
-            className={cn('text-slate-500 ml-1 block flex-none', {
-              'h-2.5 w-32 mb-1.5 ml-1.5 bg-slate-200 dark:bg-slate-700 animate-pulse rounded':
-                !id,
-            })}
-            href={author ? `https://twitter.com/${author.username}` : ''}
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            {author ? `@${author.username}` : ''}
-          </a>
-          {id && <span className='mx-1 text-slate-500 block flex-none'>·</span>}
-          <a
-            data-cy='date'
-            className='hover:underline text-slate-500 block flex-none'
-            href={
-              author && id
-                ? `https://twitter.com/${author.username}/status/${id}`
-                : ''
-            }
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            {created_at && <TimeAgo datetime={created_at} locale='en_short' />}
-          </a>
         </header>
         <p
           data-cy='text'
