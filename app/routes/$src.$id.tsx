@@ -86,16 +86,16 @@ export function ErrorBoundary({ error }: { error: Error }) {
         className='flex-1 flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={tweetsRef} header='Tweets' />
+        <Empty className='flex-1 m-5'>
+          <p className='uppercase'>an unexpected runtime error occurred</p>
+          <p>{error.message}</p>
+        </Empty>
       </section>
       <section
         ref={articlesRef}
         className='flex-1 lg:flex hidden flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={articlesRef} header='Articles' />
-        <Empty className='flex-1 m-5'>
-          <p className='uppercase'>an unexpected runtime error occurred</p>
-          <p>{error.message}</p>
-        </Empty>
       </section>
     </main>
   );
