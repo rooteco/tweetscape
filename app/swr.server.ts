@@ -23,7 +23,7 @@ function keys(query: Prisma.Sql): {
 
 function logQueryExecute(query: Prisma.Sql) {
   const msg = query.sql.replace(/\n/g, '').replace(/\s\s+/g, ' ').substr(0, 50);
-  log.debug(`Executing PostgreSQL query ( ${msg.trim()} )...`);
+  log.trace(`Executing PostgreSQL query ( ${msg.trim()} )...`);
 }
 
 export async function revalidate<T>(
