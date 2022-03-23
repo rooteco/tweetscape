@@ -1,9 +1,10 @@
-import { Form, useTransition } from 'remix';
+import { Form, useMatches, useTransition } from 'remix';
 import type { ReactNode } from 'react';
 import cn from 'classnames';
 
 import LikeIcon from '~/icons/like';
 import LikedIcon from '~/icons/liked';
+import type { LoaderData } from '~/root';
 import Profile from '~/components/profile';
 import ReplyIcon from '~/icons/reply';
 import RetweetIcon from '~/icons/retweet';
@@ -18,50 +19,63 @@ type ActionProps = {
   count?: number;
   color: string;
   icon: ReactNode;
-  action: string;
+  href: string;
+  action?: string;
   id?: string;
 };
 
-function Action({ active, count, color, icon, action, id }: ActionProps) {
+function Action({ active, count, color, icon, href, action, id }: ActionProps) {
   const transition = useTransition();
-  return (
-    <Form
-      className='grow shrink basis-0 mr-5 h-8'
-      method={active ? 'delete' : 'post'}
-      action={`/actions/${action}/${id}`}
+  const root = useMatches()[0].data as LoaderData | undefined;
+  const iconWrapperComponent = (
+    <div
+      className={cn('p-1.5 mr-0.5 rounded-full transition duration-[0.2s]', {
+        'group-hover:bg-red-50 group-active:bg-red-50': color === 'red',
+        'group-hover:bg-blue-50 group-active:bg-blue-50': color === 'blue',
+        'group-hover:bg-green-50 group-active:bg-green-50': color === 'green',
+      })}
     >
-      <button
-        type='submit'
-        disabled={transition.state === 'submitting'}
-        className={cn(
-          'disabled:cursor-wait inline-flex justify-start items-center transition duration-[0.2s] group',
-          {
-            'hover:text-red-550 active:text-red-550': color === 'red',
-            'hover:text-blue-550 active:text-blue-550': color === 'blue',
-            'hover:text-green-550 active:text-green-550': color === 'green',
-            'text-red-550': color === 'red' && active,
-            'text-blue-550': color === 'blue' && active,
-            'text-green-550': color === 'green' && active,
-          }
-        )}
+      {icon}
+    </div>
+  );
+  const className = cn(
+    'disabled:cursor-wait inline-flex justify-start items-center transition duration-[0.2s] group',
+    {
+      'hover:text-red-550 active:text-red-550': color === 'red',
+      'hover:text-blue-550 active:text-blue-550': color === 'blue',
+      'hover:text-green-550 active:text-green-550': color === 'green',
+      'text-red-550': color === 'red' && active,
+      'text-blue-550': color === 'blue' && active,
+      'text-green-550': color === 'green' && active,
+    }
+  );
+  if (root?.user && action && id)
+    return (
+      <Form
+        className='grow shrink basis-0 mr-5 h-8'
+        method={active ? 'delete' : 'post'}
+        action={`/actions/${action}/${id}`}
       >
-        <div
-          className={cn(
-            'p-1.5 mr-0.5 rounded-full transition duration-[0.2s]',
-            {
-              'group-hover:bg-red-50 group-active:bg-red-50': color === 'red',
-              'group-hover:bg-blue-50 group-active:bg-blue-50':
-                color === 'blue',
-              'group-hover:bg-green-50 group-active:bg-green-50':
-                color === 'green',
-            }
-          )}
+        <button
+          type='submit'
+          disabled={transition.state === 'submitting'}
+          className={cn('w-full', className)}
         >
-          {icon}
-        </div>
-        {!!count && num(count)}
-      </button>
-    </Form>
+          {iconWrapperComponent}
+          {!!count && num(count)}
+        </button>
+      </Form>
+    );
+  return (
+    <a
+      className={cn('grow shrink basis-0 mr-5 h-8', className)}
+      href={href}
+      rel='noopener noreferrer'
+      target='_blank'
+    >
+      {iconWrapperComponent}
+      {!!count && num(count)}
+    </a>
   );
 }
 
@@ -156,13 +170,13 @@ function TweetInner({
           <Action
             color='blue'
             icon={<ReplyIcon />}
-            action='reply'
-            id={id}
+            href={`https://twitter.com/intent/tweet?in_reply_to=${id}`}
             count={reply_count}
           />
           <Action
             color='green'
             icon={retweeted ? <RetweetedIcon /> : <RetweetIcon />}
+            href={`https://twitter.com/intent/retweet?tweet_id=${id}`}
             action='retweet'
             id={id}
             count={
@@ -175,6 +189,7 @@ function TweetInner({
           <Action
             color='red'
             icon={liked ? <LikedIcon /> : <LikeIcon />}
+            href={`https://twitter.com/intent/like?tweet_id=${id}`}
             action='like'
             id={id}
             count={
@@ -184,21 +199,11 @@ function TweetInner({
             }
             active={liked}
           />
-          <a
-            type='submit'
-            className='mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group hover:text-blue-550 active:text-blue-550'
-            href={
-              author && id
-                ? `https://twitter.com/${author.username}/status/${id}`
-                : ''
-            }
-            rel='noopener noreferrer'
-            target='_blank'
-          >
-            <div className='p-1.5 mr-0.5 rounded-full transition duration-[0.2s] group-hover:bg-blue-50 group-active:bg-blue-50'>
-              <ShareIcon />
-            </div>
-          </a>
+          <Action
+            color='blue'
+            icon={<ShareIcon />}
+            href={`https://twitter.com/${author?.username}/status/${id}`}
+          />
         </div>
       </div>
     </article>
