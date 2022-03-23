@@ -1,7 +1,7 @@
 {
   "name": "tweetscape",
   "private": true,
-  "version": "0.0.15",
+  "version": "0.0.16",
   "author": "Nicholas Chiang <tweetscape@nicholaschiang.com>",
   "homepage": "https://tweetscape.co",
   "description": "The Supercharged Twitter Feed",
