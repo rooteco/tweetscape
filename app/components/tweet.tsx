@@ -29,9 +29,9 @@ function Action({ count, color, icon, href }: ActionProps) {
       className={cn(
         'mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group',
         {
-          'hover:text-red-550': color === 'red',
-          'hover:text-blue-550': color === 'blue',
-          'hover:text-green-550': color === 'green',
+          'hover:text-red-550 active:text-red-550': color === 'red',
+          'hover:text-blue-550 active:text-blue-550': color === 'blue',
+          'hover:text-green-550 active:text-green-550': color === 'green',
         }
       )}
       href={href}
@@ -40,9 +40,9 @@ function Action({ count, color, icon, href }: ActionProps) {
     >
       <div
         className={cn('p-1.5 mr-0.5 rounded-full transition duration-[0.2s]', {
-          'group-hover:bg-red-50': color === 'red',
-          'group-hover:bg-blue-50': color === 'blue',
-          'group-hover:bg-green-50': color === 'green',
+          'group-hover:bg-red-50 group-active:bg-red-50': color === 'red',
+          'group-hover:bg-blue-50 group-active:bg-blue-50': color === 'blue',
+          'group-hover:bg-green-50 group-active:bg-green-50': color === 'green',
         })}
       >
         {icon}
@@ -127,7 +127,7 @@ export default function TweetItem({
             {created_at && <TimeAgo datetime={created_at} locale='en_short' />}
           </a>
           {author && (
-            <article className='peer-hover:opacity-100 peer-hover:visible hover:opacity-100 hover:visible shadow-xl invisible opacity-0 transition-[opacity,visibility] absolute top-10 left-10 z-10 hover:delay-500 peer-hover:delay-500 duration-300 ease-in-out w-72 p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg'>
+            <article className='peer-hover:opacity-100 peer-hover:visible hover:opacity-100 hover:visible peer-active:opacity-100 peer-active:visible active:opacity-100 active:visible shadow-xl invisible opacity-0 transition-[opacity,visibility] absolute top-10 left-10 z-10 hover:delay-500 peer-hover:delay-500 active:delay-500 peer-active:delay-500 duration-300 ease-in-out w-72 p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg'>
               <div className='absolute -top-2.5 left-0 right-0 h-2.5 transparent' />
               <header>
                 <div className='flex justify-between items-start'>
@@ -178,7 +178,7 @@ export default function TweetItem({
                     rel='noopener noreferrer'
                   >
                     hive.one
-                    <OpenInNewIcon className='inline fill-current w-3.5 h-3.5 ml-0.5 mb-0.5' />
+                    <OpenInNewIcon className='inline fill-current w-3.5 h-3.5 ml-0.5 mb-px' />
                   </a>
                 </div>
               </header>
