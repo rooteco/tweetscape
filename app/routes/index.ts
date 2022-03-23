@@ -1,20 +1,12 @@
 import type { LoaderFunction } from 'remix';
-import { redirect } from 'remix';
 
-import { commitSession, getSession } from '~/session.server';
+import { getBaseURL, log, redirectToLastVisited } from '~/utils.server';
 import { TwitterApi } from '~/twitter.server';
 import { db } from '~/db.server';
-import { log } from '~/utils.server';
+import { getSession } from '~/session.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-
-  // Fly flattens all requests to HTTP in its private network.
-  // @see {@link https://fly.io/blog/always-be-connecting-with-https}
-  const proto = request.headers.get('X-Forwarded-Proto');
-  const protocol = proto ? `${proto}:` : url.protocol;
-  const base = `${protocol}//${url.host}`;
-
   const stateId = url.searchParams.get('state');
   const code = url.searchParams.get('code');
   const session = await getSession(request.headers.get('Cookie'));
@@ -34,7 +26,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       } = await client.loginWithOAuth2({
         code,
         codeVerifier: session.get('codeVerifier') as string,
-        redirectUri: base,
+        redirectUri: getBaseURL(request),
       });
       log.info('Fetching logged in user from Twitter API...');
       const { data: user } = await api.v2.me({
@@ -84,8 +76,5 @@ export const loader: LoaderFunction = async ({ request }) => {
       session.set('uid', user.id);
     }
   }
-  const headers = { 'Set-Cookie': await commitSession(session) };
-  const dest = new URL(`${base}${session.get('href') ?? '/clusters/ethereum'}`);
-  dest.searchParams.delete('l'); // Reset infinite scroller query limit.
-  return redirect(dest.href, { headers });
+  return redirectToLastVisited(request, session);
 };

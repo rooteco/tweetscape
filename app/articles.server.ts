@@ -3,18 +3,17 @@ import type { ActionFunction } from 'remix';
 import Bottleneck from 'bottleneck';
 import type { IText } from 'html5parser';
 import { decode } from 'html-entities';
-import invariant from 'tiny-invariant';
 
 import type { Article, Link } from '~/types';
 import { ArticlesFilter, ArticlesSort } from '~/query';
-import { commitSession, getSession } from '~/session.server';
 import {
   getListArticles,
   getLists,
   revalidateListsCache,
 } from '~/query.server';
+import { getLoggedInSession, log } from '~/utils.server';
+import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
-import { log } from '~/utils.server';
 
 const limiter = new Bottleneck({
   trackDoneStatus: true,
@@ -29,9 +28,7 @@ limiter.on('failed', (e) => {
 });
 
 export const action: ActionFunction = async ({ request }) => {
-  const session = await getSession(request.headers.get('Cookie'));
-  const uid = session.get('uid') as string | undefined;
-  invariant(uid, 'expected session uid');
+  const { session, uid } = await getLoggedInSession(request);
   log.info(`Fetching owned and followed lists for user (${uid})...`);
   // TODO: Should I allow potentially stale data (from redis) to be used here?
   const listIds = (await getLists(uid)).map((l) => l.id);

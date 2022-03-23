@@ -57,13 +57,15 @@ export async function getListTweets(
   listId: string,
   sort: TweetsSort,
   filter: TweetsFilter,
-  limit: number
+  limit: number,
+  uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
   /* prettier-ignore */
   const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
     select
       tweets.*,
+      ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
       to_json(influencers.*) as author,
       to_json(retweets.*) as retweet,
       to_json(retweet_authors.*) as retweet_author
@@ -73,6 +75,7 @@ export async function getListTweets(
       left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted'
       left outer join tweets retweets on retweets.id = refs.referenced_tweet_id
       left outer join influencers retweet_authors on retweet_authors.id = retweets.author_id
+      ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
     where list_members.list_id = ${listId}
     ${filter === TweetsFilter.HideRetweets ? Prisma.sql`and refs is null` : Prisma.empty}
     order by ${TWEETS_ORDER_BY[sort]}
@@ -85,13 +88,15 @@ export async function getClusterTweets(
   clusterSlug: string,
   sort: TweetsSort,
   filter: TweetsFilter,
-  limit: number
+  limit: number,
+  uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
   /* prettier-ignore */
   const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
     select
       tweets.*,
+      ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
       to_json(influencers.*) as author,
       to_json(retweets.*) as retweet,
       to_json(retweet_authors.*) as retweet_author
@@ -102,6 +107,7 @@ export async function getClusterTweets(
       left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted'
       left outer join tweets retweets on retweets.id = refs.referenced_tweet_id
       left outer join influencers retweet_authors on retweet_authors.id = retweets.author_id
+      ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
     where clusters.slug = ${clusterSlug}
     ${filter === TweetsFilter.HideRetweets ? Prisma.sql`and refs is null` : Prisma.empty}
     order by ${TWEETS_ORDER_BY[sort]}

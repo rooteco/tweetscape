@@ -47,6 +47,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   log.info(`Fetching articles and tweets for ${params.src} (${params.id})...`);
   const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
+  const uid = session.get('uid') as string | undefined;
   session.set('href', `${url.pathname}${url.search}`);
   const articlesSort = Number(
     url.searchParams.get('a') ?? DEFAULT_ARTICLES_SORT
@@ -60,15 +61,15 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const tweetsFilter = Number(
     url.searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
-  const tweetsLimit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
+  const limit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
   const articles =
     params.src === 'clusters'
       ? await getClusterArticles(params.id, articlesSort, articlesFilter)
       : await getListArticles(params.id, articlesSort, articlesFilter);
   const tweets =
     params.src === 'clusters'
-      ? await getClusterTweets(params.id, tweetsSort, tweetsFilter, tweetsLimit)
-      : await getListTweets(params.id, tweetsSort, tweetsFilter, tweetsLimit);
+      ? await getClusterTweets(params.id, tweetsSort, tweetsFilter, limit, uid)
+      : await getListTweets(params.id, tweetsSort, tweetsFilter, limit, uid);
   return json<LoaderData>(
     { articles, tweets, locale: lang(request) },
     { headers: { 'Set-Cookie': await commitSession(session) } }

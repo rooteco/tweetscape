@@ -44,6 +44,8 @@ export type TweetFull = Tweet & {
   retweet_author?: InfluencerFull;
   retweet?: TweetFull;
   score?: Score;
+  liked?: boolean;
+  retweeted?: boolean;
 };
 export type Article = Link & {
   cluster_id?: string;
