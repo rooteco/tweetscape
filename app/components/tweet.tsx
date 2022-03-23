@@ -236,7 +236,7 @@ export default function TweetItem({
             icon={<RetweetIcon />}
             href={id ? `https://twitter.com/intent/retweet?tweet_id=${id}` : ''}
             count={
-              retweet_count && quote_count
+              retweet_count !== undefined && quote_count !== undefined
                 ? retweet_count + quote_count
                 : undefined
             }
