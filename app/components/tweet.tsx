@@ -178,7 +178,7 @@ export default function TweetItem({
                     rel='noopener noreferrer'
                   >
                     hive.one
-                    <OpenInNewIcon className='inline fill-current w-3.5 h-3.5 ml-0.5 mb-0.5' />
+                    <OpenInNewIcon className='inline fill-current w-3.5 h-3.5 ml-0.5 mb-px' />
                   </a>
                 </div>
               </header>
