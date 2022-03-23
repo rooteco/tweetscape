@@ -54,7 +54,7 @@ export default function Header() {
         {root?.user && (
           <button
             type='button'
-            className='disabled:cursor-wait mr-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
+            className='disabled:cursor-wait mr-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
             onClick={() =>
               fetcher.submit(null, { method: 'patch', action: '/logout' })
             }
@@ -77,7 +77,7 @@ export default function Header() {
       </div>
       <div className='h-6 mt-1.5'>
         <a
-          className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
+          className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
           href='https://github.com/rooteco/tweetscape'
           target='_blank'
           rel='noopener noreferrer'
@@ -87,7 +87,7 @@ export default function Header() {
         </a>
         <button
           type='button'
-          className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 dark:text-white rounded px-2 h-6'
+          className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
           aria-pressed={theme === Theme.System ? 'mixed' : theme === Theme.Dark}
           onClick={() =>
             setTheme((prev) => {
