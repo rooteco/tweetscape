@@ -25,6 +25,99 @@ const ARTICLES_ORDER_BY: Record<ArticlesSort, Prisma.Sql> = {
   [ArticlesSort.AttentionScore]: Prisma.sql`attention_score`,
 };
 
+function html(text: string): string {
+  return autoLink(text, {
+    usernameIncludeSymbol: true,
+    linkAttributeBlock(entity, attrs) {
+      attrs.target = '_blank';
+      attrs.rel = 'noopener noreferrer';
+      attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
+    },
+  });
+}
+
+function getTweetsFull(tweets: TweetFull[]): TweetFull[] {
+  return tweets.map((tweet) => ({
+    ...tweet,
+    html: html(tweet.text),
+    author: { ...tweet.author, html: html(tweet.author.description ?? '') },
+    retweet: tweet.retweet
+      ? { ...tweet.retweet, html: html(tweet.retweet.text) }
+      : undefined,
+    retweet_author: tweet.retweet_author
+      ? {
+          ...tweet.retweet_author,
+          html: html(tweet.retweet_author.description ?? ''),
+        }
+      : undefined,
+  }));
+}
+
+export async function getListTweets(
+  listId: string,
+  sort: TweetsSort,
+  filter: TweetsFilter,
+  limit: number
+): Promise<TweetFull[]> {
+  log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
+  /* prettier-ignore */
+  const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
+    select
+      tweets.*,
+      to_json(influencers.*) as author,
+      to_json(retweets.*) as retweet,
+      to_json(retweet_authors.*) as retweet_author
+    from tweets
+      inner join influencers on influencers.id = tweets.author_id
+      inner join list_members on list_members.influencer_id = tweets.author_id
+      left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted'
+      left outer join tweets retweets on retweets.id = refs.referenced_tweet_id
+      left outer join influencers retweet_authors on retweet_authors.id = retweets.author_id
+    where list_members.list_id = ${listId}
+    ${filter === TweetsFilter.HideRetweets ? Prisma.sql`and refs is null` : Prisma.empty}
+    order by ${TWEETS_ORDER_BY[sort]}
+    limit ${limit};`);
+  log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
+  return getTweetsFull(tweets);
+}
+
+export async function getClusterTweets(
+  clusterSlug: string,
+  sort: TweetsSort,
+  filter: TweetsFilter,
+  limit: number
+): Promise<TweetFull[]> {
+  log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
+  /* prettier-ignore */
+  const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
+    select
+      tweets.*,
+      to_json(influencers.*) as author,
+      to_json(retweets.*) as retweet,
+      to_json(retweet_authors.*) as retweet_author
+    from tweets
+      inner join influencers on influencers.id = tweets.author_id
+      inner join scores on scores.influencer_id = tweets.author_id
+      inner join clusters on clusters.id = scores.cluster_id      
+      left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted'
+      left outer join tweets retweets on retweets.id = refs.referenced_tweet_id
+      left outer join influencers retweet_authors on retweet_authors.id = retweets.author_id
+    where clusters.slug = ${clusterSlug}
+    ${filter === TweetsFilter.HideRetweets ? Prisma.sql`and refs is null` : Prisma.empty}
+    order by ${TWEETS_ORDER_BY[sort]}
+    limit ${limit};
+    `);
+  log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
+  return getTweetsFull(tweets);
+}
+
+function getArticlesFull(articles: Article[]): Article[] {
+  return articles.map((article) => ({
+    ...article,
+    tweets: getTweetsFull(article.tweets),
+  }));
+}
+
 export function getListsQuery(uid: string): Prisma.Sql {
   // TODO: Wrap the `uid` in some SQL injection avoidance mechanism as it's
   // very much possible that somebody smart and devious could:
@@ -75,38 +168,6 @@ export function getListArticlesQuery(
     limit 20;`;
 }
 
-function getTweetsFull(tweets: TweetFull[]): TweetFull[] {
-  return tweets.map((tweet) => ({
-    ...tweet,
-    html: autoLink(tweet.text, {
-      usernameIncludeSymbol: true,
-      linkAttributeBlock(entity, attrs) {
-        attrs.target = '_blank';
-        attrs.rel = 'noopener noreferrer';
-        attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-      },
-    }),
-    author: {
-      ...tweet.author,
-      html: autoLink(tweet.author.description ?? '', {
-        usernameIncludeSymbol: true,
-        linkAttributeBlock(entity, attrs) {
-          attrs.target = '_blank';
-          attrs.rel = 'noopener noreferrer';
-          attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-        },
-      }),
-    },
-  }));
-}
-
-function getArticlesWithHTML(articles: Article[]): Article[] {
-  return articles.map((article) => ({
-    ...article,
-    tweets: getTweetsFull(article.tweets),
-  }));
-}
-
 export async function getListArticles(
   listId: string,
   sort: ArticlesSort,
@@ -116,30 +177,7 @@ export async function getListArticles(
     getListArticlesQuery(listId, sort, filter)
   );
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
-  return getArticlesWithHTML(articles);
-}
-
-export async function getListTweets(
-  listId: string,
-  sort: TweetsSort,
-  filter: TweetsFilter,
-  limit: number
-): Promise<TweetFull[]> {
-  log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
-  const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
-    select tweets.*, to_json(influencers.*) as author from tweets
-    inner join influencers on influencers.id = tweets.author_id
-    inner join list_members on list_members.influencer_id = tweets.author_id
-    where list_members.list_id = ${listId}
-    ${
-      filter === TweetsFilter.HideRetweets
-        ? Prisma.sql`and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
-        : Prisma.empty
-    }
-    order by ${TWEETS_ORDER_BY[sort]}
-    limit ${limit};`);
-  log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
-  return getTweetsFull(tweets);
+  return getArticlesFull(articles);
 }
 
 export function revalidateListsCache(listIds: string[]) {
@@ -210,30 +248,5 @@ export async function getClusterArticles(
     getClusterArticlesQuery(clusterSlug, sort, filter)
   );
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);
-  return getArticlesWithHTML(articles);
-}
-
-export async function getClusterTweets(
-  clusterSlug: string,
-  sort: TweetsSort,
-  filter: TweetsFilter,
-  limit: number
-): Promise<TweetFull[]> {
-  log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
-  const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
-    select tweets.*, to_json(influencers.*) as author from tweets
-    inner join influencers on influencers.id = tweets.author_id
-    inner join scores on scores.influencer_id = tweets.author_id
-    inner join clusters on clusters.id = scores.cluster_id
-    where clusters.slug = ${clusterSlug}
-    ${
-      filter === TweetsFilter.HideRetweets
-        ? Prisma.sql`and not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
-        : Prisma.empty
-    }
-    order by ${TWEETS_ORDER_BY[sort]}
-    limit ${limit};
-    `);
-  log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
-  return getTweetsFull(tweets);
+  return getArticlesFull(articles);
 }

@@ -52,7 +52,7 @@ function Action({ count, color, icon, href }: ActionProps) {
   );
 }
 
-export default function TweetItem({
+function TweetInner({
   id,
   author,
   retweet_count,
@@ -63,7 +63,7 @@ export default function TweetItem({
   html,
 }: Partial<TweetFull>) {
   return (
-    <li className='relative flex w-full text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800 p-3'>
+    <article className='flex pl-3 pr-3 pb-3 relative'>
       <a
         className={cn(
           'block flex-none mr-3 w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden',
@@ -83,7 +83,7 @@ export default function TweetItem({
           />
         )}
       </a>
-      <article className='flex-1 min-w-0'>
+      <div className='flex-1 min-w-0'>
         <header className='mb-0.5 flex items-end'>
           <a
             href={author ? `https://twitter.com/${author.username}` : ''}
@@ -127,7 +127,7 @@ export default function TweetItem({
             {created_at && <TimeAgo datetime={created_at} locale='en_short' />}
           </a>
           {author && (
-            <article className='peer-hover:opacity-100 peer-hover:visible hover:opacity-100 hover:visible peer-active:opacity-100 peer-active:visible active:opacity-100 active:visible shadow-xl invisible opacity-0 transition-[opacity,visibility] absolute top-10 left-10 z-10 hover:delay-500 peer-hover:delay-500 active:delay-500 peer-active:delay-500 duration-300 ease-in-out w-72 p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg'>
+            <article className='peer-hover:opacity-100 peer-hover:visible hover:opacity-100 hover:visible peer-active:opacity-100 peer-active:visible active:opacity-100 active:visible shadow-xl invisible opacity-0 transition-[opacity,visibility] absolute top-7 left-10 z-10 hover:delay-500 peer-hover:delay-500 active:delay-500 peer-active:delay-500 duration-300 ease-in-out w-72 p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg'>
               <div className='absolute -top-2.5 left-0 right-0 h-2.5 transparent' />
               <header>
                 <div className='flex justify-between items-start'>
@@ -257,7 +257,60 @@ export default function TweetItem({
             }
           />
         </div>
-      </article>
+      </div>
+    </article>
+  );
+}
+
+export default function TweetItem({
+  id,
+  retweet,
+  retweet_author,
+  author,
+  created_at,
+  ...tweet
+}: Partial<TweetFull>) {
+  return (
+    <li
+      className={cn(
+        'w-full text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800',
+        { 'pt-3': !retweet, 'pt-2': retweet }
+      )}
+    >
+      {retweet && author && (
+        <header className='text-slate-500 text-xs px-3 mb-0.5'>
+          <svg viewBox='0 0 24 24' className='ml-8 w-4 h-4 fill-current inline'>
+            <g>
+              <path d='M23.615 15.477c-.47-.47-1.23-.47-1.697 0l-1.326 1.326V7.4c0-2.178-1.772-3.95-3.95-3.95h-5.2c-.663 0-1.2.538-1.2 1.2s.537 1.2 1.2 1.2h5.2c.854 0 1.55.695 1.55 1.55v9.403l-1.326-1.326c-.47-.47-1.23-.47-1.697 0s-.47 1.23 0 1.697l3.374 3.375c.234.233.542.35.85.35s.613-.116.848-.35l3.375-3.376c.467-.47.467-1.23-.002-1.697zM12.562 18.5h-5.2c-.854 0-1.55-.695-1.55-1.55V7.547l1.326 1.326c.234.235.542.352.848.352s.614-.117.85-.352c.468-.47.468-1.23 0-1.697L5.46 3.8c-.47-.468-1.23-.468-1.697 0L.388 7.177c-.47.47-.47 1.23 0 1.697s1.23.47 1.697 0L3.41 7.547v9.403c0 2.178 1.773 3.95 3.95 3.95h5.2c.664 0 1.2-.538 1.2-1.2s-.535-1.2-1.198-1.2z' />
+            </g>
+          </svg>
+          <a
+            className='ml-3 font-bold hover:underline'
+            href={`https://twitter.com/${author.username}`}
+            rel='noopener noreferrer'
+            target='_blank'
+          >
+            {author.name} Retweeted
+          </a>
+          <a
+            className='ml-1 font-bold hover:underline'
+            href={`https://twitter.com/${author.username}/status/${id}`}
+            rel='noopener noreferrer'
+            target='_blank'
+          >
+            <TimeAgo datetime={created_at ?? new Date()} locale='en_short' />
+          </a>
+        </header>
+      )}
+      {retweet && <TweetInner {...retweet} author={retweet_author} />}
+      {!retweet && (
+        <TweetInner
+          {...tweet}
+          author={author}
+          created_at={created_at}
+          id={id}
+        />
+      )}
     </li>
   );
 }
