@@ -28,9 +28,9 @@ import {
   toURL,
 } from '~/twitter.server';
 import { getLoggedInSession, log } from '~/utils.server';
+import { revalidateListArticles, revalidateListTweets } from '~/query.server';
 import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
-import { revalidateListsCache } from '~/query.server';
 
 export const action: ActionFunction = async ({ request }) => {
   try {
@@ -180,7 +180,10 @@ export const action: ActionFunction = async ({ request }) => {
       db.images.createMany({ data: create.images, skipDuplicates }),
       db.urls.createMany({ data: create.urls, skipDuplicates }),
     ]);
-    await revalidateListsCache(listIds);
+    await Promise.all([
+      ...listIds.map((listId) => revalidateListArticles(listId)),
+      ...listIds.map((listId) => revalidateListTweets(listId)),
+    ]);
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
   } catch (e) {

@@ -9,7 +9,7 @@ import { ArticlesFilter, ArticlesSort } from '~/query';
 import {
   getListArticles,
   getLists,
-  revalidateListsCache,
+  revalidateListArticles,
 } from '~/query.server';
 import { getLoggedInSession, log } from '~/utils.server';
 import { commitSession } from '~/session.server';
@@ -113,7 +113,7 @@ export const action: ActionFunction = async ({ request }) => {
       db.links.update({ data, where: { url: data.url } })
     )
   );
-  await revalidateListsCache(listIds);
+  await Promise.all(listIds.map((listId) => revalidateListArticles(listId)));
   const headers = { 'Set-Cookie': await commitSession(session) };
   return new Response('Sync Success', { status: 200, headers });
 };

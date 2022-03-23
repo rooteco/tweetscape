@@ -4,21 +4,22 @@ import type { Article, List, TweetFull } from '~/types';
 import {
   ArticlesFilter,
   ArticlesSort,
+  DEFAULT_TWEETS_LIMIT,
   TweetsFilter,
   TweetsSort,
 } from '~/query';
-import { Prisma, db } from '~/db.server';
 import { revalidate, swr } from '~/swr.server';
+import { Prisma } from '~/db.server';
 import { log } from '~/utils.server';
 
 const TWEETS_ORDER_BY: Record<TweetsSort, Prisma.Sql> = {
-  [TweetsSort.TweetCount]: Prisma.sql`(retweet_count + quote_count) desc`,
-  [TweetsSort.RetweetCount]: Prisma.sql`retweet_count desc`,
-  [TweetsSort.QuoteCount]: Prisma.sql`quote_count desc`,
-  [TweetsSort.LikeCount]: Prisma.sql`like_count desc`,
+  [TweetsSort.TweetCount]: Prisma.sql`(tweets.retweet_count + tweets.quote_count) desc`,
+  [TweetsSort.RetweetCount]: Prisma.sql`tweets.retweet_count desc`,
+  [TweetsSort.QuoteCount]: Prisma.sql`tweets.quote_count desc`,
+  [TweetsSort.LikeCount]: Prisma.sql`tweets.like_count desc`,
   [TweetsSort.FollowerCount]: Prisma.sql`influencers.followers_count desc`,
-  [TweetsSort.Latest]: Prisma.sql`created_at desc`,
-  [TweetsSort.Earliest]: Prisma.sql`created_at asc`,
+  [TweetsSort.Latest]: Prisma.sql`tweets.created_at desc`,
+  [TweetsSort.Earliest]: Prisma.sql`tweets.created_at asc`,
 };
 const ARTICLES_ORDER_BY: Record<ArticlesSort, Prisma.Sql> = {
   [ArticlesSort.TweetCount]: Prisma.sql`count(tweets)`,
@@ -35,7 +36,6 @@ function html(text: string): string {
     },
   });
 }
-
 function getTweetsFull(tweets: TweetFull[]): TweetFull[] {
   return tweets.map((tweet) => ({
     ...tweet,
@@ -52,17 +52,22 @@ function getTweetsFull(tweets: TweetFull[]): TweetFull[] {
       : undefined,
   }));
 }
+function getArticlesFull(articles: Article[]): Article[] {
+  return articles.map((article) => ({
+    ...article,
+    tweets: getTweetsFull(article.tweets),
+  }));
+}
 
-export async function getListTweets(
+function getListTweetsQuery(
   listId: string,
   sort: TweetsSort,
   filter: TweetsFilter,
-  limit: number,
+  limit = DEFAULT_TWEETS_LIMIT,
   uid?: string
-): Promise<TweetFull[]> {
-  log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
+) {
   /* prettier-ignore */
-  const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
+  return Prisma.sql`
     select
       tweets.*,
       ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
@@ -85,21 +90,47 @@ export async function getListTweets(
     where list_members.list_id = ${listId}
     ${filter === TweetsFilter.HideRetweets ? Prisma.sql`and refs is null` : Prisma.empty}
     order by ${TWEETS_ORDER_BY[sort]}
-    limit ${limit};`);
-  log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
-  return getTweetsFull(tweets);
+    limit ${limit};`;
 }
-
-export async function getClusterTweets(
-  clusterSlug: string,
+export async function getListTweets(
+  listId: string,
   sort: TweetsSort,
   filter: TweetsFilter,
-  limit: number,
+  limit = DEFAULT_TWEETS_LIMIT,
   uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
+  const tweets = await swr<TweetFull>(
+    getListTweetsQuery(listId, sort, filter, limit, uid)
+  );
+  log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
+  return getTweetsFull(tweets);
+}
+export function revalidateListTweets(
+  listId: string,
+  limit = DEFAULT_TWEETS_LIMIT,
+  uid?: string
+) {
+  log.info(`Revalidating list (${listId}) tweets...`);
+  const promises = Object.values(TweetsSort).map((sort) => {
+    if (typeof sort === 'string') return;
+    return Object.values(TweetsFilter).map((filter) => {
+      if (typeof filter === 'string') return;
+      return revalidate(getListTweetsQuery(listId, sort, filter, limit, uid));
+    });
+  });
+  return Promise.all(promises.flat());
+}
+
+function getClusterTweetsQuery(
+  clusterSlug: string,
+  sort: TweetsSort,
+  filter: TweetsFilter,
+  limit = DEFAULT_TWEETS_LIMIT,
+  uid?: string
+) {
   /* prettier-ignore */
-  const tweets = await db.$queryRaw<TweetFull[]>(Prisma.sql`
+  return Prisma.sql`
     select
       tweets.*,
       ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
@@ -123,37 +154,51 @@ export async function getClusterTweets(
     where clusters.slug = ${clusterSlug}
     ${filter === TweetsFilter.HideRetweets ? Prisma.sql`and refs is null` : Prisma.empty}
     order by ${TWEETS_ORDER_BY[sort]}
-    limit ${limit};
-    `);
+    limit ${limit};`;
+}
+export async function getClusterTweets(
+  clusterSlug: string,
+  sort: TweetsSort,
+  filter: TweetsFilter,
+  limit = DEFAULT_TWEETS_LIMIT,
+  uid?: string
+): Promise<TweetFull[]> {
+  log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
+  const tweets = await swr<TweetFull>(
+    getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid)
+  );
   log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
   return getTweetsFull(tweets);
 }
-
-function getArticlesFull(articles: Article[]): Article[] {
-  return articles.map((article) => ({
-    ...article,
-    tweets: getTweetsFull(article.tweets),
-  }));
+export function revalidateClusterTweets(
+  clusterSlug: string,
+  limit = DEFAULT_TWEETS_LIMIT,
+  uid?: string
+) {
+  log.info(`Revalidating cluster (${clusterSlug}) tweets...`);
+  const promises = Object.values(TweetsSort).map((sort) => {
+    if (typeof sort === 'string') return;
+    return Object.values(TweetsFilter).map((filter) => {
+      if (typeof filter === 'string') return;
+      return revalidate(
+        getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid)
+      );
+    });
+  });
+  return Promise.all(promises.flat());
 }
 
-export function getListsQuery(uid: string): Prisma.Sql {
-  // TODO: Wrap the `uid` in some SQL injection avoidance mechanism as it's
-  // very much possible that somebody smart and devious could:
-  // a) find our cookie secret and encrypt their own (fake) session cookie;
-  // b) set the session cookie `uid` to some malicious raw SQL;
-  // c) have that SQL run here and mess up our production db.
+function getListsQuery(uid: string): Prisma.Sql {
   return Prisma.sql`
     select lists.* from lists
     left outer join list_followers on list_followers.list_id = lists.id
     where lists.owner_id = ${uid} or list_followers.influencer_id = ${uid}
     `;
 }
+export const getLists = (uid: string) => swr<List>(getListsQuery(uid));
+export const revalidateLists = (uid: string) => revalidate(getListsQuery(uid));
 
-export function getLists(uid: string): Promise<List[]> {
-  return db.$queryRaw<List[]>(getListsQuery(uid));
-}
-
-export function getListArticlesQuery(
+function getListArticlesQuery(
   listId: string,
   sort: ArticlesSort,
   filter: ArticlesFilter,
@@ -198,38 +243,31 @@ export function getListArticlesQuery(
     order by count(tweets) desc
     limit 20;`;
 }
-
 export async function getListArticles(
   listId: string,
   sort: ArticlesSort,
   filter: ArticlesFilter,
   uid?: string
 ): Promise<Article[]> {
-  const articles = await db.$queryRaw<Article[]>(
+  const articles = await swr<Article>(
     getListArticlesQuery(listId, sort, filter, uid)
   );
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
   return getArticlesFull(articles);
 }
-
-export function revalidateListsCache(listIds: string[]) {
-  log.info('Revalidating SWR cache keys for new data...');
-  return Promise.all(
-    listIds
-      .map((listId) =>
-        Object.values(ArticlesSort).map((sort) => {
-          if (typeof sort === 'string') return;
-          return Object.values(ArticlesFilter).map((filter) => {
-            if (typeof filter === 'string') return;
-            return revalidate(getListArticlesQuery(listId, sort, filter));
-          });
-        })
-      )
-      .flat(2)
-  );
+export function revalidateListArticles(listId: string) {
+  log.info(`Revalidating list (${listId}) articles...`);
+  const promises = Object.values(ArticlesSort).map((sort) => {
+    if (typeof sort === 'string') return;
+    return Object.values(ArticlesFilter).map((filter) => {
+      if (typeof filter === 'string') return;
+      return revalidate(getListArticlesQuery(listId, sort, filter));
+    });
+  });
+  return Promise.all(promises.flat());
 }
 
-export function getClusterArticlesQuery(
+function getClusterArticlesQuery(
   clusterSlug: string,
   sort: ArticlesSort,
   filter: ArticlesFilter,
@@ -281,7 +319,6 @@ export function getClusterArticlesQuery(
     order by ${ARTICLES_ORDER_BY[sort]} desc
     limit 20;`;
 }
-
 export async function getClusterArticles(
   clusterSlug: string,
   sort: ArticlesSort,

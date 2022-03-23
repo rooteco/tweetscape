@@ -10,6 +10,7 @@ import {
 import { getLoggedInSession, log } from '~/utils.server';
 import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
+import { revalidateLists } from '~/query.server';
 
 export const action: ActionFunction = async ({ request }) => {
   try {
@@ -89,6 +90,8 @@ export const action: ActionFunction = async ({ request }) => {
           (listFollowedLimit?.reset ?? 0) * 1000
         ).toLocaleString()}...`
       );
+
+    await revalidateLists(uid);
 
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
