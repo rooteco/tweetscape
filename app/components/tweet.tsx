@@ -13,6 +13,7 @@ import RetweetedIcon from '~/icons/retweeted';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
 import type { TweetFull } from '~/types';
+import VerifiedIcon from '~/icons/verified';
 import { num } from '~/utils';
 
 type ActionProps = {
@@ -151,6 +152,11 @@ function TweetInner({
           >
             {author?.name}
           </a>
+          {author?.verified && (
+            <span className='block peer pl-0.5 h-5'>
+              <VerifiedIcon className='h-5 w-5 fill-current' />
+            </span>
+          )}
           <span className='block peer pl-1 h-5' />
           <a
             data-cy='author'
