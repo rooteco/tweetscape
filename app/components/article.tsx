@@ -135,6 +135,8 @@ export default function ArticleItem({
                 key={id}
               >
                 <img
+                  width={25}
+                  height={25}
                   src={`/img/${encodeURIComponent(
                     author.profile_image_url ?? ''
                   )}?width=25&height=25&fit=cover`}

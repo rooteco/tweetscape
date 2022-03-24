@@ -129,6 +129,8 @@ function TweetInner({
       >
         {author?.profile_image_url && (
           <img
+            width={48}
+            height={48}
             src={`/img/${encodeURIComponent(
               author.profile_image_url
             )}?width=48&height=48&fit=cover`}
