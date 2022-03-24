@@ -35,12 +35,12 @@ export const action: ActionFunction = async ({ request, params }) => {
         log.info(`Unliking tweet (${params.id}) for user (${uid})...`);
         await api.v2.unlike(uid, params.id);
         log.info(`Deleting like for tweet (${params.id}) by user (${uid})...`);
-        await db.likes.delete({
+        // I have to use `deleteMany` to be idempotent... otherwise a successive
+        // call to `delete()` may cause a `RecordNotFound` exception.
+        await db.likes.deleteMany({
           where: {
-            tweet_id_influencer_id: {
-              tweet_id: params.id,
-              influencer_id: uid,
-            },
+            tweet_id: params.id,
+            influencer_id: uid,
           },
         });
         break;

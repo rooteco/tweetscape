@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { useFetcher, useMatches } from 'remix';
 import type { ReactNode } from 'react';
 import cn from 'classnames';
@@ -38,15 +37,9 @@ function Action({
   id,
 }: ActionProps) {
   const fetcher = useFetcher();
-  const prevActive = useRef(!!active);
-  let isActive = prevActive.current;
-  if (fetcher.submission) {
-    isActive = fetcher.submission.method === 'POST';
-    prevActive.current = isActive;
-  }
-  useEffect(() => {
-    prevActive.current = !!active;
-  }, [active]);
+  const isActive = fetcher.submission
+    ? fetcher.submission.method === 'POST'
+    : !!active;
   const iconWrapperComponent = (
     <div
       className={cn('p-1.5 mr-0.5 rounded-full transition duration-[0.2s]', {
