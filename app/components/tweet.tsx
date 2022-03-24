@@ -149,7 +149,7 @@ function TweetInner({
           </a>
           {author?.verified && (
             <span className='block peer pl-0.5 h-5'>
-              <VerifiedIcon className='h-5 w-5 fill-current' />
+              <VerifiedIcon className='h-5 w-5 fill-sky-500 dark:fill-current' />
             </span>
           )}
           <span className='block peer pl-1 h-5' />
