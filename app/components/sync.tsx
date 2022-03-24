@@ -17,31 +17,22 @@ export default function Sync() {
     if (error) return;
     if (user && lists.type === 'init') {
       lists.submit(null, { method: 'patch', action: '/sync/lists' });
-      setProgress(1 / 6);
+      setProgress(1 / 4);
       setStatus('Syncing lists');
-    } else if (lists.type === 'done') setProgress(2 / 6);
+    } else if (lists.type === 'done') setProgress(2 / 4);
   }, [error, user, lists]);
   const tweets = useFetcher();
   useEffect(() => {
     if (error) return;
     if (user && lists.type === 'done' && tweets.type === 'init') {
       tweets.submit(null, { method: 'patch', action: '/sync/tweets' });
-      setProgress(3 / 6);
+      setProgress(3 / 4);
       setStatus('Syncing tweets');
-    } else if (tweets.type === 'done') setProgress(4 / 6);
-  }, [error, user, lists.type, tweets]);
-  const articles = useFetcher();
-  useEffect(() => {
-    if (error) return;
-    if (user && tweets.type === 'done' && articles.type === 'init') {
-      articles.submit(null, { method: 'patch', action: '/sync/articles' });
-      setProgress(5 / 6);
-      setStatus('Syncing articles');
-    } else if (articles.type === 'done') {
-      setProgress(6 / 6);
+    } else if (tweets.type === 'done') {
+      setProgress(4 / 4);
       setLastSynced((prev) => prev ?? new Date());
     }
-  }, [error, user, tweets.type, articles]);
+  }, [error, user, lists.type, tweets]);
 
   const location = useLocation();
 
