@@ -1,4 +1,11 @@
-import { Link, NavLink, useFetcher, useMatches, useTransition } from 'remix';
+import {
+  Link,
+  NavLink,
+  useFetcher,
+  useMatches,
+  useResolvedPath,
+  useTransition,
+} from 'remix';
 import cn from 'classnames';
 import { useState } from 'react';
 
@@ -15,29 +22,38 @@ import OpenInNewIcon from '~/icons/open-in-new';
 import Sync from '~/components/sync';
 import SystemIcon from '~/icons/system';
 
+function SectionLink({ to, children }: { to: string; children: string }) {
+  const transition = useTransition();
+  const path = useResolvedPath(to);
+  return (
+    <NavLink
+      key={to}
+      className={({ isActive }) =>
+        cn('block pl-3 py-0.5 my-1 -ml-px border-l border-transparent', {
+          'border-current font-semibold dark:text-sky-400 text-sky-500':
+            isActive,
+          'text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600 transition hover:text-slate-800 dark:hover:text-slate-200':
+            !isActive,
+          'cursor-wait':
+            transition.state === 'loading' &&
+            transition.location.pathname === path.pathname,
+        })
+      }
+      to={to}
+    >
+      {children}
+    </NavLink>
+  );
+}
+
 type SectionProps = { header: string; links: { to: string; name: string }[] };
 function Section({ header, links }: SectionProps) {
-  const transition = useTransition();
   return (
     <section className='text-sm mt-5'>
       <h2 className='mb-2.5 font-semibold'>{header}</h2>
       <div className='border-l border-slate-200 dark:border-slate-800'>
         {links.map(({ to, name }) => (
-          <NavLink
-            key={to}
-            className={({ isActive }) =>
-              cn('block pl-3 py-0.5 my-1 -ml-px border-l border-transparent', {
-                'border-current font-semibold dark:text-sky-400 text-sky-500':
-                  isActive,
-                'text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600 transition hover:text-slate-800 dark:hover:text-slate-200':
-                  !isActive,
-                'cursor-wait': transition.state !== 'idle',
-              })
-            }
-            to={to}
-          >
-            {name}
-          </NavLink>
+          <SectionLink to={to}>{name}</SectionLink>
         ))}
       </div>
     </section>
