@@ -1,3 +1,4 @@
+import { ApiResponseError, TwitterApi } from 'twitter-api-v2';
 import type {
   ListV2,
   ReferencedTweetV2,
@@ -8,7 +9,6 @@ import type {
   UserV2,
 } from 'twitter-api-v2';
 import type { Decimal } from '@prisma/client/runtime';
-import { TwitterApi } from 'twitter-api-v2';
 import { TwitterApiRateLimitPlugin } from '@twitter-api-v2/plugin-rate-limit';
 import invariant from 'tiny-invariant';
 
@@ -29,11 +29,24 @@ import { TwitterApiRateLimitDBStore } from '~/limit.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
-export {
-  ApiResponseError,
-  TwitterApi,
-  TwitterV2IncludesHelper,
-} from 'twitter-api-v2';
+export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
+
+export function handleTwitterApiError(e: unknown): never {
+  if (e instanceof ApiResponseError && e.rateLimitError && e.rateLimit) {
+    const msg1 =
+      `You just hit the rate limit! Limit for this endpoint is ` +
+      `${e.rateLimit.limit} requests!`;
+    const reset = new Date(e.rateLimit.reset * 1000).toLocaleString('en-US', {
+      dateStyle: 'full',
+      timeStyle: 'full',
+    });
+    const msg2 = `Request counter will reset at ${reset}.`;
+    log.error(msg1);
+    log.error(msg2);
+    throw new Error(`${msg1} ${msg2}`);
+  }
+  throw e;
+}
 
 export async function getTwitterClientForUser(
   uid: string

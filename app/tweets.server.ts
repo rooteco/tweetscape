@@ -15,9 +15,9 @@ import type {
   URL,
 } from '~/types';
 import {
-  ApiResponseError,
   TwitterV2IncludesHelper,
   getTwitterClientForUser,
+  handleTwitterApiError,
   toAnnotation,
   toImages,
   toInfluencer,
@@ -182,19 +182,6 @@ export const action: ActionFunction = async ({ request }) => {
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
   } catch (e) {
-    if (e instanceof ApiResponseError && e.rateLimitError && e.rateLimit) {
-      // TODO: Manually update the rate limit stored in PostgreSQL to reflect
-      // the updated "0" remaining state as `plugin-rate-limit` doesn't.
-      // @see {@link https://github.com/PLhery/node-twitter-api-v2/issues/226}
-      log.error(
-        `You just hit the rate limit! Limit for this endpoint is ${e.rateLimit.limit} requests!`
-      );
-      log.error(
-        `Request counter will reset at timestamp ${new Date(
-          e.rateLimit.reset * 1000
-        ).toLocaleString()}.`
-      );
-    }
-    throw e;
+    return handleTwitterApiError(e);
   }
 };

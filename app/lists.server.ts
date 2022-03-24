@@ -1,9 +1,9 @@
 import type { ActionFunction } from 'remix';
 
 import {
-  ApiResponseError,
   TwitterV2IncludesHelper,
   getTwitterClientForUser,
+  handleTwitterApiError,
   toInfluencer,
   toList,
 } from '~/twitter.server';
@@ -93,16 +93,6 @@ export const action: ActionFunction = async ({ request }) => {
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
   } catch (e) {
-    if (e instanceof ApiResponseError && e.rateLimitError && e.rateLimit) {
-      log.error(
-        `You just hit the rate limit! Limit for this endpoint is ${e.rateLimit.limit} requests!`
-      );
-      log.error(
-        `Request counter will reset at timestamp ${new Date(
-          e.rateLimit.reset * 1000
-        ).toLocaleString()}.`
-      );
-    }
-    throw e;
+    return handleTwitterApiError(e);
   }
 };
