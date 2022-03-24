@@ -272,7 +272,7 @@ export default function Cluster() {
                 ))}
               scrollThreshold={0.65}
               scrollableTarget='tweets'
-              style={{ overflow: undefined }}
+              style={{ overflow: 'hidden' }}
               hasMore
             >
               {tweets.map((t) => (
