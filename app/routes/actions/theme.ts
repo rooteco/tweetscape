@@ -1,7 +1,7 @@
-import type { ActionFunction, LoaderFunction } from 'remix';
-import { json, redirect } from 'remix';
+import type { ActionFunction } from 'remix';
 
-import { commitSession, getSession } from '~/session.server';
+import { log, redirectToLastVisited } from '~/utils.server';
+import { getSession } from '~/session.server';
 import { isTheme } from '~/theme';
 
 export const action: ActionFunction = async ({ request }) => {
@@ -9,19 +9,9 @@ export const action: ActionFunction = async ({ request }) => {
   const requestText = await request.text();
   const form = new URLSearchParams(requestText);
   const theme = form.get('theme');
-
-  if (!isTheme(theme)) {
-    return json({
-      success: false,
-      message: `theme value of ${theme} is not a valid theme`,
-    });
+  if (isTheme(theme)) {
+    log.info(`Setting theme cookie (${theme})...`);
+    session.set('theme', theme);
   }
-
-  session.set('theme', theme);
-  return json(
-    { success: true },
-    { headers: { 'Set-Cookie': await commitSession(session) } }
-  );
+  return redirectToLastVisited(request, session, false);
 };
-
-export const loader: LoaderFunction = () => redirect('/', { status: 404 });

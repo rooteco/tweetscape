@@ -5,10 +5,8 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
-import { useFetcher } from 'remix';
 
 export enum Theme {
   Dark = 'dark',
@@ -50,30 +48,6 @@ export function ThemeProvider({
 
     return getPreferredTheme();
   });
-
-  const persistTheme = useFetcher();
-  // TODO: remove this when persistTheme is memoized properly
-  const persistThemeRef = useRef(persistTheme);
-  useEffect(() => {
-    persistThemeRef.current = persistTheme;
-  }, [persistTheme]);
-
-  const mountRun = useRef(false);
-
-  useEffect(() => {
-    if (!mountRun.current) {
-      mountRun.current = true;
-      return;
-    }
-    if (!theme) {
-      return;
-    }
-
-    persistThemeRef.current.submit(
-      { theme },
-      { action: 'actions/theme', method: 'post' }
-    );
-  }, [theme]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(prefersDarkMQ);

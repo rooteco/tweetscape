@@ -59,7 +59,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
   const themeValue = session.get('theme') as Theme | null;
   const theme = isTheme(themeValue) ? themeValue : null;
-  log.info(`Fetched theme cookie (${theme}).`);
+  log.info(`Found theme cookie (${theme}).`);
   const headers = { 'Set-Cookie': await commitSession(session) };
   return json<LoaderData>({ theme, clusters, user, lists }, { headers });
 };

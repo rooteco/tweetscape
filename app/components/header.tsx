@@ -9,17 +9,15 @@ import {
 import cn from 'classnames';
 import { useState } from 'react';
 
-import { Theme, Themed, useTheme } from '~/theme';
 import BirdIcon from '~/icons/bird';
-import DarkIcon from '~/icons/dark';
 import Empty from '~/components/empty';
-import LightIcon from '~/icons/light';
 import type { LoaderData } from '~/root';
 import LogoutIcon from '~/icons/logout';
 import MenuIcon from '~/icons/menu';
 import MenuOpenIcon from '~/icons/menu-open';
 import OpenInNewIcon from '~/icons/open-in-new';
 import Sync from '~/components/sync';
+import ThemeSwitcher from '~/components/theme-switcher';
 
 function SectionLink({ to, children }: { to: string; children: string }) {
   const transition = useTransition();
@@ -62,7 +60,6 @@ function Section({ header, links }: SectionProps) {
 }
 
 export default function Header() {
-  const [theme, setTheme] = useTheme();
   const root = useMatches()[0].data as LoaderData | undefined;
   const clusters = root?.clusters ?? [];
   const lists = root?.lists ?? [];
@@ -132,28 +129,7 @@ export default function Header() {
         </a>
       </div>
       <div className='h-6 mt-1.5'>
-        <button
-          type='button'
-          className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
-          onClick={() =>
-            setTheme((prev) =>
-              prev === Theme.Light ? Theme.Dark : Theme.Light
-            )
-          }
-        >
-          <Themed
-            dark={
-              <DarkIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
-            }
-            light={
-              <LightIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
-            }
-          />
-          <Themed
-            dark={<span>Dark Mode</span>}
-            light={<span>Light Mode</span>}
-          />
-        </button>
+        <ThemeSwitcher />
       </div>
       {!!clusters.length && (
         <Section
