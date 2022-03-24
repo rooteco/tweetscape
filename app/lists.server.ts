@@ -1,5 +1,6 @@
 import type { ActionFunction } from 'remix';
 
+import type { Influencer, List, ListFollower } from '~/types';
 import {
   TwitterV2IncludesHelper,
   getTwitterClientForUser,
@@ -16,6 +17,13 @@ export const action: ActionFunction = async ({ request }) => {
     const { session, uid } = await getLoggedInSession(request);
     const context = `user (${uid}) lists`;
     const { api, limits } = await getTwitterClientForUser(uid);
+
+    const create = {
+      influencers: [] as Influencer[],
+      lists: [] as List[],
+      list_followers: [] as ListFollower[],
+    };
+
     const listFollowedLimit = await limits.v2.getRateLimit(
       'users/:id/followed_lists'
     );
@@ -41,29 +49,17 @@ export const action: ActionFunction = async ({ request }) => {
         ],
       });
       const includes = new TwitterV2IncludesHelper(res);
-      const owners = includes.users.map(toInfluencer);
-      log.info(
-        `Inserting ${owners.length} followed list owners for ${context}...`
+      includes.users.forEach((i) => create.influencers.push(toInfluencer(i)));
+      res.lists.forEach((l) => create.lists.push(toList(l)));
+      res.lists.forEach((l) =>
+        create.list_followers.push({ influencer_id: uid, list_id: l.id })
       );
-      await db.influencers.createMany({ data: owners, skipDuplicates: true });
-      const lists = res.lists.map(toList);
-      log.info(`Inserting ${lists.length} followed lists for ${context}...`);
-      log.debug(
-        `User (${uid}) followed lists: ${JSON.stringify(lists, null, 2)}`
-      );
-      await db.lists.createMany({ data: lists, skipDuplicates: true });
-      log.info(`Inserting ${lists.length} list follows for ${context}...`);
-      await db.list_followers.createMany({
-        data: lists.map((l) => ({ influencer_id: uid, list_id: l.id })),
-        skipDuplicates: true,
-      });
     } else
       log.warn(
         `Rate limit hit for getting user (${uid}) followed lists, skipping until ${new Date(
           (listFollowedLimit?.reset ?? 0) * 1000
         ).toLocaleString()}...`
       );
-
     const listsOwnedLimit = await limits.v2.getRateLimit(
       'users/:id/owned_lists'
     );
@@ -79,17 +75,25 @@ export const action: ActionFunction = async ({ request }) => {
           'owner_id',
         ],
       });
-      const lists = res.lists.map(toList);
-      log.info(`Inserting ${lists.length} owned lists for ${context}...`);
-      log.debug(`User (${uid}) owned lists: ${JSON.stringify(lists, null, 2)}`);
-      await db.lists.createMany({ data: lists, skipDuplicates: true });
+      res.lists.forEach((l) => create.lists.push(toList(l)));
     } else
       log.warn(
         `Rate limit hit for getting user (${uid}) owned lists, skipping until ${new Date(
           (listFollowedLimit?.reset ?? 0) * 1000
         ).toLocaleString()}...`
       );
-
+    log.info(`Inserting ${create.influencers.length} influencers...`);
+    log.info(`Inserting ${create.lists.length} lists...`);
+    log.info(`Inserting ${create.list_followers.length} list followers...`);
+    const skipDuplicates = true;
+    await db.$transaction([
+      db.influencers.createMany({ data: create.influencers, skipDuplicates }),
+      db.lists.createMany({ data: create.lists, skipDuplicates }),
+      db.list_followers.createMany({
+        data: create.list_followers,
+        skipDuplicates,
+      }),
+    ]);
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
   } catch (e) {
