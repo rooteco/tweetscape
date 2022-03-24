@@ -16,6 +16,7 @@ import type {
 } from '~/types';
 import {
   TwitterV2IncludesHelper,
+  USER_FIELDS,
   getTwitterClientForUser,
   handleTwitterApiError,
   toAnnotation,
@@ -95,15 +96,7 @@ export const action: ActionFunction = async ({ request }) => {
               'referenced_tweets.id.author_id',
               'entities.mentions.username',
             ],
-            'user.fields': [
-              'id',
-              'name',
-              'username',
-              'description',
-              'profile_image_url',
-              'public_metrics',
-              'created_at',
-            ],
+            'user.fields': USER_FIELDS,
           });
           const includes = new TwitterV2IncludesHelper(res);
           const authors = includes.users.map(toInfluencer);

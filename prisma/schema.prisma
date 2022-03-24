@@ -41,6 +41,7 @@ model influencers {
   tweets_count      Int?
   created_at        DateTime?        @db.Timestamptz(6)
   updated_at        DateTime?        @db.Timestamptz(6)
+  verified          Boolean?
   likes             likes[]
   list_followers    list_followers[]
   list_members      list_members[]

@@ -3,6 +3,7 @@ import type { ActionFunction } from 'remix';
 import type { Influencer, List, ListFollower } from '~/types';
 import {
   TwitterV2IncludesHelper,
+  USER_FIELDS,
   getTwitterClientForUser,
   handleTwitterApiError,
   toInfluencer,
@@ -39,14 +40,7 @@ export const action: ActionFunction = async ({ request }) => {
           'owner_id',
         ],
         'expansions': ['owner_id'],
-        'user.fields': [
-          'id',
-          'name',
-          'username',
-          'profile_image_url',
-          'public_metrics',
-          'created_at',
-        ],
+        'user.fields': USER_FIELDS,
       });
       const includes = new TwitterV2IncludesHelper(res);
       includes.users.forEach((i) => create.influencers.push(toInfluencer(i)));

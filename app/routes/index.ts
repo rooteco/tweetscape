@@ -1,7 +1,7 @@
 import type { LoaderFunction } from 'remix';
 
 import { getBaseURL, log, redirectToLastVisited } from '~/utils.server';
-import { TwitterApi } from '~/twitter.server';
+import { TwitterApi, USER_FIELDS } from '~/twitter.server';
 import { db } from '~/db.server';
 import { getSession } from '~/session.server';
 
@@ -29,16 +29,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         redirectUri: getBaseURL(request),
       });
       log.info('Fetching logged in user from Twitter API...');
-      const { data: user } = await api.v2.me({
-        'user.fields': [
-          'id',
-          'name',
-          'username',
-          'profile_image_url',
-          'public_metrics',
-          'created_at',
-        ],
-      });
+      const { data: user } = await api.v2.me({ 'user.fields': USER_FIELDS });
       log.info(`Upserting influencer ${user.name} (@${user.username})...`);
       const influencer = {
         id: user.id,
