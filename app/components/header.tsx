@@ -82,7 +82,7 @@ export default function Header() {
         {open && <MenuOpenIcon className='fill-current' />}
         {!open && <MenuIcon className='fill-current' />}
       </button>
-      <h1 className='font-black text-4xl tracking-tight mb-2.5 lg:mt-0 mt-6'>
+      <h1 className='font-semibold text-4xl tracking-tighter mb-3 lg:mt-0 mt-6'>
         tweetscape
       </h1>
       <div className='h-6'>
@@ -120,9 +120,20 @@ export default function Header() {
           <OpenInNewIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
           <span>GitHub</span>
         </a>
+        <a
+          className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+          href='https://discord.gg/3KYQBJwRSS'
+          target='_blank'
+          rel='noopener noreferrer'
+        >
+          <OpenInNewIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
+          <span>Community</span>
+        </a>
+      </div>
+      <div className='h-6 mt-1.5'>
         <button
           type='button'
-          className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+          className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
           aria-pressed={theme === Theme.System ? 'mixed' : theme === Theme.Dark}
           onClick={() =>
             setTheme((prev) => {
@@ -142,7 +153,7 @@ export default function Header() {
           {(theme === undefined || theme === Theme.System) && (
             <SystemIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
           )}
-          <span>{Object.values(Theme)[theme ?? Theme.System]}</span>
+          <span>{Object.values(Theme)[theme ?? Theme.System]} Mode Theme</span>
         </button>
       </div>
       {!!clusters.length && (
