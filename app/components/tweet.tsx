@@ -1,4 +1,5 @@
 import { Form, useMatches, useTransition } from 'remix';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import cn from 'classnames';
 
@@ -21,12 +22,26 @@ type ActionProps = {
   icon: ReactNode;
   href: string;
   action?: string;
+  activeIcon?: ReactNode;
   id?: string;
 };
 
-function Action({ active, count, color, icon, href, action, id }: ActionProps) {
-  const transition = useTransition();
-  const root = useMatches()[0].data as LoaderData | undefined;
+function Action({
+  active,
+  count,
+  color,
+  icon,
+  href,
+  action,
+  activeIcon,
+  id,
+}: ActionProps) {
+  // Using Remix's `useTransition()` hook is actually slower than `useState()`
+  // so I just use this to generate an optimistic UI (as it's faster).
+  const [isActive, setIsActive] = useState(!!active);
+  useEffect(() => {
+    setIsActive((prev) => active ?? prev);
+  }, [active]);
   const iconWrapperComponent = (
     <div
       className={cn('p-1.5 mr-0.5 rounded-full transition duration-[0.2s]', {
@@ -35,7 +50,7 @@ function Action({ active, count, color, icon, href, action, id }: ActionProps) {
         'group-hover:bg-green-50 group-active:bg-green-50': color === 'green',
       })}
     >
-      {icon}
+      {isActive ? activeIcon : icon}
     </div>
   );
   const className = cn(
@@ -44,11 +59,12 @@ function Action({ active, count, color, icon, href, action, id }: ActionProps) {
       'hover:text-red-550 active:text-red-550': color === 'red',
       'hover:text-blue-550 active:text-blue-550': color === 'blue',
       'hover:text-green-550 active:text-green-550': color === 'green',
-      'text-red-550': color === 'red' && active,
-      'text-blue-550': color === 'blue' && active,
-      'text-green-550': color === 'green' && active,
+      'text-red-550': color === 'red' && isActive,
+      'text-blue-550': color === 'blue' && isActive,
+      'text-green-550': color === 'green' && isActive,
     }
   );
+  const root = useMatches()[0].data as LoaderData | undefined;
   if (root?.user && action && id)
     return (
       <Form
@@ -58,11 +74,11 @@ function Action({ active, count, color, icon, href, action, id }: ActionProps) {
       >
         <button
           type='submit'
-          disabled={transition.state === 'submitting'}
+          onClick={() => setIsActive((prev) => !prev)}
           className={cn('w-full', className)}
         >
           {iconWrapperComponent}
-          {!!count && num(count)}
+          {count !== undefined && num(count + (isActive ? 1 : 0))}
         </button>
       </Form>
     );
@@ -175,29 +191,27 @@ function TweetInner({
           />
           <Action
             color='green'
-            icon={retweeted ? <RetweetedIcon /> : <RetweetIcon />}
+            icon={<RetweetIcon />}
             href={`https://twitter.com/intent/retweet?tweet_id=${id}`}
             action='retweet'
             id={id}
             count={
               retweet_count !== undefined && quote_count !== undefined
-                ? retweet_count + quote_count + (retweeted ? 1 : 0)
+                ? retweet_count + quote_count
                 : undefined
             }
             active={retweeted}
+            activeIcon={<RetweetedIcon />}
           />
           <Action
             color='red'
-            icon={liked ? <LikedIcon /> : <LikeIcon />}
+            icon={<LikeIcon />}
             href={`https://twitter.com/intent/like?tweet_id=${id}`}
             action='like'
             id={id}
-            count={
-              like_count !== undefined
-                ? like_count + (liked ? 1 : 0)
-                : undefined
-            }
+            count={like_count}
             active={liked}
+            activeIcon={<LikedIcon />}
           />
           <Action
             color='blue'
