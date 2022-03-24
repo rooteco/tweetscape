@@ -1,5 +1,5 @@
-import { Form, useMatches, useTransition } from 'remix';
 import { useEffect, useRef } from 'react';
+import { useFetcher, useMatches } from 'remix';
 import type { ReactNode } from 'react';
 import cn from 'classnames';
 
@@ -36,12 +36,11 @@ function Action({
   activeIcon,
   id,
 }: ActionProps) {
-  const transition = useTransition();
-  const pathname = `/actions/${action}/${id}`;
+  const fetcher = useFetcher();
   const prevActive = useRef(!!active);
   let isActive = prevActive.current;
-  if (transition.submission && transition.location.pathname === pathname) {
-    isActive = transition.submission.method === 'POST';
+  if (fetcher.submission) {
+    isActive = fetcher.submission.method === 'POST';
     prevActive.current = isActive;
   }
   useEffect(() => {
@@ -73,16 +72,21 @@ function Action({
   const n = count !== undefined && count + (isActive ? 1 : 0);
   if (root?.user && action && id)
     return (
-      <Form
+      <fetcher.Form
         className='grow shrink basis-0 mr-5 h-8'
         method={isActive ? 'delete' : 'post'}
-        action={pathname}
+        action={`/actions/${action}/${id}`}
       >
         <button type='submit' className={cn('w-full', className)}>
           {iconWrapperComponent}
           {!!n && num(n)}
         </button>
-      </Form>
+        <input
+          type='hidden'
+          name='action'
+          value={isActive ? 'delete' : 'post'}
+        />
+      </fetcher.Form>
     );
   return (
     <a

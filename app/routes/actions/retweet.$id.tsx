@@ -9,8 +9,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   invariant(params.id, 'expected params.id');
   const { session, uid } = await getLoggedInSession(request);
   const { api } = await getTwitterClientForUser(uid);
-  switch (request.method) {
-    case 'POST': {
+  const formData = await request.formData();
+  switch (formData.get('action')) {
+    case 'post': {
       log.info(`Retweeting tweet (${params.id}) for user (${uid})...`);
       await api.v2.retweet(uid, params.id);
       log.info(`Inserting retweet for (${params.id}) by user (${uid})...`);
@@ -26,7 +27,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       });
       break;
     }
-    case 'DELETE': {
+    case 'delete': {
       log.info(`Unretweeting tweet (${params.id}) for user (${uid})...`);
       await api.v2.unretweet(uid, params.id);
       log.info(`Deleting retweet for (${params.id}) by user (${uid})...`);

@@ -53,7 +53,9 @@ function Section({ header, links }: SectionProps) {
       <h2 className='mb-2.5 font-semibold'>{header}</h2>
       <div className='border-l border-slate-200 dark:border-slate-800'>
         {links.map(({ to, name }) => (
-          <SectionLink to={to}>{name}</SectionLink>
+          <SectionLink key={to} to={to}>
+            {name}
+          </SectionLink>
         ))}
       </div>
     </section>
