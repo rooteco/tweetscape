@@ -84,7 +84,7 @@ export default function Header() {
         {open && <MenuOpenIcon className='fill-current' />}
         {!open && <MenuIcon className='fill-current' />}
       </button>
-      <h1 className='font-semibold text-4xl tracking-tighter mb-3 lg:mt-0 mt-6'>
+      <h1 className='font-semibold text-4xl tracking-tighter mb-3.5 lg:mt-0 mt-6'>
         tweetscape
       </h1>
       <div className='h-6'>
