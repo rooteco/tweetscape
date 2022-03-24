@@ -1,10 +1,12 @@
 import type { InfluencerFull } from '~/types';
 import OpenInNewIcon from '~/icons/open-in-new';
+import VerifiedIcon from '~/icons/verified';
 import { num } from '~/utils';
 
 export default function Profile({
   name,
   username,
+  verified,
   description,
   html,
   following_count,
@@ -40,14 +42,21 @@ export default function Profile({
             Follow
           </a>
         </div>
-        <a
-          className='block hover:underline mt-2 leading-none font-semibold text-base'
-          href={`https://twitter.com/${username}`}
-          rel='noopener noreferrer'
-          target='_blank'
-        >
-          {name}
-        </a>
+        <div className='mt-2 flex items-end'>
+          <a
+            className='block hover:underline leading-5 font-semibold text-base'
+            href={`https://twitter.com/${username}`}
+            rel='noopener noreferrer'
+            target='_blank'
+          >
+            {name}
+          </a>
+          {verified && (
+            <span className='pl-0.5 block h-5'>
+              <VerifiedIcon className='h-5 w-5 fill-current' />
+            </span>
+          )}
+        </div>
         <div className='mt-1 leading-none text-slate-500'>
           <a
             href={`https://twitter.com/${username}`}

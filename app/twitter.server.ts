@@ -6,6 +6,7 @@ import type {
   TweetEntityHashtagV2,
   TweetEntityUrlV2,
   TweetV2,
+  TTweetv2UserField,
   UserV2,
 } from 'twitter-api-v2';
 import type { Decimal } from '@prisma/client/runtime';
@@ -30,6 +31,17 @@ import { db } from '~/db.server';
 import { log } from '~/utils.server';
 
 export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
+
+export const USER_FIELDS: TTweetv2UserField[] = [
+  'id',
+  'name',
+  'username',
+  'verified',
+  'description',
+  'profile_image_url',
+  'public_metrics',
+  'created_at',
+];
 
 export function handleTwitterApiError(e: unknown): never {
   if (e instanceof ApiResponseError && e.rateLimitError && e.rateLimit) {
@@ -105,6 +117,7 @@ export function toInfluencer(u: UserV2): Influencer {
     id: u.id,
     name: u.name,
     username: u.username,
+    verified: u.verified ?? null,
     description: u.description ?? null,
     profile_image_url: u.profile_image_url ?? null,
     followers_count: u.public_metrics?.followers_count ?? null,

@@ -51,6 +51,7 @@ const USER_FIELDS = [
   'id',
   'name',
   'username',
+  'verified',
   'description',
   'profile_image_url',
   'public_metrics',
