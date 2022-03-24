@@ -65,6 +65,7 @@ function Action({
     }
   );
   const root = useMatches()[0].data as LoaderData | undefined;
+  const n = count !== undefined && count + (isActive ? 1 : 0);
   if (root?.user && action && id)
     return (
       <Form
@@ -78,7 +79,7 @@ function Action({
           className={cn('w-full', className)}
         >
           {iconWrapperComponent}
-          {count !== undefined && num(count + (isActive ? 1 : 0))}
+          {!!n && num(n)}
         </button>
       </Form>
     );
@@ -90,7 +91,7 @@ function Action({
       target='_blank'
     >
       {iconWrapperComponent}
-      {!!count && num(count)}
+      {!!n && num(n)}
     </a>
   );
 }
