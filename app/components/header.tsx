@@ -9,18 +9,15 @@ import {
 import cn from 'classnames';
 import { useState } from 'react';
 
-import { Theme, useTheme } from '~/theme';
 import BirdIcon from '~/icons/bird';
-import DarkIcon from '~/icons/dark';
 import Empty from '~/components/empty';
-import LightIcon from '~/icons/light';
 import type { LoaderData } from '~/root';
 import LogoutIcon from '~/icons/logout';
 import MenuIcon from '~/icons/menu';
 import MenuOpenIcon from '~/icons/menu-open';
 import OpenInNewIcon from '~/icons/open-in-new';
 import Sync from '~/components/sync';
-import SystemIcon from '~/icons/system';
+import ThemeSwitcher from '~/components/theme-switcher';
 
 function SectionLink({ to, children }: { to: string; children: string }) {
   const transition = useTransition();
@@ -63,7 +60,6 @@ function Section({ header, links }: SectionProps) {
 }
 
 export default function Header() {
-  const [theme, setTheme] = useTheme();
   const root = useMatches()[0].data as LoaderData | undefined;
   const clusters = root?.clusters ?? [];
   const lists = root?.lists ?? [];
@@ -133,30 +129,7 @@ export default function Header() {
         </a>
       </div>
       <div className='h-6 mt-1.5'>
-        <button
-          type='button'
-          className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
-          aria-pressed={theme === Theme.System ? 'mixed' : theme === Theme.Dark}
-          onClick={() =>
-            setTheme((prev) => {
-              if (prev === undefined || prev === Theme.System)
-                return Theme.Dark;
-              if (prev === Theme.Dark) return Theme.Light;
-              return Theme.System;
-            })
-          }
-        >
-          {theme === Theme.Dark && (
-            <DarkIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
-          )}
-          {theme === Theme.Light && (
-            <LightIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
-          )}
-          {(theme === undefined || theme === Theme.System) && (
-            <SystemIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
-          )}
-          <span>{Object.values(Theme)[theme ?? Theme.System]} Mode Theme</span>
-        </button>
+        <ThemeSwitcher />
       </div>
       {!!clusters.length && (
         <Section
