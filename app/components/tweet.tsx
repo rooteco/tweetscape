@@ -1,53 +1,98 @@
+import { Form, useMatches, useTransition } from 'remix';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import cn from 'classnames';
 
 import LikeIcon from '~/icons/like';
-import OpenInNewIcon from '~/icons/open-in-new';
+import LikedIcon from '~/icons/liked';
+import type { LoaderData } from '~/root';
+import Profile from '~/components/profile';
 import ReplyIcon from '~/icons/reply';
 import RetweetIcon from '~/icons/retweet';
+import RetweetedIcon from '~/icons/retweeted';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
 import type { TweetFull } from '~/types';
-
-function num(n: number): string {
-  if (n > 1000000) return `${(n / 1000000).toFixed(1)}M`;
-  if (n > 1000) return `${(n / 1000).toFixed(1)}K`;
-  return n.toString();
-}
+import { num } from '~/utils';
 
 type ActionProps = {
+  active?: boolean;
   count?: number;
   color: string;
   icon: ReactNode;
   href: string;
+  action?: string;
+  activeIcon?: ReactNode;
+  id?: string;
 };
 
-function Action({ count, color, icon, href }: ActionProps) {
+function Action({
+  active,
+  count,
+  color,
+  icon,
+  href,
+  action,
+  activeIcon,
+  id,
+}: ActionProps) {
+  const transition = useTransition();
+  const pathname = `/actions/${action}/${id}`;
+  const prevActive = useRef(!!active);
+  let isActive = prevActive.current;
+  if (transition.submission && transition.location.pathname === pathname) {
+    isActive = transition.submission.method === 'POST';
+    prevActive.current = isActive;
+  }
+  useEffect(() => {
+    prevActive.current = !!active;
+  }, [active]);
+  const iconWrapperComponent = (
+    <div
+      className={cn('p-1.5 mr-0.5 rounded-full transition duration-[0.2s]', {
+        'group-hover:bg-red-50 group-active:bg-red-50': color === 'red',
+        'group-hover:bg-blue-50 group-active:bg-blue-50': color === 'blue',
+        'group-hover:bg-green-50 group-active:bg-green-50': color === 'green',
+      })}
+    >
+      {isActive ? activeIcon : icon}
+    </div>
+  );
+  const className = cn(
+    'disabled:cursor-wait inline-flex justify-start items-center transition duration-[0.2s] group',
+    {
+      'hover:text-red-550 active:text-red-550': color === 'red',
+      'hover:text-blue-550 active:text-blue-550': color === 'blue',
+      'hover:text-green-550 active:text-green-550': color === 'green',
+      'text-red-550': color === 'red' && isActive,
+      'text-blue-550': color === 'blue' && isActive,
+      'text-green-550': color === 'green' && isActive,
+    }
+  );
+  const root = useMatches()[0].data as LoaderData | undefined;
+  const n = count !== undefined && count + (isActive ? 1 : 0);
+  if (root?.user && action && id)
+    return (
+      <Form
+        className='grow shrink basis-0 mr-5 h-8'
+        method={isActive ? 'delete' : 'post'}
+        action={pathname}
+      >
+        <button type='submit' className={cn('w-full', className)}>
+          {iconWrapperComponent}
+          {!!n && num(n)}
+        </button>
+      </Form>
+    );
   return (
     <a
-      data-cy='share'
-      className={cn(
-        'mr-5 grow shrink basis-0 inline-flex justify-start items-center transition duration-[0.2s] group',
-        {
-          'hover:text-red-550 active:text-red-550': color === 'red',
-          'hover:text-blue-550 active:text-blue-550': color === 'blue',
-          'hover:text-green-550 active:text-green-550': color === 'green',
-        }
-      )}
+      className={cn('grow shrink basis-0 mr-5 h-8', className)}
       href={href}
-      target='_blank'
       rel='noopener noreferrer'
+      target='_blank'
     >
-      <div
-        className={cn('p-1.5 mr-0.5 rounded-full transition duration-[0.2s]', {
-          'group-hover:bg-red-50 group-active:bg-red-50': color === 'red',
-          'group-hover:bg-blue-50 group-active:bg-blue-50': color === 'blue',
-          'group-hover:bg-green-50 group-active:bg-green-50': color === 'green',
-        })}
-      >
-        {icon}
-      </div>
-      {count}
+      {iconWrapperComponent}
+      {!!n && num(n)}
     </a>
   );
 }
@@ -55,10 +100,13 @@ function Action({ count, color, icon, href }: ActionProps) {
 function TweetInner({
   id,
   author,
+  reply_count,
   retweet_count,
   quote_count,
   like_count,
   created_at,
+  liked,
+  retweeted,
   text,
   html,
 }: Partial<TweetFull>) {
@@ -126,94 +174,7 @@ function TweetInner({
           >
             {created_at && <TimeAgo datetime={created_at} locale='en_short' />}
           </a>
-          {author && (
-            <article className='peer-hover:opacity-100 peer-hover:visible hover:opacity-100 hover:visible peer-active:opacity-100 peer-active:visible active:opacity-100 active:visible shadow-xl invisible opacity-0 transition-[opacity,visibility] absolute top-7 left-10 z-10 hover:delay-500 peer-hover:delay-500 active:delay-500 peer-active:delay-500 duration-300 ease-in-out w-72 p-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg'>
-              <div className='absolute -top-2.5 left-0 right-0 h-2.5 transparent' />
-              <header>
-                <div className='flex justify-between items-start'>
-                  <a
-                    className='block w-16 h-16 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden'
-                    href={`https://twitter.com/${author.username}`}
-                    rel='noopener noreferrer'
-                    target='_blank'
-                  >
-                    {author.profile_image_url && (
-                      <img
-                        src={`/img/${encodeURIComponent(
-                          author.profile_image_url
-                        )}?width=64&height=64&fit=cover`}
-                        alt=''
-                      />
-                    )}
-                  </a>
-                  <a
-                    className='block py-2.5 px-5 rounded-full bg-slate-900 text-slate-100 dark:bg-slate-100 dark:text-slate-900 font-semibold'
-                    href={`https://twitter.com/intent/user?screen_name=${author.username}`}
-                    rel='noopener noreferrer'
-                    target='_blank'
-                  >
-                    Follow
-                  </a>
-                </div>
-                <a
-                  className='block hover:underline mt-2 leading-none font-semibold text-base'
-                  href={`https://twitter.com/${author.username}`}
-                  rel='noopener noreferrer'
-                  target='_blank'
-                >
-                  {author.name}
-                </a>
-                <div className='mt-1 leading-none text-slate-500'>
-                  <a
-                    href={`https://twitter.com/${author.username}`}
-                    rel='noopener noreferrer'
-                    target='_blank'
-                  >
-                    @{author.username}
-                  </a>
-                  <span className='mx-1'>·</span>
-                  <a
-                    href={`https://hive.one/p/${author.username}`}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    hive.one
-                    <OpenInNewIcon className='inline fill-current w-3.5 h-3.5 ml-0.5 mb-px' />
-                  </a>
-                </div>
-              </header>
-              <p
-                className='my-3'
-                dangerouslySetInnerHTML={{
-                  __html: author.html ?? author.description ?? '',
-                }}
-              />
-              <p>
-                <a
-                  className='hover:underline mr-3'
-                  href={`https://twitter.com/${author.username}/following`}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  <span className='font-semibold'>
-                    {num(author.following_count ?? 0)}
-                  </span>
-                  <span className='text-slate-500'> Following</span>
-                </a>
-                <a
-                  className='hover:underline mr-3'
-                  href={`https://twitter.com/${author.username}/followers`}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  <span className='font-semibold'>
-                    {num(author.followers_count ?? 0)}
-                  </span>
-                  <span className='text-slate-500'> Followers</span>
-                </a>
-              </p>
-            </article>
-          )}
+          {author && <Profile {...author} />}
         </header>
         <p
           data-cy='text'
@@ -227,34 +188,37 @@ function TweetInner({
           <Action
             color='blue'
             icon={<ReplyIcon />}
-            href={
-              id ? `https://twitter.com/intent/tweet?in_reply_to=${id}` : ''
-            }
+            href={`https://twitter.com/intent/tweet?in_reply_to=${id}`}
+            count={reply_count}
           />
           <Action
             color='green'
             icon={<RetweetIcon />}
-            href={id ? `https://twitter.com/intent/retweet?tweet_id=${id}` : ''}
+            href={`https://twitter.com/intent/retweet?tweet_id=${id}`}
+            action='retweet'
+            id={id}
             count={
               retweet_count !== undefined && quote_count !== undefined
                 ? retweet_count + quote_count
                 : undefined
             }
+            active={retweeted}
+            activeIcon={<RetweetedIcon />}
           />
           <Action
             color='red'
             icon={<LikeIcon />}
-            href={id ? `https://twitter.com/intent/like?tweet_id=${id}` : ''}
+            href={`https://twitter.com/intent/like?tweet_id=${id}`}
+            action='like'
+            id={id}
             count={like_count}
+            active={liked}
+            activeIcon={<LikedIcon />}
           />
           <Action
             color='blue'
             icon={<ShareIcon />}
-            href={
-              author && id
-                ? `https://twitter.com/${author.username}/status/${id}`
-                : ''
-            }
+            href={`https://twitter.com/${author?.username}/status/${id}`}
           />
         </div>
       </div>
@@ -266,6 +230,8 @@ export default function TweetItem({
   id,
   retweet,
   retweet_author,
+  retweet_liked,
+  retweet_retweeted,
   author,
   created_at,
   ...tweet
@@ -302,7 +268,14 @@ export default function TweetItem({
           </a>
         </header>
       )}
-      {retweet && <TweetInner {...retweet} author={retweet_author} />}
+      {retweet && (
+        <TweetInner
+          {...retweet}
+          author={retweet_author}
+          liked={retweet_liked}
+          retweeted={retweet_retweeted}
+        />
+      )}
       {!retweet && (
         <TweetInner
           {...tweet}

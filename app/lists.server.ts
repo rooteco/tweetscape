@@ -1,5 +1,4 @@
 import type { ActionFunction } from 'remix';
-import invariant from 'tiny-invariant';
 
 import {
   ApiResponseError,
@@ -8,15 +7,13 @@ import {
   toInfluencer,
   toList,
 } from '~/twitter.server';
-import { commitSession, getSession } from '~/session.server';
+import { getLoggedInSession, log } from '~/utils.server';
+import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
-import { log } from '~/utils.server';
 
 export const action: ActionFunction = async ({ request }) => {
   try {
-    const session = await getSession(request.headers.get('Cookie'));
-    const uid = session.get('uid') as string | undefined;
-    invariant(uid, 'expected session uid');
+    const { session, uid } = await getLoggedInSession(request);
     const context = `user (${uid}) lists`;
     const { api, limits } = await getTwitterClientForUser(uid);
     const listFollowedLimit = await limits.v2.getRateLimit(

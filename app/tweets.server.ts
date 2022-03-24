@@ -1,7 +1,6 @@
 import { createHash } from 'crypto';
 
 import type { ActionFunction } from 'remix';
-import invariant from 'tiny-invariant';
 
 import type {
   Annotation,
@@ -28,16 +27,13 @@ import {
   toTweet,
   toURL,
 } from '~/twitter.server';
-import { commitSession, getSession } from '~/session.server';
+import { getLoggedInSession, log } from '~/utils.server';
+import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
-import { log } from '~/utils.server';
-import { revalidateListsCache } from '~/query.server';
 
 export const action: ActionFunction = async ({ request }) => {
   try {
-    const session = await getSession(request.headers.get('Cookie'));
-    const uid = session.get('uid') as string | undefined;
-    invariant(uid, 'expected session uid');
+    const { session, uid } = await getLoggedInSession(request);
     const { api, limits } = await getTwitterClientForUser(uid);
     log.info(`Fetching followed and owned lists for user (${uid})...`);
     const [followedLists, ownedLists] = await Promise.all([
@@ -183,7 +179,6 @@ export const action: ActionFunction = async ({ request }) => {
       db.images.createMany({ data: create.images, skipDuplicates }),
       db.urls.createMany({ data: create.urls, skipDuplicates }),
     ]);
-    await revalidateListsCache(listIds);
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
   } catch (e) {
