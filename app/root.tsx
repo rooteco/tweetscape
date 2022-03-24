@@ -87,16 +87,28 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export const links: LinksFunction = () => [
-  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
-    rel: 'preconnect',
-    href: 'https://fonts.gstatic.com',
+    rel: 'preload',
+    href: '/fonts/inter-400.woff2',
     crossOrigin: 'anonymous',
+    type: 'font/woff2',
+    as: 'font',
   },
   {
-    rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap',
+    rel: 'preload',
+    href: '/fonts/inter-600.woff2',
+    crossOrigin: 'anonymous',
+    type: 'font/woff2',
+    as: 'font',
   },
+  {
+    rel: 'preload',
+    href: '/fonts/inter-700.woff2',
+    crossOrigin: 'anonymous',
+    type: 'font/woff2',
+    as: 'font',
+  },
+  { rel: 'stylesheet', href: '/fonts/inter.css' },
   { rel: 'stylesheet', href: styles },
   { rel: 'mask-icon', sizes: 'any', href: '/favicon.svg', color: '#1D9BF0' },
   { rel: 'shortcut icon', href: '/favicon.ico' },
