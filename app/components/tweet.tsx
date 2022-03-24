@@ -1,5 +1,5 @@
 import { Form, useMatches, useTransition } from 'remix';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import cn from 'classnames';
 
@@ -36,11 +36,16 @@ function Action({
   activeIcon,
   id,
 }: ActionProps) {
-  // Using Remix's `useTransition()` hook is actually slower than `useState()`
-  // so I just use this to generate an optimistic UI (as it's faster).
-  const [isActive, setIsActive] = useState(!!active);
+  const transition = useTransition();
+  const pathname = `/actions/${action}/${id}`;
+  const prevActive = useRef(!!active);
+  let isActive = prevActive.current;
+  if (transition.submission && transition.location.pathname === pathname) {
+    isActive = transition.submission.method === 'POST';
+    prevActive.current = isActive;
+  }
   useEffect(() => {
-    setIsActive((prev) => active ?? prev);
+    prevActive.current = !!active;
   }, [active]);
   const iconWrapperComponent = (
     <div
@@ -70,14 +75,10 @@ function Action({
     return (
       <Form
         className='grow shrink basis-0 mr-5 h-8'
-        method={active ? 'delete' : 'post'}
-        action={`/actions/${action}/${id}`}
+        method={isActive ? 'delete' : 'post'}
+        action={pathname}
       >
-        <button
-          type='submit'
-          onClick={() => setIsActive((prev) => !prev)}
-          className={cn('w-full', className)}
-        >
+        <button type='submit' className={cn('w-full', className)}>
           {iconWrapperComponent}
           {!!n && num(n)}
         </button>
