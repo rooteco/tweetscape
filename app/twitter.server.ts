@@ -12,6 +12,7 @@ import type {
   TweetEntityAnnotationsV2,
   TweetEntityHashtagV2,
   TweetEntityUrlV2,
+  TweetSearchRecentV2Paginator,
   TweetV2,
   TweetV2ListTweetsPaginator,
   UserV2,
@@ -223,9 +224,21 @@ export function toImages(u: TweetEntityUrlV2): Image[] {
   }));
 }
 
+type CreateQueue = {
+  influencers: Influencer[];
+  list_members: ListMember[];
+  tweets: Tweet[];
+  mentions: Mention[];
+  annotations: Annotation[];
+  tags: Tag[];
+  refs: Ref[];
+  links: Link[];
+  images: Image[];
+  urls: URL[];
+};
 export function toCreateQueue(
-  res: TweetV2ListTweetsPaginator,
-  create = {
+  res: TweetV2ListTweetsPaginator | TweetSearchRecentV2Paginator,
+  queue: CreateQueue = {
     influencers: [] as Influencer[],
     list_members: [] as ListMember[],
     tweets: [] as Tweet[],
@@ -241,21 +254,21 @@ export function toCreateQueue(
 ) {
   const includes = new TwitterV2IncludesHelper(res);
   const authors = includes.users.map(toInfluencer);
-  authors.forEach((i) => create.influencers.push(i));
+  authors.forEach((i) => queue.influencers.push(i));
   if (listId)
     authors
       .map((a) => ({
         list_id: listId,
         influencer_id: a.id,
       }))
-      .forEach((l) => create.list_members.push(l));
-  includes.tweets.map(toTweet).forEach((r) => create.tweets.push(r));
-  res.tweets.map(toTweet).forEach((t) => create.tweets.push(t));
+      .forEach((l) => queue.list_members.push(l));
+  includes.tweets.map(toTweet).forEach((r) => queue.tweets.push(r));
+  res.tweets.map(toTweet).forEach((t) => queue.tweets.push(t));
   res.tweets.forEach((t) => {
     t.entities?.mentions?.forEach((m) => {
       const mid = authors.find((u) => u.username === m.username)?.id;
       if (mid)
-        create.mentions.push({
+        queue.mentions.push({
           tweet_id: t.id,
           influencer_id: mid,
           start: m.start,
@@ -263,25 +276,50 @@ export function toCreateQueue(
         });
     });
     t.entities?.annotations?.forEach((a) =>
-      create.annotations.push(toAnnotation(a, t))
+      queue.annotations.push(toAnnotation(a, t))
     );
     t.entities?.hashtags?.forEach((h) =>
-      create.tags.push(toTag(h, t, 'hashtag'))
+      queue.tags.push(toTag(h, t, 'hashtag'))
     );
     t.entities?.cashtags?.forEach((c) =>
-      create.tags.push(toTag(c, t, 'cashtag'))
+      queue.tags.push(toTag(c, t, 'cashtag'))
     );
     t.referenced_tweets?.forEach((r) => {
       // Address edge-case where the referenced tweet may be
       // inaccessible to us (e.g. private account) or deleted.
-      if (create.tweets.some((tw) => tw.id === r.id))
-        create.refs.push(toRef(r, t));
+      if (queue.tweets.some((tw) => tw.id === r.id))
+        queue.refs.push(toRef(r, t));
     });
     t.entities?.urls?.forEach((u) => {
-      create.links.push(toLink(u));
-      create.urls.push(toURL(u, t));
-      toImages(u).forEach((i) => create.images.push(i));
+      queue.links.push(toLink(u));
+      queue.urls.push(toURL(u, t));
+      toImages(u).forEach((i) => queue.images.push(i));
     });
   });
-  return create;
+  return queue;
+}
+
+export async function executeCreateQueue(queue: CreateQueue) {
+  log.info(`Creating ${queue.influencers.length} tweet authors...`);
+  log.info(`Creating ${queue.list_members.length} list members...`);
+  log.info(`Creating ${queue.tweets.length} tweets...`);
+  log.info(`Creating ${queue.mentions.length} mentions...`);
+  log.info(`Creating ${queue.tags.length} hashtags and cashtags...`);
+  log.info(`Creating ${queue.refs.length} tweet refs...`);
+  log.info(`Creating ${queue.links.length} links...`);
+  log.info(`Creating ${queue.images.length} link images...`);
+  log.info(`Creating ${queue.urls.length} tweet urls...`);
+  const skipDuplicates = true;
+  await db.$transaction([
+    db.influencers.createMany({ data: queue.influencers, skipDuplicates }),
+    db.list_members.createMany({ data: queue.list_members, skipDuplicates }),
+    db.tweets.createMany({ data: queue.tweets, skipDuplicates }),
+    db.mentions.createMany({ data: queue.mentions, skipDuplicates }),
+    db.annotations.createMany({ data: queue.annotations, skipDuplicates }),
+    db.tags.createMany({ data: queue.tags, skipDuplicates }),
+    db.refs.createMany({ data: queue.refs, skipDuplicates }),
+    db.links.createMany({ data: queue.links, skipDuplicates }),
+    db.images.createMany({ data: queue.images, skipDuplicates }),
+    db.urls.createMany({ data: queue.urls, skipDuplicates }),
+  ]);
 }

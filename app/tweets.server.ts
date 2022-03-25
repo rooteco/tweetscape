@@ -20,6 +20,7 @@ import {
   USER_FIELDS,
   getTwitterClientForUser,
   handleTwitterApiError,
+  executeCreateQueue,
   toCreateQueue,
 } from '~/twitter.server';
 import { getLoggedInSession, log } from '~/utils.server';
@@ -41,7 +42,7 @@ export const action: ActionFunction = async ({ request }) => {
     ];
     const listTweetsLimit = await limits.v2.getRateLimit('lists/:id/tweets');
 
-    const create = {
+    const queue = {
       influencers: [] as Influencer[],
       list_members: [] as ListMember[],
       tweets: [] as Tweet[],
@@ -82,7 +83,7 @@ export const action: ActionFunction = async ({ request }) => {
             'expansions': TWEET_EXPANSIONS,
             'user.fields': USER_FIELDS,
           });
-          toCreateQueue(res, create, listId);
+          toCreateQueue(res, queue, listId);
         } else {
           const reset = new Date((listTweetsLimit?.reset ?? 0) * 1000);
           const msg =
@@ -92,28 +93,7 @@ export const action: ActionFunction = async ({ request }) => {
         }
       })
     );
-    log.info(`Creating ${create.influencers.length} tweet authors...`);
-    log.info(`Creating ${create.list_members.length} list members...`);
-    log.info(`Creating ${create.tweets.length} tweets...`);
-    log.info(`Creating ${create.mentions.length} mentions...`);
-    log.info(`Creating ${create.tags.length} hashtags and cashtags...`);
-    log.info(`Creating ${create.refs.length} tweet refs...`);
-    log.info(`Creating ${create.links.length} links...`);
-    log.info(`Creating ${create.images.length} link images...`);
-    log.info(`Creating ${create.urls.length} tweet urls...`);
-    const skipDuplicates = true;
-    await db.$transaction([
-      db.influencers.createMany({ data: create.influencers, skipDuplicates }),
-      db.list_members.createMany({ data: create.list_members, skipDuplicates }),
-      db.tweets.createMany({ data: create.tweets, skipDuplicates }),
-      db.mentions.createMany({ data: create.mentions, skipDuplicates }),
-      db.annotations.createMany({ data: create.annotations, skipDuplicates }),
-      db.tags.createMany({ data: create.tags, skipDuplicates }),
-      db.refs.createMany({ data: create.refs, skipDuplicates }),
-      db.links.createMany({ data: create.links, skipDuplicates }),
-      db.images.createMany({ data: create.images, skipDuplicates }),
-      db.urls.createMany({ data: create.urls, skipDuplicates }),
-    ]);
+    await executeCreateQueue(queue);
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
   } catch (e) {

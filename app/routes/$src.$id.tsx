@@ -1,4 +1,11 @@
-import { Link, json, useLoaderData, useLocation, useSearchParams } from 'remix';
+import {
+  Link,
+  Outlet,
+  json,
+  useLoaderData,
+  useLocation,
+  useSearchParams,
+} from 'remix';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
@@ -84,7 +91,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
     <main className='flex flex-1 overflow-hidden'>
       <section
         ref={tweetsRef}
-        className='flex-1 flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
+        className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={tweetsRef} header='Tweets' />
         <Empty className='flex-1 m-5'>
@@ -94,7 +101,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
       </section>
       <section
         ref={articlesRef}
-        className='flex-1 lg:flex hidden flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
+        className='flex-none w-[40rem] lg:flex hidden flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={articlesRef} header='Articles' />
       </section>
@@ -150,11 +157,11 @@ export default function Cluster() {
   const isList = /lists/.test(useLocation().pathname);
 
   return (
-    <main className='flex flex-1 overflow-hidden'>
+    <main className='flex flex-1 overflow-x-auto overflow-y-hidden'>
       <section
         ref={tweetsRef}
         id='tweets'
-        className='flex-1 flex flex-col max-w-xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
+        className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={tweetsRef} header='Tweets'>
           <div className='flex-none mr-4'>
@@ -282,10 +289,11 @@ export default function Cluster() {
           </ol>
         )}
       </section>
+      <Outlet />
       <section
         ref={articlesRef}
         id='articles'
-        className='flex-1 lg:flex hidden flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
+        className='flex-none w-[40rem] lg:flex hidden flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-auto'
       >
         <Nav scrollerRef={articlesRef} header='Articles'>
           <div className='flex-none mr-4'>

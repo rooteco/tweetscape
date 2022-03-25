@@ -1,4 +1,4 @@
-import { useFetcher, useMatches } from 'remix';
+import { useFetcher, useMatches, useNavigate } from 'remix';
 import type { ReactNode } from 'react';
 import cn from 'classnames';
 
@@ -108,8 +108,12 @@ function TweetInner({
   text,
   html,
 }: Partial<TweetFull>) {
+  const navigate = useNavigate();
   return (
-    <article className='flex pl-3 pr-3 pb-3 relative'>
+    <article
+      onClick={() => id && navigate(id)}
+      className='flex w-full pl-3 pr-3 pb-3 relative'
+    >
       <a
         className={cn(
           'block flex-none mr-3 w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden',
@@ -244,7 +248,7 @@ export default function TweetItem({
   return (
     <li
       className={cn(
-        'w-full text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800',
+        'w-full text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors',
         { 'pt-3': !retweet, 'pt-2': retweet }
       )}
     >
