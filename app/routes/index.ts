@@ -1,7 +1,7 @@
 import type { LoaderFunction } from 'remix';
 
-import { getBaseURL, log, redirectToLastVisited } from '~/utils.server';
 import { TwitterApi, USER_FIELDS } from '~/twitter.server';
+import { getBaseURL, log, redirectToLastVisited } from '~/utils.server';
 import { db } from '~/db.server';
 import { getSession } from '~/session.server';
 
