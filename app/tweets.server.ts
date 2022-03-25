@@ -15,18 +15,13 @@ import type {
   URL,
 } from '~/types';
 import {
-  TwitterV2IncludesHelper,
+  TWEET_EXPANSIONS,
+  TWEET_FIELDS,
   USER_FIELDS,
   getTwitterClientForUser,
   handleTwitterApiError,
-  toAnnotation,
-  toImages,
-  toInfluencer,
-  toLink,
-  toRef,
-  toTag,
-  toTweet,
-  toURL,
+  executeCreateQueue,
+  toCreateQueue,
 } from '~/twitter.server';
 import { getLoggedInSession, log } from '~/utils.server';
 import { commitSession } from '~/session.server';
@@ -47,7 +42,7 @@ export const action: ActionFunction = async ({ request }) => {
     ];
     const listTweetsLimit = await limits.v2.getRateLimit('lists/:id/tweets');
 
-    const create = {
+    const queue = {
       influencers: [] as Influencer[],
       list_members: [] as ListMember[],
       tweets: [] as Tweet[],
@@ -84,63 +79,11 @@ export const action: ActionFunction = async ({ request }) => {
             return log.info(`Skipping fetch for ${context}...`);
           if (latestTweet) await redis.set(key, check.tweets[0].id);
           const res = await api.v2.listTweets(listId, {
-            'tweet.fields': [
-              'created_at',
-              'entities',
-              'author_id',
-              'public_metrics',
-              'referenced_tweets',
-            ],
-            'expansions': [
-              'referenced_tweets.id',
-              'referenced_tweets.id.author_id',
-              'entities.mentions.username',
-            ],
+            'tweet.fields': TWEET_FIELDS,
+            'expansions': TWEET_EXPANSIONS,
             'user.fields': USER_FIELDS,
           });
-          const includes = new TwitterV2IncludesHelper(res);
-          const authors = includes.users.map(toInfluencer);
-          authors.forEach((i) => create.influencers.push(i));
-          authors
-            .map((a) => ({
-              list_id: listId,
-              influencer_id: a.id,
-            }))
-            .forEach((l) => create.list_members.push(l));
-          includes.tweets.map(toTweet).forEach((r) => create.tweets.push(r));
-          res.tweets.map(toTweet).forEach((t) => create.tweets.push(t));
-          res.tweets.forEach((t) => {
-            t.entities?.mentions?.forEach((m) => {
-              const mid = authors.find((u) => u.username === m.username)?.id;
-              if (mid)
-                create.mentions.push({
-                  tweet_id: t.id,
-                  influencer_id: mid,
-                  start: m.start,
-                  end: m.end,
-                });
-            });
-            t.entities?.annotations?.forEach((a) =>
-              create.annotations.push(toAnnotation(a, t))
-            );
-            t.entities?.hashtags?.forEach((h) =>
-              create.tags.push(toTag(h, t, 'hashtag'))
-            );
-            t.entities?.cashtags?.forEach((c) =>
-              create.tags.push(toTag(c, t, 'cashtag'))
-            );
-            t.referenced_tweets?.forEach((r) => {
-              // Address edge-case where the referenced tweet may be
-              // inaccessible to us (e.g. private account) or deleted.
-              if (create.tweets.some((tw) => tw.id === r.id))
-                create.refs.push(toRef(r, t));
-            });
-            t.entities?.urls?.forEach((u) => {
-              create.links.push(toLink(u));
-              create.urls.push(toURL(u, t));
-              toImages(u).forEach((i) => create.images.push(i));
-            });
-          });
+          toCreateQueue(res, queue, listId);
         } else {
           const reset = new Date((listTweetsLimit?.reset ?? 0) * 1000);
           const msg =
@@ -150,28 +93,7 @@ export const action: ActionFunction = async ({ request }) => {
         }
       })
     );
-    log.info(`Creating ${create.influencers.length} tweet authors...`);
-    log.info(`Creating ${create.list_members.length} list members...`);
-    log.info(`Creating ${create.tweets.length} tweets...`);
-    log.info(`Creating ${create.mentions.length} mentions...`);
-    log.info(`Creating ${create.tags.length} hashtags and cashtags...`);
-    log.info(`Creating ${create.refs.length} tweet refs...`);
-    log.info(`Creating ${create.links.length} links...`);
-    log.info(`Creating ${create.images.length} link images...`);
-    log.info(`Creating ${create.urls.length} tweet urls...`);
-    const skipDuplicates = true;
-    await db.$transaction([
-      db.influencers.createMany({ data: create.influencers, skipDuplicates }),
-      db.list_members.createMany({ data: create.list_members, skipDuplicates }),
-      db.tweets.createMany({ data: create.tweets, skipDuplicates }),
-      db.mentions.createMany({ data: create.mentions, skipDuplicates }),
-      db.annotations.createMany({ data: create.annotations, skipDuplicates }),
-      db.tags.createMany({ data: create.tags, skipDuplicates }),
-      db.refs.createMany({ data: create.refs, skipDuplicates }),
-      db.links.createMany({ data: create.links, skipDuplicates }),
-      db.images.createMany({ data: create.images, skipDuplicates }),
-      db.urls.createMany({ data: create.urls, skipDuplicates }),
-    ]);
+    await executeCreateQueue(queue);
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
   } catch (e) {

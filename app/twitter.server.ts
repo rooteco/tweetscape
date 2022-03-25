@@ -1,12 +1,20 @@
-import { ApiResponseError, TwitterApi } from 'twitter-api-v2';
+import {
+  ApiResponseError,
+  TwitterApi,
+  TwitterV2IncludesHelper,
+} from 'twitter-api-v2';
 import type {
   ListV2,
   ReferencedTweetV2,
+  TTweetv2Expansion,
+  TTweetv2TweetField,
+  TTweetv2UserField,
   TweetEntityAnnotationsV2,
   TweetEntityHashtagV2,
   TweetEntityUrlV2,
+  TweetSearchRecentV2Paginator,
   TweetV2,
-  TTweetv2UserField,
+  TweetV2ListTweetsPaginator,
   UserV2,
 } from 'twitter-api-v2';
 import type { Decimal } from '@prisma/client/runtime';
@@ -20,6 +28,8 @@ import type {
   Influencer,
   Link,
   List,
+  ListMember,
+  Mention,
   Ref,
   Tag,
   TagType,
@@ -41,6 +51,18 @@ export const USER_FIELDS: TTweetv2UserField[] = [
   'profile_image_url',
   'public_metrics',
   'created_at',
+];
+export const TWEET_FIELDS: TTweetv2TweetField[] = [
+  'created_at',
+  'entities',
+  'author_id',
+  'public_metrics',
+  'referenced_tweets',
+];
+export const TWEET_EXPANSIONS: TTweetv2Expansion[] = [
+  'referenced_tweets.id',
+  'referenced_tweets.id.author_id',
+  'entities.mentions.username',
 ];
 
 export function handleTwitterApiError(e: unknown): never {
@@ -200,4 +222,104 @@ export function toImages(u: TweetEntityUrlV2): Image[] {
     width: i.width,
     height: i.height,
   }));
+}
+
+type CreateQueue = {
+  influencers: Influencer[];
+  list_members: ListMember[];
+  tweets: Tweet[];
+  mentions: Mention[];
+  annotations: Annotation[];
+  tags: Tag[];
+  refs: Ref[];
+  links: Link[];
+  images: Image[];
+  urls: URL[];
+};
+export function toCreateQueue(
+  res: TweetV2ListTweetsPaginator | TweetSearchRecentV2Paginator,
+  queue: CreateQueue = {
+    influencers: [] as Influencer[],
+    list_members: [] as ListMember[],
+    tweets: [] as Tweet[],
+    mentions: [] as Mention[],
+    annotations: [] as Annotation[],
+    tags: [] as Tag[],
+    refs: [] as Ref[],
+    links: [] as Link[],
+    images: [] as Image[],
+    urls: [] as URL[],
+  },
+  listId?: string
+) {
+  const includes = new TwitterV2IncludesHelper(res);
+  const authors = includes.users.map(toInfluencer);
+  authors.forEach((i) => queue.influencers.push(i));
+  if (listId)
+    authors
+      .map((a) => ({
+        list_id: listId,
+        influencer_id: a.id,
+      }))
+      .forEach((l) => queue.list_members.push(l));
+  includes.tweets.map(toTweet).forEach((r) => queue.tweets.push(r));
+  res.tweets.map(toTweet).forEach((t) => queue.tweets.push(t));
+  res.tweets.forEach((t) => {
+    t.entities?.mentions?.forEach((m) => {
+      const mid = authors.find((u) => u.username === m.username)?.id;
+      if (mid)
+        queue.mentions.push({
+          tweet_id: t.id,
+          influencer_id: mid,
+          start: m.start,
+          end: m.end,
+        });
+    });
+    t.entities?.annotations?.forEach((a) =>
+      queue.annotations.push(toAnnotation(a, t))
+    );
+    t.entities?.hashtags?.forEach((h) =>
+      queue.tags.push(toTag(h, t, 'hashtag'))
+    );
+    t.entities?.cashtags?.forEach((c) =>
+      queue.tags.push(toTag(c, t, 'cashtag'))
+    );
+    t.referenced_tweets?.forEach((r) => {
+      // Address edge-case where the referenced tweet may be
+      // inaccessible to us (e.g. private account) or deleted.
+      if (queue.tweets.some((tw) => tw.id === r.id))
+        queue.refs.push(toRef(r, t));
+    });
+    t.entities?.urls?.forEach((u) => {
+      queue.links.push(toLink(u));
+      queue.urls.push(toURL(u, t));
+      toImages(u).forEach((i) => queue.images.push(i));
+    });
+  });
+  return queue;
+}
+
+export async function executeCreateQueue(queue: CreateQueue) {
+  log.info(`Creating ${queue.influencers.length} tweet authors...`);
+  log.info(`Creating ${queue.list_members.length} list members...`);
+  log.info(`Creating ${queue.tweets.length} tweets...`);
+  log.info(`Creating ${queue.mentions.length} mentions...`);
+  log.info(`Creating ${queue.tags.length} hashtags and cashtags...`);
+  log.info(`Creating ${queue.refs.length} tweet refs...`);
+  log.info(`Creating ${queue.links.length} links...`);
+  log.info(`Creating ${queue.images.length} link images...`);
+  log.info(`Creating ${queue.urls.length} tweet urls...`);
+  const skipDuplicates = true;
+  await db.$transaction([
+    db.influencers.createMany({ data: queue.influencers, skipDuplicates }),
+    db.list_members.createMany({ data: queue.list_members, skipDuplicates }),
+    db.tweets.createMany({ data: queue.tweets, skipDuplicates }),
+    db.mentions.createMany({ data: queue.mentions, skipDuplicates }),
+    db.annotations.createMany({ data: queue.annotations, skipDuplicates }),
+    db.tags.createMany({ data: queue.tags, skipDuplicates }),
+    db.refs.createMany({ data: queue.refs, skipDuplicates }),
+    db.links.createMany({ data: queue.links, skipDuplicates }),
+    db.images.createMany({ data: queue.images, skipDuplicates }),
+    db.urls.createMany({ data: queue.urls, skipDuplicates }),
+  ]);
 }
