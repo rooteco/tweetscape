@@ -43,6 +43,7 @@ export type TweetFull = Tweet & {
   author: InfluencerFull;
   score?: Score;
   liked?: boolean;
+  replied_to?: string;
   retweeted?: boolean;
   retweet?: TweetFull;
   retweet_author?: InfluencerFull;

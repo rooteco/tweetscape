@@ -1,5 +1,5 @@
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import { useFetcher, useMatches, useNavigate, useResolvedPath } from 'remix';
+import { useFetcher, useLocation, useMatches, useNavigate } from 'remix';
 import cn from 'classnames';
 
 import LikeIcon from '~/icons/like';
@@ -103,15 +103,17 @@ type TweetProps = {
 function TweetInner({ tweet, setActiveTweet }: TweetProps) {
   const navigate = useNavigate();
   const fetcher = useFetcher();
-  const path = useResolvedPath(tweet ? tweet.id : '');
+  const { pathname } = useLocation();
   return (
     <div
       role='button'
       tabIndex={-1}
       onClick={() => {
+        if (!tweet) return;
         if (setActiveTweet) setActiveTweet(tweet);
-        fetcher.submit(null, { action: path.pathname, method: 'patch' });
-        navigate(path.pathname);
+        const path = `${pathname}/${tweet.id}`;
+        fetcher.submit(null, { action: path, method: 'patch' });
+        navigate(path);
       }}
       onKeyPress={() => {}}
       className='flex w-full pl-3 pr-3 pb-3 relative'
