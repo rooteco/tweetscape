@@ -1,11 +1,4 @@
-import {
-  Link,
-  Outlet,
-  json,
-  useLoaderData,
-  useLocation,
-  useSearchParams,
-} from 'remix';
+import { Link, Outlet, json, useLoaderData, useSearchParams } from 'remix';
 import { useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
@@ -123,7 +116,6 @@ export default function Cluster() {
     searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
 
-  const isList = /lists/.test(useLocation().pathname);
   const [activeTweet, setActiveTweet] = useState<TweetFull>();
 
   return (
