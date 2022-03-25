@@ -1,5 +1,5 @@
 import type { ActionFunction, LoaderFunction } from 'remix';
-import { Link, json, useLoaderData, useLocation } from 'remix';
+import { Link, json, useFetchers, useLoaderData, useLocation } from 'remix';
 import invariant from 'tiny-invariant';
 
 import {
@@ -14,6 +14,7 @@ import { commitSession, getSession } from '~/session.server';
 import { getLoggedInSession, log } from '~/utils.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
 import CloseIcon from '~/icons/close';
+import Empty from '~/components/empty';
 import type { TweetFull } from '~/types';
 import TweetItem from '~/components/tweet';
 
@@ -57,6 +58,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 export default function TweetPage() {
   const data = useLoaderData<LoaderData>();
   const { pathname } = useLocation();
+  const fetchers = useFetchers();
   return data.map(({ tweet, replies }) => (
     <section className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-auto'>
       <header className='z-30 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 relative'>
@@ -69,14 +71,18 @@ export default function TweetPage() {
         <TweetItem tweet={tweet} />
       </header>
       <ol>
-        {!replies.length &&
-          Array(10)
-            .fill(null)
-            .map((_, idx) => <TweetItem key={idx} />)}
         {replies.map((reply) => (
           <TweetItem tweet={reply} key={reply.id} />
         ))}
+        {fetchers.some((f) => f.submission?.action.endsWith(tweet.id)) &&
+          Array(3)
+            .fill(null)
+            .map((_, idx) => <TweetItem key={idx} />)}
       </ol>
+      {!fetchers.some((f) => f.submission?.action.endsWith(tweet.id)) &&
+        !replies.length && (
+          <Empty className='flex-1 m-5'>NO REPLIES TO SHOW</Empty>
+        )}
     </section>
   ));
 }
