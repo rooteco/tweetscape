@@ -249,7 +249,7 @@ export default function TweetItem({ tweet, setActiveTweet }: TweetProps) {
   return (
     <li
       className={cn(
-        'w-full text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors',
+        'w-full list-none text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors',
         { 'pt-3': !tweet?.retweet, 'pt-2': tweet?.retweet }
       )}
     >
