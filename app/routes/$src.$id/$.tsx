@@ -60,7 +60,7 @@ export default function TweetPage() {
   const { pathname } = useLocation();
   const fetchers = useFetchers();
   return data.map(({ tweet, replies }) => (
-    <section className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-auto'>
+    <section className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'>
       <header className='z-30 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 relative'>
         <Link
           to={pathname.replaceAll(`/${tweet.id}`, '')}
