@@ -1,5 +1,11 @@
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import { useFetcher, useLocation, useMatches, useNavigate } from 'remix';
+import {
+  useFetcher,
+  useFetchers,
+  useLocation,
+  useMatches,
+  useNavigate,
+} from 'remix';
 import cn from 'classnames';
 
 import LikeIcon from '~/icons/like';
@@ -36,10 +42,11 @@ function Action({
   activeIcon,
   id,
 }: ActionProps) {
+  const fetchers = useFetchers();
+  const path = `/actions/${action}/${id}`;
+  const fetching = fetchers.find((f) => f.submission?.action === path);
+  const isActive = fetching ? fetching.submission?.method === 'POST' : !!active;
   const fetcher = useFetcher();
-  const isActive = fetcher.submission
-    ? fetcher.submission.method === 'POST'
-    : !!active;
   const iconWrapperComponent = (
     <div
       className={cn('p-1.5 mr-0.5 rounded-full transition duration-[0.2s]', {
@@ -69,7 +76,7 @@ function Action({
       <fetcher.Form
         className='grow shrink basis-0 mr-5 h-8'
         method={isActive ? 'delete' : 'post'}
-        action={`/actions/${action}/${id}`}
+        action={path}
       >
         <button type='submit' className={cn('w-full', className)}>
           {iconWrapperComponent}
