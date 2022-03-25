@@ -12,12 +12,7 @@ import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
 
-import type { Article, TweetFull } from '~/types';
 import {
-  ArticlesFilter,
-  ArticlesSort,
-  DEFAULT_ARTICLES_FILTER,
-  DEFAULT_ARTICLES_SORT,
   DEFAULT_TWEETS_FILTER,
   DEFAULT_TWEETS_LIMIT,
   DEFAULT_TWEETS_SORT,
@@ -25,24 +20,18 @@ import {
   TweetsSort,
 } from '~/query';
 import { commitSession, getSession } from '~/session.server';
-import {
-  getClusterArticles,
-  getClusterTweets,
-  getListArticles,
-  getListTweets,
-} from '~/query.server';
+import { getClusterTweets, getListTweets } from '~/query.server';
 import { lang, log } from '~/utils.server';
-import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
+import type { TweetFull } from '~/types';
 import TweetItem from '~/components/tweet';
 import { useError } from '~/error';
 
 export type LoaderData = {
   tweets: TweetFull[];
-  articles: Article[];
   locale: string;
 };
 
@@ -51,17 +40,11 @@ export type LoaderData = {
 export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.src, 'expected params.src');
   invariant(params.id, 'expected params.id');
-  log.info(`Fetching articles and tweets for ${params.src} (${params.id})...`);
+  log.info(`Fetching tweets for ${params.src} (${params.id})...`);
   const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
   const uid = session.get('uid') as string | undefined;
   session.set('href', `${url.pathname}${url.search}`);
-  const articlesSort = Number(
-    url.searchParams.get('a') ?? DEFAULT_ARTICLES_SORT
-  ) as ArticlesSort;
-  const articlesFilter = Number(
-    url.searchParams.get('b') ?? DEFAULT_ARTICLES_FILTER
-  ) as ArticlesFilter;
   const tweetsSort = Number(
     url.searchParams.get('c') ?? DEFAULT_TWEETS_SORT
   ) as TweetsSort;
@@ -69,16 +52,12 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     url.searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
   const limit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
-  const articles =
-    params.src === 'clusters'
-      ? await getClusterArticles(params.id, articlesSort, articlesFilter, uid)
-      : await getListArticles(params.id, articlesSort, articlesFilter, uid);
   const tweets =
     params.src === 'clusters'
       ? await getClusterTweets(params.id, tweetsSort, tweetsFilter, limit, uid)
       : await getListTweets(params.id, tweetsSort, tweetsFilter, limit, uid);
   return json<LoaderData>(
-    { articles, tweets, locale: lang(request) },
+    { tweets, locale: lang(request) },
     { headers: { 'Set-Cookie': await commitSession(session) } }
   );
 };
@@ -86,7 +65,6 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   const tweetsRef = useRef<HTMLElement>(null);
-  const articlesRef = useRef<HTMLElement>(null);
   return (
     <main className='flex flex-1 overflow-hidden'>
       <section
@@ -99,12 +77,6 @@ export function ErrorBoundary({ error }: { error: Error }) {
           <p>{error.message}</p>
         </Empty>
       </section>
-      <section
-        ref={articlesRef}
-        className='flex-none w-[40rem] lg:flex hidden flex-col max-w-2xl border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'
-      >
-        <Nav scrollerRef={articlesRef} header='Articles' />
-      </section>
     </main>
   );
 }
@@ -112,23 +84,14 @@ export function ErrorBoundary({ error }: { error: Error }) {
 type NavLinkProps = {
   active: boolean;
   children: string;
-  articlesSort: ArticlesSort;
-  articlesFilter: ArticlesFilter;
   tweetsSort: TweetsSort;
   tweetsFilter: TweetsFilter;
 };
-function NavLink({
-  active,
-  children,
-  articlesSort,
-  articlesFilter,
-  tweetsSort,
-  tweetsFilter,
-}: NavLinkProps) {
+function NavLink({ active, children, tweetsSort, tweetsFilter }: NavLinkProps) {
   return (
     <Link
       className={cn({ underline: active })}
-      to={`?a=${articlesSort}&b=${articlesFilter}&c=${tweetsSort}&d=${tweetsFilter}`}
+      to={`?c=${tweetsSort}&d=${tweetsFilter}`}
     >
       {children}
     </Link>
@@ -136,17 +99,10 @@ function NavLink({
 }
 
 export default function Cluster() {
-  const { articles, tweets } = useLoaderData<LoaderData>();
+  const { tweets } = useLoaderData<LoaderData>();
   const tweetsRef = useRef<HTMLElement>(null);
-  const articlesRef = useRef<HTMLElement>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const articlesSort = Number(
-    searchParams.get('a') ?? DEFAULT_ARTICLES_SORT
-  ) as ArticlesSort;
-  const articlesFilter = Number(
-    searchParams.get('b') ?? DEFAULT_ARTICLES_FILTER
-  ) as ArticlesFilter;
   const tweetsSort = Number(
     searchParams.get('c') ?? DEFAULT_TWEETS_SORT
   ) as TweetsSort;
@@ -168,8 +124,6 @@ export default function Cluster() {
           <div className='flex-none mr-4'>
             <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
             <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={articlesFilter}
               tweetsSort={TweetsSort.TweetCount}
               tweetsFilter={tweetsFilter}
               active={tweetsSort === TweetsSort.TweetCount}
@@ -178,8 +132,6 @@ export default function Cluster() {
             </NavLink>
             {' · '}
             <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={articlesFilter}
               tweetsSort={TweetsSort.RetweetCount}
               tweetsFilter={tweetsFilter}
               active={tweetsSort === TweetsSort.RetweetCount}
@@ -188,8 +140,6 @@ export default function Cluster() {
             </NavLink>
             {' · '}
             <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={articlesFilter}
               tweetsSort={TweetsSort.QuoteCount}
               tweetsFilter={tweetsFilter}
               active={tweetsSort === TweetsSort.QuoteCount}
@@ -198,8 +148,6 @@ export default function Cluster() {
             </NavLink>
             {' · '}
             <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={articlesFilter}
               tweetsSort={TweetsSort.LikeCount}
               tweetsFilter={tweetsFilter}
               active={tweetsSort === TweetsSort.LikeCount}
@@ -208,8 +156,6 @@ export default function Cluster() {
             </NavLink>
             {' · '}
             <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={articlesFilter}
               tweetsSort={TweetsSort.FollowerCount}
               tweetsFilter={tweetsFilter}
               active={tweetsSort === TweetsSort.FollowerCount}
@@ -218,8 +164,6 @@ export default function Cluster() {
             </NavLink>
             {' · '}
             <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={articlesFilter}
               tweetsSort={TweetsSort.Latest}
               tweetsFilter={tweetsFilter}
               active={tweetsSort === TweetsSort.Latest}
@@ -228,8 +172,6 @@ export default function Cluster() {
             </NavLink>
             {' · '}
             <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={articlesFilter}
               tweetsSort={TweetsSort.Earliest}
               tweetsFilter={tweetsFilter}
               active={tweetsSort === TweetsSort.Earliest}
@@ -240,8 +182,6 @@ export default function Cluster() {
           <div className='flex-none'>
             <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
             <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={articlesFilter}
               tweetsSort={tweetsSort}
               tweetsFilter={TweetsFilter.HideRetweets}
               active={tweetsFilter === TweetsFilter.HideRetweets}
@@ -250,8 +190,6 @@ export default function Cluster() {
             </NavLink>
             {' · '}
             <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={articlesFilter}
               tweetsSort={tweetsSort}
               tweetsFilter={TweetsFilter.ShowRetweets}
               active={tweetsFilter === TweetsFilter.ShowRetweets}
@@ -295,73 +233,6 @@ export default function Cluster() {
         )}
       </section>
       <Outlet context={activeTweet} />
-      <section
-        ref={articlesRef}
-        id='articles'
-        className='flex-none w-[40rem] lg:flex hidden flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'
-      >
-        <Nav scrollerRef={articlesRef} header='Articles'>
-          <div className='flex-none mr-4'>
-            <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-            {!isList && (
-              <NavLink
-                articlesSort={ArticlesSort.AttentionScore}
-                articlesFilter={articlesFilter}
-                tweetsSort={tweetsSort}
-                tweetsFilter={tweetsFilter}
-                active={articlesSort === ArticlesSort.AttentionScore}
-              >
-                attention score
-              </NavLink>
-            )}
-            {isList && (
-              <span className='cursor-not-allowed'>attention score</span>
-            )}
-            {' · '}
-            <NavLink
-              articlesSort={ArticlesSort.TweetCount}
-              articlesFilter={articlesFilter}
-              tweetsSort={tweetsSort}
-              tweetsFilter={tweetsFilter}
-              active={articlesSort === ArticlesSort.TweetCount || isList}
-            >
-              tweets
-            </NavLink>
-          </div>
-          <div className='flex-none'>
-            <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-            <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={ArticlesFilter.HideRetweets}
-              tweetsSort={tweetsSort}
-              tweetsFilter={tweetsFilter}
-              active={articlesFilter === ArticlesFilter.HideRetweets}
-            >
-              hide retweets
-            </NavLink>
-            {' · '}
-            <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={ArticlesFilter.ShowRetweets}
-              tweetsSort={tweetsSort}
-              tweetsFilter={tweetsFilter}
-              active={articlesFilter === ArticlesFilter.ShowRetweets}
-            >
-              show retweets
-            </NavLink>
-          </div>
-        </Nav>
-        {!articles.length && (
-          <Empty className='flex-1 m-5'>No articles to show</Empty>
-        )}
-        {!!articles.length && (
-          <ol>
-            {articles.map((a) => (
-              <ArticleItem {...a} key={a.url} />
-            ))}
-          </ol>
-        )}
-      </section>
     </main>
   );
 }
