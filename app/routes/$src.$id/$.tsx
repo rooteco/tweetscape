@@ -1,19 +1,10 @@
-import type { ActionFunction, LoaderFunction } from 'remix';
 import { Link, json, useFetchers, useLoaderData, useLocation } from 'remix';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
 
-import {
-  TWEET_EXPANSIONS,
-  TWEET_FIELDS,
-  USER_FIELDS,
-  executeCreateQueue,
-  getTwitterClientForUser,
-  toCreateQueue,
-} from '~/twitter.server';
 import { commitSession, getSession } from '~/session.server';
-import { getLoggedInSession, log } from '~/utils.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
 import BoltIcon from '~/icons/bolt';
 import CloseIcon from '~/icons/close';
@@ -28,6 +19,8 @@ export type LoaderData = { tweet: TweetFull; replies: TweetFull[] }[];
 export const loader: LoaderFunction = async ({ request, params }) => {
   invariant(params['*'], 'expected params.*');
   const session = await getSession(request.headers.get('Cookie'));
+  const url = new URL(request.url);
+  session.set('href', `${url.pathname}${url.search}`);
   const uid = session.get('uid') as string | undefined;
   const tweetIds = params['*'].split('/');
   const [tweets, replies] = await Promise.all([
@@ -42,24 +35,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   return json<LoaderData>(data, { headers });
 };
 
-export const action: ActionFunction = async ({ request, params }) => {
-  invariant(params['*'], 'expected params.*');
-  const tweetId = params['*'].split('/').pop();
-  log.info(`Getting replies to tweet (${tweetId})...`);
-  const { session, uid } = await getLoggedInSession(request);
-  const { api } = await getTwitterClientForUser(uid);
-  const query = `is:reply conversation_id:${tweetId}`;
-  const res = await api.v2.search(query, {
-    'tweet.fields': TWEET_FIELDS,
-    'expansions': TWEET_EXPANSIONS,
-    'user.fields': USER_FIELDS,
-    'max_results': 100,
-  });
-  await executeCreateQueue(toCreateQueue(res));
-  const headers = { 'Set-Cookie': await commitSession(session) };
-  return new Response('Sync Success', { status: 200, headers });
-};
-
 const fallback = Array(3)
   .fill(null)
   .map((_, idx) => <TweetItem key={idx} />);
@@ -68,7 +43,7 @@ function Section({ tweet, replies }: LoaderData[number]) {
   const { pathname } = useLocation();
   const fetchers = useFetchers();
   const syncing = useMemo(
-    () => fetchers.some((f) => f.submission?.action.endsWith(tweet.id)),
+    () => fetchers.some((f) => f.submission?.action === `/sync/${tweet.id}`),
     [fetchers, tweet.id]
   );
   const prevSyncing = useRef(syncing);

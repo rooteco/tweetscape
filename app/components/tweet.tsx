@@ -114,9 +114,8 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
           if ((evt.target as Node).nodeName !== 'P') return;
         }
         if (setActiveTweet) setActiveTweet(tweet);
-        const path = `${pathname}/${tweet.id}`;
-        fetcher.submit(null, { action: path, method: 'patch' });
-        navigate(path);
+        fetcher.submit(null, { action: `/sync/${tweet.id}`, method: 'patch' });
+        navigate(`${pathname}/${tweet.id}`);
       }}
       onKeyPress={() => {}}
       className='flex w-full pl-3 pr-3 pb-3 relative'
