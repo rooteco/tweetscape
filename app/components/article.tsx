@@ -252,7 +252,7 @@ export default function ArticleItem({
         {!!results.length && (
           <ol>
             {results.map((tweet) => (
-              <TweetItem {...tweet} key={tweet.id} />
+              <TweetItem tweet={tweet} key={tweet.id} />
             ))}
           </ol>
         )}

@@ -6,11 +6,11 @@ import {
   useLocation,
   useSearchParams,
 } from 'remix';
+import { useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
-import { useRef } from 'react';
 
 import type { Article, TweetFull } from '~/types';
 import {
@@ -155,6 +155,7 @@ export default function Cluster() {
   ) as TweetsFilter;
 
   const isList = /lists/.test(useLocation().pathname);
+  const [activeTweet, setActiveTweet] = useState<TweetFull>();
 
   return (
     <main className='flex flex-1 overflow-x-auto overflow-y-hidden'>
@@ -282,14 +283,18 @@ export default function Cluster() {
               style={{ overflow: 'hidden' }}
               hasMore
             >
-              {tweets.map((t) => (
-                <TweetItem {...t} key={t.id} />
+              {tweets.map((tweet) => (
+                <TweetItem
+                  tweet={tweet}
+                  setActiveTweet={setActiveTweet}
+                  key={tweet.id}
+                />
               ))}
             </InfiniteScroll>
           </ol>
         )}
       </section>
-      <Outlet />
+      <Outlet context={activeTweet} />
       <section
         ref={articlesRef}
         id='articles'

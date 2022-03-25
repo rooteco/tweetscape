@@ -62,10 +62,11 @@ function getArticlesFull(articles: Article[]): Article[] {
   }));
 }
 
-export async function getTweet(
+export async function getTweetReplies(
   tweetId: string,
   uid?: string
-): Promise<TweetFull> {
+): Promise<TweetFull[]> {
+  /* prettier-ignore */
   const tweets = await db.$queryRaw<TweetFull[]>`
     select
       tweets.*,
@@ -73,47 +74,20 @@ export async function getTweet(
       ${uid ? Prisma.sql`retweets is not null as retweeted,` : Prisma.empty}
       to_json(influencers.*) as author,
       to_json(retweet.*) as retweet,
-      ${
-        uid
-          ? Prisma.sql`retweet_likes is not null as retweet_liked,`
-          : Prisma.empty
-      }
-      ${
-        uid
-          ? Prisma.sql`retweet_retweets is not null as retweet_retweeted,`
-          : Prisma.empty
-      }
+      ${uid ? Prisma.sql`retweet_likes is not null as retweet_liked,` : Prisma.empty}
+      ${uid ? Prisma.sql`retweet_retweets is not null as retweet_retweeted,` : Prisma.empty}
       to_json(retweet_authors.*) as retweet_author
     from tweets
       inner join influencers on influencers.id = tweets.author_id
-      ${
-        uid
-          ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}`
-          : Prisma.empty
-      }
-      ${
-        uid
-          ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.influencer_id = ${uid}`
-          : Prisma.empty
-      }
-      left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted'
-      left outer join tweets retweet on retweet.id = refs.referenced_tweet_id
+      inner join refs on refs.referencer_tweet_id = tweets.id and refs.referenced_tweet_id = ${tweetId} and refs.type = 'replied_to'
+      ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
+      ${uid ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.influencer_id = ${uid}` : Prisma.empty}
+      left outer join refs retweet_refs on retweet_refs.referencer_tweet_id = tweets.id and retweet_refs.type = 'retweeted'
+      left outer join tweets retweet on retweet.id = retweet_refs.referenced_tweet_id
       left outer join influencers retweet_authors on retweet_authors.id = retweet.author_id
-      ${
-        uid
-          ? Prisma.sql`left outer join likes retweet_likes on retweet_likes.tweet_id = refs.referenced_tweet_id and retweet_likes.influencer_id = ${uid}`
-          : Prisma.empty
-      }
-      ${
-        uid
-          ? Prisma.sql`left outer join retweets retweet_retweets on retweet_retweets.tweet_id = refs.referenced_tweet_id and retweet_retweets.influencer_id = ${uid}`
-          : Prisma.empty
-      }
-    where tweets.id = ${tweetId}
-    limit 1;`;
-  if (tweets.length < 1) throw new Error(`Could not find tweet (${tweetId})`);
-  if (tweets.length > 1) throw new Error(`Found too many tweets (${tweetId})`);
-  return getTweetFull(tweets[0]);
+      ${uid ? Prisma.sql`left outer join likes retweet_likes on retweet_likes.tweet_id = retweet_refs.referenced_tweet_id and retweet_likes.influencer_id = ${uid}` : Prisma.empty}
+      ${uid ? Prisma.sql`left outer join retweets retweet_retweets on retweet_retweets.tweet_id = retweet_refs.referenced_tweet_id and retweet_retweets.influencer_id = ${uid}` : Prisma.empty};`;
+  return getTweetsFull(tweets);
 }
 
 function getListTweetsQuery(
