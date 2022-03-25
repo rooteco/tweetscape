@@ -30,7 +30,7 @@
     "postinstall": "concurrently yarn:setup:sharp yarn:setup:remix yarn:setup:prisma"
   },
   "dependencies": {
-    "@prisma/client": "^3.11.0",
+    "@prisma/client": "^3.11.1",
     "@remix-run/node": "^1.3.3",
     "@remix-run/react": "^1.3.3",
     "@remix-run/serve": "^1.3.3",
