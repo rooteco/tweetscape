@@ -264,7 +264,12 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
           refs
             ?.filter((r) => r.type === 'quoted')
             .map((t) => (
-              <TweetInner nested tweet={t} setActiveTweet={setActiveTweet} />
+              <TweetInner
+                nested
+                tweet={t}
+                setActiveTweet={setActiveTweet}
+                key={t.id}
+              />
             ))}
         <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-slate-500'>
           <Action
@@ -356,7 +361,9 @@ export default function TweetItem({ tweet, setActiveTweet }: TweetProps) {
       {isRetweet &&
         refs
           ?.filter((r) => r.type === 'retweeted')
-          .map((t) => <TweetInner tweet={t} setActiveTweet={setActiveTweet} />)}
+          .map((t) => (
+            <TweetInner tweet={t} setActiveTweet={setActiveTweet} key={t.id} />
+          ))}
       {!isRetweet && (
         <TweetInner tweet={tweet} setActiveTweet={setActiveTweet} />
       )}
