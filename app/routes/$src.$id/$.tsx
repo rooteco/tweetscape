@@ -80,11 +80,11 @@ function Section({ tweet, replies }: LoaderData[number]) {
   }, [syncing]);
   return (
     <section className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'>
-      <header className='z-30 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800'>
+      <header className='z-30 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow'>
         <nav className='px-3 py-1.5 border-b border-slate-200 dark:border-slate-800'>
           <Link
             to={pathname.replaceAll(`/${tweet.id}`, '')}
-            className='inline-flex truncate items-center text-white text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+            className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
           >
             <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
             <span>Close</span>
