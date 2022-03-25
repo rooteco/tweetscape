@@ -1,5 +1,7 @@
 import type { ActionFunction, LoaderFunction } from 'remix';
 import { Link, json, useFetchers, useLoaderData, useLocation } from 'remix';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import cn from 'classnames';
 import invariant from 'tiny-invariant';
 
 import {
@@ -13,8 +15,11 @@ import {
 import { commitSession, getSession } from '~/session.server';
 import { getLoggedInSession, log } from '~/utils.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
+import BoltIcon from '~/icons/bolt';
 import CloseIcon from '~/icons/close';
 import Empty from '~/components/empty';
+import SyncIcon from '~/icons/sync';
+import { TimeAgo } from '~/components/timeago';
 import type { TweetFull } from '~/types';
 import TweetItem from '~/components/tweet';
 
@@ -55,34 +60,79 @@ export const action: ActionFunction = async ({ request, params }) => {
   return new Response('Sync Success', { status: 200, headers });
 };
 
-export default function TweetPage() {
-  const data = useLoaderData<LoaderData>();
+const fallback = Array(3)
+  .fill(null)
+  .map((_, idx) => <TweetItem key={idx} />);
+
+function Section({ tweet, replies }: LoaderData[number]) {
   const { pathname } = useLocation();
   const fetchers = useFetchers();
-  return data.map(({ tweet, replies }) => (
+  const syncing = useMemo(
+    () => fetchers.some((f) => f.submission?.action.endsWith(tweet.id)),
+    [fetchers, tweet.id]
+  );
+  const prevSyncing = useRef(syncing);
+  const [lastSynced, setLastSynced] = useState<Date>();
+  useEffect(() => {
+    if (!syncing && prevSyncing.current)
+      setLastSynced((prev) => prev ?? new Date());
+    prevSyncing.current = syncing;
+  }, [syncing]);
+  return (
     <section className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'>
-      <header className='z-30 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 relative'>
-        <Link
-          to={pathname.replaceAll(`/${tweet.id}`, '')}
-          className='z-30 absolute top-1.5 right-1.5 p-2 block rounded-full hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors'
-        >
-          <CloseIcon className='w-5 h-5 fill-current' />
-        </Link>
+      <header className='z-30 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800'>
+        <nav className='px-3 py-1.5 border-b border-slate-200 dark:border-slate-800'>
+          <Link
+            to={pathname.replaceAll(`/${tweet.id}`, '')}
+            className='inline-flex truncate items-center text-white text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+          >
+            <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
+            <span>Close</span>
+          </Link>
+          <div
+            className={cn(
+              'ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6',
+              { 'cursor-wait': syncing, 'cursor-default': !syncing }
+            )}
+          >
+            {syncing && (
+              <>
+                <SyncIcon />
+                <span>Syncing</span>
+              </>
+            )}
+            {!syncing && (
+              <>
+                <BoltIcon />
+                <span>
+                  Synced{' '}
+                  <TimeAgo
+                    datetime={lastSynced ?? new Date()}
+                    locale='en_short'
+                  />
+                </span>
+              </>
+            )}
+          </div>
+        </nav>
         <TweetItem tweet={tweet} />
       </header>
       <ol>
         {replies.map((reply) => (
           <TweetItem tweet={reply} key={reply.id} />
         ))}
-        {fetchers.some((f) => f.submission?.action.endsWith(tweet.id)) &&
-          Array(3)
-            .fill(null)
-            .map((_, idx) => <TweetItem key={idx} />)}
+        {syncing && fallback}
       </ol>
-      {!fetchers.some((f) => f.submission?.action.endsWith(tweet.id)) &&
-        !replies.length && (
-          <Empty className='flex-1 m-5'>NO REPLIES TO SHOW</Empty>
-        )}
+      {!syncing && !replies.length && (
+        <Empty className='flex-1 m-5'>No replies to show</Empty>
+      )}
     </section>
+  );
+}
+
+export default function TweetPage() {
+  const data = useLoaderData<LoaderData>();
+  return data.map(({ tweet, replies }) => (
+    <Section tweet={tweet} replies={replies} key={tweet.id} />
   ));
 }

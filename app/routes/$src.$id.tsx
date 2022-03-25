@@ -95,7 +95,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
       >
         <Nav scrollerRef={tweetsRef} header='Tweets' />
         <Empty className='flex-1 m-5'>
-          <p className='uppercase'>an unexpected runtime error occurred</p>
+          <p>An unexpected runtime error occurred</p>
           <p>{error.message}</p>
         </Empty>
       </section>
@@ -261,7 +261,7 @@ export default function Cluster() {
           </div>
         </Nav>
         {!tweets.length && (
-          <Empty className='flex-1 m-5'>NO TWEETS TO SHOW</Empty>
+          <Empty className='flex-1 m-5'>No tweets to show</Empty>
         )}
         {!!tweets.length && (
           <ol>
@@ -352,7 +352,7 @@ export default function Cluster() {
           </div>
         </Nav>
         {!articles.length && (
-          <Empty className='flex-1 m-5'>NO ARTICLES TO SHOW</Empty>
+          <Empty className='flex-1 m-5'>No articles to show</Empty>
         )}
         {!!articles.length && (
           <ol>

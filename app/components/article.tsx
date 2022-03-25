@@ -247,7 +247,7 @@ export default function ArticleItem({
           </button>
         </nav>
         {!results.length && (
-          <Empty className='m-3 h-48'>NO TWEETS TO SHOW</Empty>
+          <Empty className='m-3 h-48'>No tweets to show</Empty>
         )}
         {!!results.length && (
           <ol>
