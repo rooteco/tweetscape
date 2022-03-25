@@ -37,7 +37,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   return json<LoaderData>(data, { headers });
 };
 
-const fallback = Array(3)
+const fallback = Array(10)
   .fill(null)
   .map((_, idx) => <TweetItem key={idx} />);
 
