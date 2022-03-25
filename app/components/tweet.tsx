@@ -118,7 +118,8 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
       onClick={(evt) => {
         if (!tweet) return;
         if (evt.target !== evt.currentTarget) {
-          if ((evt.target as Node).nodeName !== 'P') return;
+          const validTargets = ['P', 'ARTICLE', 'HEADER'];
+          if (!validTargets.includes((evt.target as Node).nodeName)) return;
         }
         if (setActiveTweet) setActiveTweet(tweet);
         fetcher.submit(null, { action: `/sync/${tweet.id}`, method: 'patch' });
