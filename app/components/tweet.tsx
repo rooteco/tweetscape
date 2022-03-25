@@ -110,7 +110,9 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
       tabIndex={-1}
       onClick={(evt) => {
         if (!tweet) return;
-        if (evt.target !== evt.currentTarget) return;
+        if (evt.target !== evt.currentTarget) {
+          if ((evt.target as Node).nodeName !== 'P') return;
+        }
         if (setActiveTweet) setActiveTweet(tweet);
         const path = `${pathname}/${tweet.id}`;
         fetcher.submit(null, { action: path, method: 'patch' });
