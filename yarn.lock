@@ -472,10 +472,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prisma/engines@npm:3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b":
-  version: 3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b
-  resolution: "@prisma/engines@npm:3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b"
-  checksum: a2ca2af2fa0f5ab6616a0f9372f9a88bd200faaf4d2cdcbfa9c300550d0d592c5d55f32d0966944822a61e640b8dc1a3ac396b9f650a570f97775229b169280a
+"@prisma/engines@npm:3.11.1-1.1a2506facaf1a4727b7c26850735e88ec779dee9":
+  version: 3.11.1-1.1a2506facaf1a4727b7c26850735e88ec779dee9
+  resolution: "@prisma/engines@npm:3.11.1-1.1a2506facaf1a4727b7c26850735e88ec779dee9"
+  checksum: 87750ba42f2ad359e381818264acebc02d6e8fa61fe878c8e6e9ed2e0c2d13171e5c5e60ac9b380a9df54b6bc1c83750bbc6364ef09d8db7a613127f236a647b
   languageName: node
   linkType: hard
 
@@ -8204,15 +8204,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prisma@npm:^3.11.0":
-  version: 3.11.0
-  resolution: "prisma@npm:3.11.0"
+"prisma@npm:^3.11.1":
+  version: 3.11.1
+  resolution: "prisma@npm:3.11.1"
   dependencies:
-    "@prisma/engines": 3.11.0-48.b371888aaf8f51357c7457d836b86d12da91658b
+    "@prisma/engines": 3.11.1-1.1a2506facaf1a4727b7c26850735e88ec779dee9
   bin:
     prisma: build/index.js
     prisma2: build/index.js
-  checksum: b4f650bea628b77eee5f7d86418069585f7decaaeaa846c651bed3fbb17ce662ef625832ef14cf741ad7b127b4a50f1679e0bb96560b30e328240765ca80977f
+  checksum: 0dc24dad3b71ece4b5de69451f90bce20b3d52cd4b17626a725536daef0db07ee2bb08d4e50aa49332bd0b3a19a9e34bd230551bb0c859acea34f1aa508f17bd
   languageName: node
   linkType: hard
 
@@ -10107,7 +10107,7 @@ __metadata:
     postcss: ^8.4.12
     prettier: ^2.6.0
     pretty-quick: ^3.1.3
-    prisma: ^3.11.0
+    prisma: ^3.11.1
     react: ^17.0.2
     react-dom: ^17.0.2
     react-infinite-scroll-component: ^6.1.0
