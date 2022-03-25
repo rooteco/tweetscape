@@ -4,6 +4,7 @@ import type {
   clusters,
   images,
   influencers,
+  likes,
   links,
   list_followers,
   list_members,
@@ -11,6 +12,7 @@ import type {
   mentions,
   ref_type,
   refs,
+  retweets,
   scores,
   tag_type,
   tags,
@@ -23,6 +25,8 @@ export type Annotation = annotations;
 export type Cluster = clusters;
 export type Influencer = influencers;
 export type Link = links;
+export type Like = likes;
+export type Retweet = retweets;
 export type Mention = mentions;
 export type Ref = refs;
 export type Score = scores;
@@ -40,21 +44,21 @@ export type TagType = tag_type;
 export type InfluencerFull = Influencer & { html?: string };
 export type TweetFull = Tweet & {
   html?: string;
-  author: InfluencerFull;
+  author?: InfluencerFull;
   score?: Score;
   liked?: boolean;
-  replied_to?: string;
   retweeted?: boolean;
-  retweet?: TweetFull;
-  retweet_author?: InfluencerFull;
-  retweet_liked?: boolean;
-  retweet_retweeted?: boolean;
+  refs?: (Ref | null)[];
+  ref_tweets?: (TweetFull | null)[];
+  ref_authors?: (InfluencerFull | null)[];
+  ref_likes?: (Like | null)[];
+  ref_retweets?: (Retweet | null)[];
 };
 export type Article = Link & {
-  cluster_id?: string;
-  cluster_name?: string;
-  cluster_slug?: string;
-  insider_score?: number;
-  attention_score?: number;
+  cluster_id: string;
+  cluster_name: string;
+  cluster_slug: string;
+  insider_score: number;
+  attention_score: number;
   tweets: TweetFull[];
 };
