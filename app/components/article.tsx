@@ -129,7 +129,7 @@ export default function ArticleItem({
             .map(({ id, author }) => (
               <a
                 className='inline-block cursor-pointer duration-75 transition-transform hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-700 border-2 border-white dark:border-slate-900 -mr-2 first:mr-0 overflow-hidden'
-                href={`https://twitter.com/${author.username}/status/${id}`}
+                href={`https://twitter.com/${author?.username}/status/${id}`}
                 rel='noopener noreferrer'
                 target='_blank'
                 key={id}
@@ -138,7 +138,7 @@ export default function ArticleItem({
                   width={25}
                   height={25}
                   src={`/img/${encodeURIComponent(
-                    author.profile_image_url ?? ''
+                    author?.profile_image_url ?? ''
                   )}?width=25&height=25&fit=cover`}
                   alt=''
                 />
@@ -170,7 +170,7 @@ export default function ArticleItem({
         )}
         <a
           className='hover:underline'
-          href={`https://twitter.com/${earliestTweet.author.username}/status/${earliestTweet.id}`}
+          href={`https://twitter.com/${earliestTweet.author?.username}/status/${earliestTweet.id}`}
           target='_blank'
           rel='noopener noreferrer'
         >
