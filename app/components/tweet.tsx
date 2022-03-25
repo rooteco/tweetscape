@@ -131,7 +131,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
       tabIndex={-1}
       onClick={(evt) => {
         evt.stopPropagation();
-        if (!tweet) return;
+        if (!tweet || pathname.includes(tweet.id)) return;
         if (evt.target !== evt.currentTarget) {
           const validTargets = ['P', 'ARTICLE', 'HEADER'];
           if (!validTargets.includes((evt.target as Node).nodeName)) return;
@@ -141,10 +141,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
         navigate(`${pathname}/${tweet.id}`);
       }}
       onKeyPress={() => {}}
-      className={cn('flex w-full pl-3 pr-3 pb-3 relative', {
-        'pt-3 mb-3 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors':
-          nested,
-      })}
+      className={cn('flex w-full pl-3 pr-3 pb-3 relative', {})}
     >
       {!nested && (
         <a
@@ -265,7 +262,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
           refs
             ?.filter((r) => r.type === 'quoted')
             .map((t) => (
-              <TweetInner
+              <TweetItem
                 nested
                 tweet={t}
                 setActiveTweet={setActiveTweet}
@@ -310,7 +307,11 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
   );
 }
 
-export default function TweetItem({ tweet, setActiveTweet }: TweetProps) {
+export default function TweetItem({
+  tweet,
+  nested,
+  setActiveTweet,
+}: TweetProps) {
   const refs = tweet?.ref_tweets
     ?.filter((t) => !!t)
     .map((t) => ({
@@ -327,8 +328,13 @@ export default function TweetItem({ tweet, setActiveTweet }: TweetProps) {
   return (
     <li
       className={cn(
-        'w-full list-none text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors',
-        { 'pt-3': !isRetweet, 'pt-2': isRetweet }
+        'w-full list-none text-sm border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors',
+        {
+          'mb-3 border rounded-lg': nested,
+          'border-b last-of-type:border-0': !nested,
+          'pt-3': !isRetweet || nested,
+          'pt-2': isRetweet,
+        }
       )}
     >
       {isRetweet && (
@@ -363,10 +369,19 @@ export default function TweetItem({ tweet, setActiveTweet }: TweetProps) {
         refs
           ?.filter((r) => r.type === 'retweeted')
           .map((t) => (
-            <TweetInner tweet={t} setActiveTweet={setActiveTweet} key={t.id} />
+            <TweetInner
+              tweet={t}
+              setActiveTweet={setActiveTweet}
+              key={t.id}
+              nested={nested}
+            />
           ))}
       {!isRetweet && (
-        <TweetInner tweet={tweet} setActiveTweet={setActiveTweet} />
+        <TweetInner
+          tweet={tweet}
+          setActiveTweet={setActiveTweet}
+          nested={nested}
+        />
       )}
     </li>
   );
