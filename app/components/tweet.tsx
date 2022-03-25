@@ -8,6 +8,7 @@ import {
 } from 'remix';
 import cn from 'classnames';
 
+import type { InfluencerFull, Ref, TweetFull } from '~/types';
 import LikeIcon from '~/icons/like';
 import LikedIcon from '~/icons/liked';
 import type { LoaderData } from '~/root';
@@ -17,7 +18,6 @@ import RetweetIcon from '~/icons/retweet';
 import RetweetedIcon from '~/icons/retweeted';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
-import type { TweetFull } from '~/types';
 import VerifiedIcon from '~/icons/verified';
 import { num } from '~/utils';
 
@@ -104,19 +104,34 @@ function Action({
 
 type TweetProps = {
   tweet?: TweetFull;
+  nested?: boolean;
   setActiveTweet?: Dispatch<SetStateAction<TweetFull | undefined>>;
 };
 
-function TweetInner({ tweet, setActiveTweet }: TweetProps) {
+function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const { pathname } = useLocation();
+  const refs = tweet?.ref_tweets
+    ?.filter((t) => !!t)
+    .map((t) => ({
+      ...(t as TweetFull),
+      type: (tweet.refs?.find((r) => r?.referenced_tweet_id === t?.id) as Ref)
+        .type,
+      author: tweet.ref_authors?.find(
+        (a) => a?.id === t?.author_id
+      ) as InfluencerFull,
+      liked: tweet.ref_likes?.some((r) => r?.tweet_id === t?.id),
+      retweeted: tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
+    }));
+  const isQuote = tweet?.refs?.some((r) => r?.type === 'quoted');
   return (
     <div
       role='button'
       tabIndex={-1}
       onClick={(evt) => {
-        if (!tweet) return;
+        evt.stopPropagation();
+        if (!tweet || pathname.includes(tweet.id)) return;
         if (evt.target !== evt.currentTarget) {
           const validTargets = ['P', 'ARTICLE', 'HEADER'];
           if (!validTargets.includes((evt.target as Node).nodeName)) return;
@@ -126,32 +141,63 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
         navigate(`${pathname}/${tweet.id}`);
       }}
       onKeyPress={() => {}}
-      className='flex w-full pl-3 pr-3 pb-3 relative'
+      className={cn('flex w-full pl-3 pr-3 pb-3 relative', {})}
     >
-      <a
-        className={cn(
-          'block flex-none mr-3 w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden',
-          { 'animate-pulse': !tweet }
-        )}
-        href={tweet ? `https://twitter.com/${tweet.author.username}` : ''}
-        rel='noopener noreferrer'
-        target='_blank'
-      >
-        {tweet?.author.profile_image_url && (
-          <img
-            width={48}
-            height={48}
-            src={`/img/${encodeURIComponent(
-              tweet.author.profile_image_url
-            )}?width=48&height=48&fit=cover`}
-            alt=''
-          />
-        )}
-      </a>
+      {!nested && (
+        <a
+          className={cn(
+            'block flex-none mr-3 w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden',
+            { 'animate-pulse': !tweet }
+          )}
+          href={
+            tweet?.author ? `https://twitter.com/${tweet.author.username}` : ''
+          }
+          rel='noopener noreferrer'
+          target='_blank'
+        >
+          {tweet?.author?.profile_image_url && (
+            <img
+              width={48}
+              height={48}
+              src={`/img/${encodeURIComponent(
+                tweet.author.profile_image_url
+              )}?width=48&height=48&fit=cover`}
+              alt=''
+            />
+          )}
+        </a>
+      )}
       <article className='flex-1 min-w-0'>
         <header className='mb-0.5 flex items-end'>
+          {nested && (
+            <a
+              className='block flex-none mr-1 w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden'
+              href={
+                tweet?.author
+                  ? `https://twitter.com/${tweet.author.username}`
+                  : ''
+              }
+              rel='noopener noreferrer'
+              target='_blank'
+            >
+              {tweet?.author?.profile_image_url && (
+                <img
+                  width={48}
+                  height={48}
+                  src={`/img/${encodeURIComponent(
+                    tweet.author.profile_image_url
+                  )}?width=48&height=48&fit=cover`}
+                  alt=''
+                />
+              )}
+            </a>
+          )}
           <a
-            href={tweet ? `https://twitter.com/${tweet.author.username}` : ''}
+            href={
+              tweet?.author
+                ? `https://twitter.com/${tweet.author.username}`
+                : ''
+            }
             target='_blank'
             rel='noopener noreferrer'
             className={cn(
@@ -162,9 +208,9 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
               }
             )}
           >
-            {tweet?.author.name}
+            {tweet?.author?.name}
           </a>
-          {tweet?.author.verified && (
+          {tweet?.author?.verified && (
             <span className='block peer pl-0.5 h-5'>
               <VerifiedIcon className='h-5 w-5 fill-sky-500 dark:fill-current' />
             </span>
@@ -176,11 +222,15 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
               'h-2.5 w-32 mb-1.5 ml-1.5 bg-slate-200 dark:bg-slate-700 animate-pulse rounded':
                 !tweet,
             })}
-            href={tweet ? `https://twitter.com/${tweet.author.username}` : ''}
+            href={
+              tweet?.author
+                ? `https://twitter.com/${tweet.author.username}`
+                : ''
+            }
             target='_blank'
             rel='noopener noreferrer'
           >
-            {tweet ? `@${tweet.author.username}` : ''}
+            {tweet?.author ? `@${tweet.author.username}` : ''}
           </a>
           {tweet && (
             <span className='mx-1 text-slate-500 block flex-none'>·</span>
@@ -189,7 +239,7 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
             data-cy='date'
             className='hover:underline text-slate-500 block flex-none'
             href={
-              tweet
+              tweet?.author
                 ? `https://twitter.com/${tweet.author.username}/status/${tweet.id}`
                 : ''
             }
@@ -198,7 +248,7 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
           >
             {tweet && <TimeAgo datetime={tweet.created_at} locale='en_short' />}
           </a>
-          {tweet && <Profile {...tweet.author} />}
+          {tweet?.author && <Profile {...tweet.author} />}
         </header>
         <p
           data-cy='text'
@@ -208,6 +258,17 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
           })}
           dangerouslySetInnerHTML={{ __html: tweet?.html ?? tweet?.text ?? '' }}
         />
+        {isQuote &&
+          refs
+            ?.filter((r) => r.type === 'quoted')
+            .map((t) => (
+              <TweetItem
+                nested
+                tweet={t}
+                setActiveTweet={setActiveTweet}
+                key={t.id}
+              />
+            ))}
         <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-slate-500'>
           <Action
             color='blue'
@@ -238,7 +299,7 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
           <Action
             color='blue'
             icon={<ShareIcon />}
-            href={`https://twitter.com/${tweet?.author.username}/status/${tweet?.id}`}
+            href={`https://twitter.com/${tweet?.author?.username}/status/${tweet?.id}`}
           />
         </div>
       </article>
@@ -246,15 +307,37 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
   );
 }
 
-export default function TweetItem({ tweet, setActiveTweet }: TweetProps) {
+export default function TweetItem({
+  tweet,
+  nested,
+  setActiveTweet,
+}: TweetProps) {
+  const refs = tweet?.ref_tweets
+    ?.filter((t) => !!t)
+    .map((t) => ({
+      ...(t as TweetFull),
+      type: (tweet.refs?.find((r) => r?.referenced_tweet_id === t?.id) as Ref)
+        .type,
+      author: tweet.ref_authors?.find(
+        (a) => a?.id === t?.author_id
+      ) as InfluencerFull,
+      liked: tweet.ref_likes?.some((r) => r?.tweet_id === t?.id),
+      retweeted: tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
+    }));
+  const isRetweet = tweet?.refs?.some((r) => r?.type === 'retweeted');
   return (
     <li
       className={cn(
-        'w-full list-none text-sm border-b last-of-type:border-0 border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors',
-        { 'pt-3': !tweet?.retweet, 'pt-2': tweet?.retweet }
+        'w-full list-none text-sm border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors',
+        {
+          'mb-3 border rounded-lg': nested,
+          'border-b last-of-type:border-0': !nested,
+          'pt-3': !isRetweet || nested,
+          'pt-2': isRetweet,
+        }
       )}
     >
-      {tweet?.retweet && (
+      {isRetweet && (
         <header className='text-slate-500 text-xs px-3 mb-0.5'>
           <svg viewBox='0 0 24 24' className='ml-8 w-4 h-4 fill-current inline'>
             <g>
@@ -263,35 +346,42 @@ export default function TweetItem({ tweet, setActiveTweet }: TweetProps) {
           </svg>
           <a
             className='ml-3 font-bold hover:underline'
-            href={`https://twitter.com/${tweet.author.username}`}
+            href={`https://twitter.com/${tweet?.author?.username}`}
             rel='noopener noreferrer'
             target='_blank'
           >
-            {tweet.author.name} Retweeted
+            {tweet?.author?.name} Retweeted
           </a>
           <a
             className='ml-1 font-bold hover:underline'
-            href={`https://twitter.com/${tweet.author.username}/status/${tweet.id}`}
+            href={`https://twitter.com/${tweet?.author?.username}/status/${tweet?.id}`}
             rel='noopener noreferrer'
             target='_blank'
           >
-            <TimeAgo datetime={tweet.created_at} locale='en_short' />
+            <TimeAgo
+              datetime={tweet?.created_at ?? new Date()}
+              locale='en_short'
+            />
           </a>
         </header>
       )}
-      {tweet?.retweet && (
+      {isRetweet &&
+        refs
+          ?.filter((r) => r.type === 'retweeted')
+          .map((t) => (
+            <TweetInner
+              tweet={t}
+              setActiveTweet={setActiveTweet}
+              key={t.id}
+              nested={nested}
+            />
+          ))}
+      {!isRetweet && (
         <TweetInner
-          tweet={{
-            ...tweet.retweet,
-            author: tweet.retweet_author ?? tweet.author,
-            liked: tweet.retweet_liked,
-            retweeted: tweet.retweet_retweeted,
-          }}
+          tweet={tweet}
           setActiveTweet={setActiveTweet}
+          nested={nested}
         />
-      )}
-      {!tweet?.retweet && (
-        <TweetInner tweet={tweet} setActiveTweet={setActiveTweet} />
       )}
     </li>
   );
