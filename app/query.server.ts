@@ -86,7 +86,8 @@ export async function getTweetsByIds(
       left outer join influencers retweet_authors on retweet_authors.id = retweet.author_id
       ${uid ? Prisma.sql`left outer join likes retweet_likes on retweet_likes.tweet_id = retweet_refs.referenced_tweet_id and retweet_likes.influencer_id = ${uid}` : Prisma.empty}
       ${uid ? Prisma.sql`left outer join retweets retweet_retweets on retweet_retweets.tweet_id = retweet_refs.referenced_tweet_id and retweet_retweets.influencer_id = ${uid}` : Prisma.empty}
-    where tweets.id in (${Prisma.join(tweetIds)});`;
+    where tweets.id in (${Prisma.join(tweetIds)})
+    order by tweets.created_at desc;`;
   return getTweetsFull(tweets);
 }
 
@@ -115,7 +116,8 @@ export async function getTweetRepliesByIds(
       left outer join tweets retweet on retweet.id = retweet_refs.referenced_tweet_id
       left outer join influencers retweet_authors on retweet_authors.id = retweet.author_id
       ${uid ? Prisma.sql`left outer join likes retweet_likes on retweet_likes.tweet_id = retweet_refs.referenced_tweet_id and retweet_likes.influencer_id = ${uid}` : Prisma.empty}
-      ${uid ? Prisma.sql`left outer join retweets retweet_retweets on retweet_retweets.tweet_id = retweet_refs.referenced_tweet_id and retweet_retweets.influencer_id = ${uid}` : Prisma.empty};`;
+      ${uid ? Prisma.sql`left outer join retweets retweet_retweets on retweet_retweets.tweet_id = retweet_refs.referenced_tweet_id and retweet_retweets.influencer_id = ${uid}` : Prisma.empty}
+    order by tweets.created_at desc;`;
   return getTweetsFull(tweets);
 }
 
