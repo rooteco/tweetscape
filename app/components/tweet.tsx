@@ -108,8 +108,9 @@ function TweetInner({ tweet, setActiveTweet }: TweetProps) {
     <div
       role='button'
       tabIndex={-1}
-      onClick={() => {
+      onClick={(evt) => {
         if (!tweet) return;
+        if (evt.target !== evt.currentTarget) return;
         if (setActiveTweet) setActiveTweet(tweet);
         const path = `${pathname}/${tweet.id}`;
         fetcher.submit(null, { action: path, method: 'patch' });
