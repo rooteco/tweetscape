@@ -35,6 +35,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     'tweet.fields': TWEET_FIELDS,
     'expansions': TWEET_EXPANSIONS,
     'user.fields': USER_FIELDS,
+    'max_results': 100,
   });
   await executeCreateQueue(toCreateQueue(res));
   const headers = { 'Set-Cookie': await commitSession(session) };
