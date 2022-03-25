@@ -1,12 +1,19 @@
-import { ApiResponseError, TwitterApi } from 'twitter-api-v2';
+import {
+  ApiResponseError,
+  TwitterApi,
+  TwitterV2IncludesHelper,
+} from 'twitter-api-v2';
 import type {
   ListV2,
   ReferencedTweetV2,
+  TTweetv2Expansion,
+  TTweetv2TweetField,
+  TTweetv2UserField,
   TweetEntityAnnotationsV2,
   TweetEntityHashtagV2,
   TweetEntityUrlV2,
   TweetV2,
-  TTweetv2UserField,
+  TweetV2ListTweetsPaginator,
   UserV2,
 } from 'twitter-api-v2';
 import type { Decimal } from '@prisma/client/runtime';
@@ -20,6 +27,8 @@ import type {
   Influencer,
   Link,
   List,
+  ListMember,
+  Mention,
   Ref,
   Tag,
   TagType,
@@ -41,6 +50,18 @@ export const USER_FIELDS: TTweetv2UserField[] = [
   'profile_image_url',
   'public_metrics',
   'created_at',
+];
+export const TWEET_FIELDS: TTweetv2TweetField[] = [
+  'created_at',
+  'entities',
+  'author_id',
+  'public_metrics',
+  'referenced_tweets',
+];
+export const TWEET_EXPANSIONS: TTweetv2Expansion[] = [
+  'referenced_tweets.id',
+  'referenced_tweets.id.author_id',
+  'entities.mentions.username',
 ];
 
 export function handleTwitterApiError(e: unknown): never {
@@ -200,4 +221,67 @@ export function toImages(u: TweetEntityUrlV2): Image[] {
     width: i.width,
     height: i.height,
   }));
+}
+
+export function toCreateQueue(
+  res: TweetV2ListTweetsPaginator,
+  create = {
+    influencers: [] as Influencer[],
+    list_members: [] as ListMember[],
+    tweets: [] as Tweet[],
+    mentions: [] as Mention[],
+    annotations: [] as Annotation[],
+    tags: [] as Tag[],
+    refs: [] as Ref[],
+    links: [] as Link[],
+    images: [] as Image[],
+    urls: [] as URL[],
+  },
+  listId?: string
+) {
+  const includes = new TwitterV2IncludesHelper(res);
+  const authors = includes.users.map(toInfluencer);
+  authors.forEach((i) => create.influencers.push(i));
+  if (listId)
+    authors
+      .map((a) => ({
+        list_id: listId,
+        influencer_id: a.id,
+      }))
+      .forEach((l) => create.list_members.push(l));
+  includes.tweets.map(toTweet).forEach((r) => create.tweets.push(r));
+  res.tweets.map(toTweet).forEach((t) => create.tweets.push(t));
+  res.tweets.forEach((t) => {
+    t.entities?.mentions?.forEach((m) => {
+      const mid = authors.find((u) => u.username === m.username)?.id;
+      if (mid)
+        create.mentions.push({
+          tweet_id: t.id,
+          influencer_id: mid,
+          start: m.start,
+          end: m.end,
+        });
+    });
+    t.entities?.annotations?.forEach((a) =>
+      create.annotations.push(toAnnotation(a, t))
+    );
+    t.entities?.hashtags?.forEach((h) =>
+      create.tags.push(toTag(h, t, 'hashtag'))
+    );
+    t.entities?.cashtags?.forEach((c) =>
+      create.tags.push(toTag(c, t, 'cashtag'))
+    );
+    t.referenced_tweets?.forEach((r) => {
+      // Address edge-case where the referenced tweet may be
+      // inaccessible to us (e.g. private account) or deleted.
+      if (create.tweets.some((tw) => tw.id === r.id))
+        create.refs.push(toRef(r, t));
+    });
+    t.entities?.urls?.forEach((u) => {
+      create.links.push(toLink(u));
+      create.urls.push(toURL(u, t));
+      toImages(u).forEach((i) => create.images.push(i));
+    });
+  });
+  return create;
 }
