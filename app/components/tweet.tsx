@@ -130,6 +130,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
       role='button'
       tabIndex={-1}
       onClick={(evt) => {
+        evt.stopPropagation();
         if (!tweet) return;
         if (evt.target !== evt.currentTarget) {
           const validTargets = ['P', 'ARTICLE', 'HEADER'];
@@ -141,7 +142,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
       }}
       onKeyPress={() => {}}
       className={cn('flex w-full pl-3 pr-3 pb-3 relative', {
-        'pt-3 mb-3 border border-slate-200 dark:border-slate-800 rounded-lg':
+        'pt-3 mb-3 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors':
           nested,
       })}
     >
