@@ -29,7 +29,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   ]);
   const data = tweetIds.map((tweetId) => ({
     tweet: tweets.find((tweet) => tweet.id === tweetId) as TweetFull,
-    replies: replies.filter((reply) => reply.replied_to === tweetId),
+    replies: replies.filter((reply) =>
+      reply.refs?.some((r) => r?.referenced_tweet_id === tweetId)
+    ),
   }));
   const headers = { 'Set-Cookie': await commitSession(session) };
   return json<LoaderData>(data, { headers });
