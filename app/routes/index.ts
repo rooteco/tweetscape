@@ -11,7 +11,9 @@ export const loader: LoaderFunction = async ({ request }) => {
   const code = url.searchParams.get('code');
   const session = await getSession(request.headers.get('Cookie'));
   if (stateId && code) {
-    if (session.get('stateId') === stateId) {
+    const storedStateId = session.get('stateId') as string;
+    log.debug(`Checking if state (${stateId}) matches (${storedStateId})...`);
+    if (storedStateId === stateId) {
       log.info('Logging in with Twitter OAuth2...');
       const client = new TwitterApi({
         clientId: process.env.OAUTH_CLIENT_ID as string,
