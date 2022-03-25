@@ -255,16 +255,14 @@ export function toCreateQueue(
   const includes = new TwitterV2IncludesHelper(res);
   const authors = includes.users.map(toInfluencer);
   authors.forEach((i) => queue.influencers.push(i));
-  if (listId)
-    authors
-      .map((a) => ({
-        list_id: listId,
-        influencer_id: a.id,
-      }))
-      .forEach((l) => queue.list_members.push(l));
   includes.tweets.map(toTweet).forEach((r) => queue.tweets.push(r));
   res.tweets.map(toTweet).forEach((t) => queue.tweets.push(t));
   res.tweets.forEach((t) => {
+    if (listId)
+      queue.list_members.push({
+        influencer_id: t.author_id as string,
+        list_id: listId,
+      });
     t.entities?.mentions?.forEach((m) => {
       const mid = authors.find((u) => u.username === m.username)?.id;
       if (mid)
