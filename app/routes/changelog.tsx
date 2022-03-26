@@ -38,7 +38,7 @@ export default function Changelog() {
       </header>
       <main className='my-8 relative'>
         {posts.map((post) => (
-          <>
+          <section key={post.id}>
             <hr className='border-t border-slate-200 dark:border-slate-700' />
             <div className='my-20 flex items-start'>
               <h4 className='w-1/4 sticky top-6 mr-6 shrink-0 text-slate-500'>
@@ -54,7 +54,7 @@ export default function Changelog() {
                 dangerouslySetInnerHTML={{ __html: post.html }}
               />
             </div>
-          </>
+          </section>
         ))}
       </main>
     </div>

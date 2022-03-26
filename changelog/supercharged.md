@@ -2,7 +2,7 @@
 date: March 25, 2022
 ---
 
-![Favorite folders](/changelog/supercharged.webp)
+![Favorite folders](/ss/supercharged.webp)
 
 ## Favorite folders
 
