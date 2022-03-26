@@ -7,11 +7,11 @@ export { loader } from '~/changelog.server';
 export default function Changelog() {
   const posts = useLoaderData<LoaderData>();
   return (
-    <div className='max-w-screen-xl mx-auto'>
+    <div className='max-w-screen-xl mx-auto px-6'>
       <header className='flex relative'>
         <div className='w-1/4 min-w-[160px] mr-6' />
         <div className='py-14'>
-          <h1 className='mb-5 text-5xl font-bold'>Changelog</h1>
+          <h1 className='mb-5 text-5xl font-bold tracking-tight'>Changelog</h1>
           <p className='mb-2.5 text-slate-600 dark:text-slate-400'>
             New updates and improvements to Tweetscape.
           </p>
@@ -22,7 +22,7 @@ export default function Changelog() {
               target='_blank'
               rel='noopener noreferrer'
             >
-              Subscribe to updates
+              Join the community
             </a>
             <span className='mx-3'>·</span>
             <a
@@ -49,7 +49,7 @@ export default function Changelog() {
                 })}
               </h4>
               <article
-                className='prose prose-slate dark:prose-invert max-w-none prose-img:rounded-xl prose-img:first-of-type:mt-0'
+                className='-mt-8 prose prose-slate dark:prose-invert max-w-none prose-img:rounded-xl prose-headings:font-semibold prose-blockquote:font-normal prose-p:before:hidden prose-p:after:hidden prose-blockquote:text-slate-600 dark:prose-blockquote:text-slate-400 prose-a:text-inherit prose-a:font-normal'
                 key={post.id}
                 dangerouslySetInnerHTML={{ __html: post.html }}
               />
