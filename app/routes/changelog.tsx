@@ -15,7 +15,7 @@ export default function Changelog() {
           <p className='mb-2.5 text-slate-600 dark:text-slate-400'>
             New updates and improvements to Tweetscape.
           </p>
-          <p>
+          <p className='text-slate-600 dark:text-slate-400'>
             <a
               className='dark:text-sky-400 text-sky-500'
               href='https://discord.gg/3KYQBJwRSS'
