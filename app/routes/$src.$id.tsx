@@ -17,6 +17,7 @@ import { getClusterTweets, getListTweets } from '~/query.server';
 import { lang, log } from '~/utils.server';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
+import Header from '~/components/header';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import type { TweetFull } from '~/types';
@@ -59,31 +60,34 @@ export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   const tweetsRef = useRef<HTMLElement>(null);
   return (
-    <main className='flex flex-1 overflow-hidden'>
-      <section
-        ref={tweetsRef}
-        className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'
-      >
-        <Nav scrollerRef={tweetsRef} header='Tweets' />
-        <Empty className='flex-1 m-5'>
-          <p>An unexpected runtime error occurred:</p>
-          <p>{error.message}</p>
-          <p className='mt-2'>
-            Try logging out and in again. Or smash your keyboard; that sometimes
-            helps. If you still have trouble, come and complain in{' '}
-            <a
-              className='underline'
-              href='https://discord.gg/3KYQBJwRSS'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              our Discord server
-            </a>
-            ; we’re always more than happy to help.
-          </p>
-        </Empty>
-      </section>
-    </main>
+    <div className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
+      <Header />
+      <main className='flex flex-1 overflow-hidden'>
+        <section
+          ref={tweetsRef}
+          className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'
+        >
+          <Nav scrollerRef={tweetsRef} header='Tweets' />
+          <Empty className='flex-1 m-5'>
+            <p>An unexpected runtime error occurred:</p>
+            <p>{error.message}</p>
+            <p className='mt-2'>
+              Try logging out and in again. Or smash your keyboard; that
+              sometimes helps. If you still have trouble, come and complain in{' '}
+              <a
+                className='underline'
+                href='https://discord.gg/3KYQBJwRSS'
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                our Discord server
+              </a>
+              ; we’re always more than happy to help.
+            </p>
+          </Empty>
+        </section>
+      </main>
+    </div>
   );
 }
 
@@ -119,125 +123,128 @@ export default function Cluster() {
   const [activeTweet, setActiveTweet] = useState<TweetFull>();
 
   return (
-    <main className='flex flex-1 overflow-x-auto overflow-y-hidden'>
-      <section
-        ref={tweetsRef}
-        id='tweets'
-        className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'
-      >
-        <Nav scrollerRef={tweetsRef} header='Tweets'>
-          <div className='flex-none mr-4'>
-            <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-            <NavLink
-              tweetsSort={TweetsSort.TweetCount}
-              tweetsFilter={tweetsFilter}
-              active={tweetsSort === TweetsSort.TweetCount}
-            >
-              tweets
-            </NavLink>
-            {' · '}
-            <NavLink
-              tweetsSort={TweetsSort.RetweetCount}
-              tweetsFilter={tweetsFilter}
-              active={tweetsSort === TweetsSort.RetweetCount}
-            >
-              retweets
-            </NavLink>
-            {' · '}
-            <NavLink
-              tweetsSort={TweetsSort.QuoteCount}
-              tweetsFilter={tweetsFilter}
-              active={tweetsSort === TweetsSort.QuoteCount}
-            >
-              quotes
-            </NavLink>
-            {' · '}
-            <NavLink
-              tweetsSort={TweetsSort.LikeCount}
-              tweetsFilter={tweetsFilter}
-              active={tweetsSort === TweetsSort.LikeCount}
-            >
-              likes
-            </NavLink>
-            {' · '}
-            <NavLink
-              tweetsSort={TweetsSort.FollowerCount}
-              tweetsFilter={tweetsFilter}
-              active={tweetsSort === TweetsSort.FollowerCount}
-            >
-              followers
-            </NavLink>
-            {' · '}
-            <NavLink
-              tweetsSort={TweetsSort.Latest}
-              tweetsFilter={tweetsFilter}
-              active={tweetsSort === TweetsSort.Latest}
-            >
-              latest
-            </NavLink>
-            {' · '}
-            <NavLink
-              tweetsSort={TweetsSort.Earliest}
-              tweetsFilter={tweetsFilter}
-              active={tweetsSort === TweetsSort.Earliest}
-            >
-              earliest
-            </NavLink>
-          </div>
-          <div className='flex-none'>
-            <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-            <NavLink
-              tweetsSort={tweetsSort}
-              tweetsFilter={TweetsFilter.HideRetweets}
-              active={tweetsFilter === TweetsFilter.HideRetweets}
-            >
-              hide retweets
-            </NavLink>
-            {' · '}
-            <NavLink
-              tweetsSort={tweetsSort}
-              tweetsFilter={TweetsFilter.ShowRetweets}
-              active={tweetsFilter === TweetsFilter.ShowRetweets}
-            >
-              show retweets
-            </NavLink>
-          </div>
-        </Nav>
-        {!tweets.length && (
-          <Empty className='flex-1 m-5'>No tweets to show</Empty>
-        )}
-        {!!tweets.length && (
-          <ol>
-            <InfiniteScroll
-              dataLength={tweets.length}
-              next={() =>
-                setSearchParams({
-                  ...Object.fromEntries(searchParams.entries()),
-                  l: (Number(searchParams.get('l') ?? 50) + 50).toString(),
-                })
-              }
-              loader={Array(3)
-                .fill(null)
-                .map((_, idx) => (
-                  <TweetItem key={idx} />
+    <div className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
+      <Header />
+      <main className='flex flex-1 overflow-x-auto overflow-y-hidden'>
+        <section
+          ref={tweetsRef}
+          id='tweets'
+          className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'
+        >
+          <Nav scrollerRef={tweetsRef} header='Tweets'>
+            <div className='flex-none mr-4'>
+              <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
+              <NavLink
+                tweetsSort={TweetsSort.TweetCount}
+                tweetsFilter={tweetsFilter}
+                active={tweetsSort === TweetsSort.TweetCount}
+              >
+                tweets
+              </NavLink>
+              {' · '}
+              <NavLink
+                tweetsSort={TweetsSort.RetweetCount}
+                tweetsFilter={tweetsFilter}
+                active={tweetsSort === TweetsSort.RetweetCount}
+              >
+                retweets
+              </NavLink>
+              {' · '}
+              <NavLink
+                tweetsSort={TweetsSort.QuoteCount}
+                tweetsFilter={tweetsFilter}
+                active={tweetsSort === TweetsSort.QuoteCount}
+              >
+                quotes
+              </NavLink>
+              {' · '}
+              <NavLink
+                tweetsSort={TweetsSort.LikeCount}
+                tweetsFilter={tweetsFilter}
+                active={tweetsSort === TweetsSort.LikeCount}
+              >
+                likes
+              </NavLink>
+              {' · '}
+              <NavLink
+                tweetsSort={TweetsSort.FollowerCount}
+                tweetsFilter={tweetsFilter}
+                active={tweetsSort === TweetsSort.FollowerCount}
+              >
+                followers
+              </NavLink>
+              {' · '}
+              <NavLink
+                tweetsSort={TweetsSort.Latest}
+                tweetsFilter={tweetsFilter}
+                active={tweetsSort === TweetsSort.Latest}
+              >
+                latest
+              </NavLink>
+              {' · '}
+              <NavLink
+                tweetsSort={TweetsSort.Earliest}
+                tweetsFilter={tweetsFilter}
+                active={tweetsSort === TweetsSort.Earliest}
+              >
+                earliest
+              </NavLink>
+            </div>
+            <div className='flex-none'>
+              <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
+              <NavLink
+                tweetsSort={tweetsSort}
+                tweetsFilter={TweetsFilter.HideRetweets}
+                active={tweetsFilter === TweetsFilter.HideRetweets}
+              >
+                hide retweets
+              </NavLink>
+              {' · '}
+              <NavLink
+                tweetsSort={tweetsSort}
+                tweetsFilter={TweetsFilter.ShowRetweets}
+                active={tweetsFilter === TweetsFilter.ShowRetweets}
+              >
+                show retweets
+              </NavLink>
+            </div>
+          </Nav>
+          {!tweets.length && (
+            <Empty className='flex-1 m-5'>No tweets to show</Empty>
+          )}
+          {!!tweets.length && (
+            <ol>
+              <InfiniteScroll
+                dataLength={tweets.length}
+                next={() =>
+                  setSearchParams({
+                    ...Object.fromEntries(searchParams.entries()),
+                    l: (Number(searchParams.get('l') ?? 50) + 50).toString(),
+                  })
+                }
+                loader={Array(3)
+                  .fill(null)
+                  .map((_, idx) => (
+                    <TweetItem key={idx} />
+                  ))}
+                scrollThreshold={0.65}
+                scrollableTarget='tweets'
+                style={{ overflow: 'hidden' }}
+                hasMore
+              >
+                {tweets.map((tweet) => (
+                  <TweetItem
+                    tweet={tweet}
+                    setActiveTweet={setActiveTweet}
+                    key={tweet.id}
+                  />
                 ))}
-              scrollThreshold={0.65}
-              scrollableTarget='tweets'
-              style={{ overflow: 'hidden' }}
-              hasMore
-            >
-              {tweets.map((tweet) => (
-                <TweetItem
-                  tweet={tweet}
-                  setActiveTweet={setActiveTweet}
-                  key={tweet.id}
-                />
-              ))}
-            </InfiniteScroll>
-          </ol>
-        )}
-      </section>
-      <Outlet context={activeTweet} />
-    </main>
+              </InfiniteScroll>
+            </ol>
+          )}
+        </section>
+        <Outlet context={activeTweet} />
+      </main>
+    </div>
   );
 }
