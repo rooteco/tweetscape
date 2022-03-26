@@ -11,6 +11,7 @@ import { useState } from 'react';
 
 import BirdIcon from '~/icons/bird';
 import Empty from '~/components/empty';
+import FireIcon from '~/icons/fire';
 import type { LoaderData } from '~/root';
 import LogoutIcon from '~/icons/logout';
 import MenuIcon from '~/icons/menu';
@@ -109,6 +110,16 @@ export default function Header() {
         {root?.user && <Sync />}
       </div>
       <div className='h-6 mt-1.5'>
+        <Link
+          className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+          to='/changelog'
+        >
+          <FireIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
+          <span>Changelog</span>
+        </Link>
+        <ThemeSwitcher />
+      </div>
+      <div className='h-6 mt-1.5'>
         <a
           className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
           href='https://github.com/rooteco/tweetscape'
@@ -127,9 +138,6 @@ export default function Header() {
           <OpenInNewIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
           <span>Community</span>
         </a>
-      </div>
-      <div className='h-6 mt-1.5'>
-        <ThemeSwitcher />
       </div>
       {!!clusters.length && (
         <Section
