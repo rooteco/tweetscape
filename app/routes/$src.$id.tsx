@@ -60,7 +60,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   const tweetsRef = useRef<HTMLElement>(null);
   return (
-    <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
+    <div className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
       <Header />
       <main className='flex flex-1 overflow-hidden'>
         <section
@@ -123,7 +123,7 @@ export default function Cluster() {
   const [activeTweet, setActiveTweet] = useState<TweetFull>();
 
   return (
-    <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
+    <div className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
       <Header />
       <main className='flex flex-1 overflow-x-auto overflow-y-hidden'>
         <section
