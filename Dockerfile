@@ -38,6 +38,7 @@ COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/package.json /app/package.json
 COPY --from=build /app/build /app/build
 COPY --from=build /app/public /app/public
+COPY --from=build /app/changelog /app/changelog
 
 EXPOSE 8080
 
