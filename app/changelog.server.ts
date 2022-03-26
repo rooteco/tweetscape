@@ -8,6 +8,13 @@ import { marked } from 'marked';
 
 import { log } from '~/utils.server';
 
+const renderer = new marked.Renderer();
+renderer.link = function link(...args) {
+  const link = marked.Renderer.prototype.link.apply(this, args);
+  return link.replace(`<a`, `<a target='_blank' rel='noopener noreferrer'`);
+};
+marked.setOptions({ renderer });
+
 export type LoaderData = { date: Date; id: string; html: string }[];
 
 export const loader: LoaderFunction = async () => {
