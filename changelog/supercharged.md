@@ -36,7 +36,7 @@ No one knows how Twitter's "algorithm" works behind-the-scenes.
 
 We're here to change that.
 We believe that we can create a more transparent, user-centric Twitter—one that's focused not on money, but on **you.**
-A version of Twitter that is optimized to serve **you**, not a corporation or its investors.
+An [OSS](https://github.com/rooteco/tweetscape) version of Twitter that is optimized to serve **you**, not a corporation or its investors.
 
 We'll empower you in ways Twitter never will:
 
