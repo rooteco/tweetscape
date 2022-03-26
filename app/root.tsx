@@ -26,7 +26,6 @@ import { commitSession, getSession } from '~/session.server';
 import Empty from '~/components/empty';
 import { ErrorContext } from '~/error';
 import Footer from '~/components/footer';
-import Header from '~/components/header';
 import { getLists } from '~/query.server';
 import { log } from '~/utils.server';
 import styles from '~/styles/app.css';
@@ -109,7 +108,7 @@ function App({ children }: { children: ReactNode }) {
         <Links />
         <ThemeHead ssrTheme={Boolean(data.theme)} />
       </head>
-      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-slate-100 w-full h-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 fixed overflow-hidden'>
+      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-slate-100 w-full h-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100'>
         {children}
         <ThemeBody ssrTheme={Boolean(data.theme)} />
         <ScrollRestoration />
@@ -123,13 +122,11 @@ function App({ children }: { children: ReactNode }) {
 export function ErrorBoundary({ error: e }: { error: Error }) {
   const [error, setError] = useState<Error | undefined>(e);
   const context = useMemo(() => ({ error, setError }), [error, setError]);
-  const data = useLoaderData<LoaderData>();
   return (
-    <ThemeProvider specifiedTheme={data.theme}>
+    <ThemeProvider specifiedTheme={null}>
       <ErrorContext.Provider value={context}>
         <App>
           <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
-            <Header />
             <Empty className='m-10 flex-1'>
               <article className='max-w-md'>
                 <p>An unexpected runtime error occurred:</p>
@@ -166,10 +163,7 @@ export default function AppWithProviders() {
     <ThemeProvider specifiedTheme={data.theme}>
       <ErrorContext.Provider value={context}>
         <App>
-          <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
-            <Header />
-            <Outlet />
-          </div>
+          <Outlet />
         </App>
       </ErrorContext.Provider>
     </ThemeProvider>
