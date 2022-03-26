@@ -32,7 +32,7 @@ There are no filters for your feed, no offline support, no keyboard shortcuts, n
 No one knows how Twitter's "algorithm" works behind-the-scenes.
 
 > Twitter algorithm should be open source
-> —[@elonmusk](https://twitter.com/elonmusk/status/1507041396242407424) (you know who this guy is)
+> —[@elonmusk](https://twitter.com/elonmusk/status/1507041396242407424) (CEO Tesla and SpaceX but you knew that 🙃)
 
 We're here to change that.
 We believe that we can create a more transparent, user-centric Twitter—one that's focused not on money, but on **you.**
