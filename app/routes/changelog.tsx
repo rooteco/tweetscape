@@ -12,7 +12,7 @@ export default function Changelog() {
         <div className='w-1/4 min-w-[160px] mr-6' />
         <div className='py-14'>
           <h1 className='mb-5 text-5xl font-bold'>Changelog</h1>
-          <p className='mb-2.5 text-slate-500'>
+          <p className='mb-2.5 text-slate-600 dark:text-slate-400'>
             New updates and improvements to Tweetscape.
           </p>
           <p>
@@ -41,7 +41,7 @@ export default function Changelog() {
           <section key={post.id}>
             <hr className='border-t border-slate-200 dark:border-slate-700' />
             <div className='my-20 flex items-start'>
-              <h4 className='w-1/4 sticky top-6 mr-6 shrink-0 text-slate-500'>
+              <h4 className='w-1/4 sticky top-6 mr-6 shrink-0 text-slate-600 dark:text-slate-400 font-medium'>
                 {new Date(post.date).toLocaleString(undefined, {
                   month: 'short',
                   day: 'numeric',
