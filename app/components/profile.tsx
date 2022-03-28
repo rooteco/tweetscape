@@ -61,6 +61,7 @@ export default function Profile({
         </div>
         <div className='mt-1 leading-none text-slate-500'>
           <a
+            className='hover:underline'
             href={`https://twitter.com/${username}`}
             rel='noopener noreferrer'
             target='_blank'
@@ -69,12 +70,23 @@ export default function Profile({
           </a>
           <span className='mx-1'>·</span>
           <a
+            className='hover:underline'
             href={`https://hive.one/p/${username}`}
             target='_blank'
             rel='noopener noreferrer'
           >
-            hive.one
-            <OpenInNewIcon className='inline fill-current w-3.5 h-3.5 ml-0.5 mb-px' />
+            hive
+            <OpenInNewIcon className='inline fill-current w-3.5 h-3.5 ml-0.5' />
+          </a>
+          <span className='mx-1'>·</span>
+          <a
+            className='hover:underline'
+            href={`https://feed.rekt.news/parlor/${username}`}
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            rekt
+            <OpenInNewIcon className='inline fill-current w-3.5 h-3.5 ml-0.5' />
           </a>
         </div>
       </header>
