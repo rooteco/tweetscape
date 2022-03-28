@@ -30,6 +30,8 @@ import {
   getClusterTweets,
   getListArticles,
   getListTweets,
+  getRektArticles,
+  getRektTweets,
 } from '~/query.server';
 import { lang, log } from '~/utils.server';
 import ArticleItem from '~/components/article';
@@ -70,14 +72,46 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     url.searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
   const limit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
-  const articles =
-    params.src === 'clusters'
-      ? await getClusterArticles(params.id, articlesSort, articlesFilter, uid)
-      : await getListArticles(params.id, articlesSort, articlesFilter, uid);
-  const tweets =
-    params.src === 'clusters'
-      ? await getClusterTweets(params.id, tweetsSort, tweetsFilter, limit, uid)
-      : await getListTweets(params.id, tweetsSort, tweetsFilter, limit, uid);
+  let articles: Article[];
+  let tweets: TweetFull[];
+  switch (params.src) {
+    case 'clusters':
+      articles = await getClusterArticles(
+        params.id,
+        articlesSort,
+        articlesFilter,
+        uid
+      );
+      tweets = await getClusterTweets(
+        params.id,
+        tweetsSort,
+        tweetsFilter,
+        limit,
+        uid
+      );
+      break;
+    case 'lists':
+      articles = await getListArticles(
+        params.id,
+        articlesSort,
+        articlesFilter,
+        uid
+      );
+      tweets = await getListTweets(
+        params.id,
+        tweetsSort,
+        tweetsFilter,
+        limit,
+        uid
+      );
+      break;
+    case 'rekt':
+      articles = await getRektArticles(uid);
+      tweets = await getRektTweets(tweetsSort, tweetsFilter, limit, uid);
+      break;
+    default:
+      throw new Response('Not Found', { status: 404 });
+  }
   return json<LoaderData>(
     { articles, tweets, locale: lang(request) },
     { headers: { 'Set-Cookie': await commitSession(session) } }

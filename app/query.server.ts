@@ -8,9 +8,9 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
-import { Prisma, db } from '~/db.server';
+import { revalidate, swr } from '~/swr.server';
+import { Prisma } from '~/db.server';
 import { log } from '~/utils.server';
-import { revalidate } from '~/swr.server';
 
 const TWEETS_ORDER_BY: Record<TweetsSort, Prisma.Sql> = {
   [TweetsSort.TweetCount]: Prisma.sql`(tweets.retweet_count + tweets.quote_count) desc`,
@@ -63,7 +63,7 @@ export async function getTweetsByIds(
   uid?: string
 ): Promise<TweetFull[]> {
   /* prettier-ignore */
-  const tweets = await db.$queryRaw<TweetFull[]>`
+  const tweets = await swr<TweetFull>(Prisma.sql`
     select
       tweets.*,
       ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
@@ -85,7 +85,7 @@ export async function getTweetsByIds(
       ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
     where tweets.id in (${Prisma.join(tweetIds)})
     group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
-    order by created_at desc;`;
+    order by created_at desc;`);
   return getTweetsFull(tweets);
 }
 
@@ -94,7 +94,7 @@ export async function getTweetRepliesByIds(
   uid?: string
 ): Promise<TweetFull[]> {
   /* prettier-ignore */
-  const tweets = await db.$queryRaw<TweetFull[]>`
+  const tweets = await swr<TweetFull>(Prisma.sql`
     select
       tweets.*,
       ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
@@ -116,7 +116,7 @@ export async function getTweetRepliesByIds(
       ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.influencer_id = ${uid}` : Prisma.empty}
       ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
     group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
-    order by created_at desc;`;
+    order by created_at desc;`);
   return getTweetsFull(tweets);
 }
 
@@ -162,7 +162,7 @@ export async function getListTweets(
   uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
-  const tweets = await db.$queryRaw<TweetFull[]>(
+  const tweets = await swr<TweetFull>(
     getListTweetsQuery(listId, sort, filter, limit, uid)
   );
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
@@ -227,28 +227,58 @@ export async function getClusterTweets(
   uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
-  const tweets = await db.$queryRaw<TweetFull[]>(
+  const tweets = await swr<TweetFull>(
     getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid)
   );
   log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
   return getTweetsFull(tweets);
 }
-export function revalidateClusterTweets(
-  clusterSlug: string,
+
+function getRektTweetsQuery(
+  sort: TweetsSort,
+  filter: TweetsFilter,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: string
 ) {
-  log.info(`Revalidating cluster (${clusterSlug}) tweets...`);
-  const promises = Object.values(TweetsSort).map((sort) => {
-    if (typeof sort === 'string') return;
-    return Object.values(TweetsFilter).map((filter) => {
-      if (typeof filter === 'string') return;
-      return revalidate(
-        getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid)
-      );
-    });
-  });
-  return Promise.all(promises.flat());
+  /* prettier-ignore */
+  return Prisma.sql`
+    select
+      tweets.*,
+      ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
+      ${uid ? Prisma.sql`retweets is not null as retweeted,` : Prisma.empty}
+      to_json(influencers.*) as author,
+      json_agg(refs.*) as refs,
+      json_agg(ref_tweets.*) as ref_tweets,
+      ${uid ? Prisma.sql`json_agg(ref_likes.*) as ref_likes,` : Prisma.empty}
+      ${uid ? Prisma.sql`json_agg(ref_retweets.*) as ref_retweets,` : Prisma.empty}
+      json_agg(ref_authors.*) as ref_authors
+    from tweets
+      inner join influencers on influencers.id = tweets.author_id
+      inner join rekt on rekt.influencer_id = influencers.id
+      ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
+      ${uid ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.influencer_id = ${uid}` : Prisma.empty}
+      left outer join refs on refs.referencer_tweet_id = tweets.id
+      left outer join tweets ref_tweets on ref_tweets.id = refs.referenced_tweet_id
+      left outer join influencers ref_authors on ref_authors.id = ref_tweets.author_id
+      ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.influencer_id = ${uid}` : Prisma.empty}
+      ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
+    ${filter === TweetsFilter.HideRetweets ? Prisma.sql`where refs is null` : Prisma.empty}
+    group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
+    order by ${TWEETS_ORDER_BY[sort]}
+    limit ${limit};`;
+}
+export async function getRektTweets(
+  sort: TweetsSort,
+  filter: TweetsFilter,
+  limit = DEFAULT_TWEETS_LIMIT,
+  uid?: string
+): Promise<TweetFull[]> {
+  log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
+  const tweets = await swr<TweetFull>(
+    getRektTweetsQuery(sort, filter, limit, uid)
+  );
+  log.info(`Fetched ${tweets.length} tweets for Rekt.`);
+  return getTweetsFull(tweets);
 }
 
 function getListsQuery(uid: string): Prisma.Sql {
@@ -258,8 +288,7 @@ function getListsQuery(uid: string): Prisma.Sql {
     where lists.owner_id = ${uid} or list_followers.influencer_id = ${uid}
     `;
 }
-export const getLists = (uid: string) =>
-  db.$queryRaw<List[]>(getListsQuery(uid));
+export const getLists = (uid: string) => swr<List>(getListsQuery(uid));
 export const revalidateLists = (uid: string) => revalidate(getListsQuery(uid));
 
 function getListArticlesQuery(
@@ -307,7 +336,7 @@ function getListArticlesQuery(
     where url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url
     order by count(tweets) desc
-    limit 20;`;
+    limit 50;`;
 }
 export async function getListArticles(
   listId: string,
@@ -315,7 +344,7 @@ export async function getListArticles(
   filter: ArticlesFilter,
   uid?: string
 ): Promise<Article[]> {
-  const articles = await db.$queryRaw<Article[]>(
+  const articles = await swr<Article>(
     getListArticlesQuery(listId, sort, filter, uid)
   );
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
@@ -385,7 +414,7 @@ function getClusterArticlesQuery(
     where url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url
     order by ${ARTICLES_ORDER_BY[sort]} desc
-    limit 20;`;
+    limit 50;`;
 }
 export async function getClusterArticles(
   clusterSlug: string,
@@ -393,9 +422,63 @@ export async function getClusterArticles(
   filter: ArticlesFilter,
   uid?: string
 ): Promise<Article[]> {
-  const articles = await db.$queryRaw<Article[]>(
+  const articles = await swr<Article>(
     getClusterArticlesQuery(clusterSlug, sort, filter, uid)
   );
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);
+  return getArticlesFull(articles);
+}
+
+function getRektArticlesQuery(uid?: string): Prisma.Sql {
+  /* prettier-ignore */
+  return Prisma.sql`
+    select
+      links.*,
+      sum(tweets.points) as points,
+      json_agg(tweets.*) as tweets
+    from links
+      inner join (
+        select distinct on (urls.link_url, tweets.author_id)
+          urls.link_url as link_url,
+          tweets.*
+        from urls
+          inner join (
+            select
+              tweets.*,
+              rekt.points as points,
+              to_json(rekt.*) as rekt,
+              ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
+              ${uid ? Prisma.sql`retweets is not null as retweeted,` : Prisma.empty}
+              to_json(influencers.*) as author,
+              quotes.referenced_tweet_id as quote_id,
+              json_agg(refs.*) as refs,
+              json_agg(ref_tweets.*) as ref_tweets,
+              ${uid ? Prisma.sql`json_agg(ref_likes.*) as ref_likes,` : Prisma.empty}
+              ${uid ? Prisma.sql`json_agg(ref_retweets.*) as ref_retweets,` : Prisma.empty}
+              json_agg(ref_authors.*) as ref_authors
+            from tweets
+              inner join influencers on influencers.id = tweets.author_id
+              inner join rekt on rekt.influencer_id = tweets.author_id
+              ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
+              ${uid ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.influencer_id = ${uid}` : Prisma.empty}
+              left outer join refs quotes on quotes.referencer_tweet_id = tweets.id and quotes.type = 'quoted'
+              left outer join refs retweet on retweet.referencer_tweet_id = tweets.id and retweet.type = 'retweeted'
+              left outer join refs on refs.referencer_tweet_id = tweets.id
+              left outer join tweets ref_tweets on ref_tweets.id = refs.referenced_tweet_id
+              left outer join influencers ref_authors on ref_authors.id = ref_tweets.author_id
+              ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.influencer_id = ${uid}` : Prisma.empty}
+              ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
+            where retweet is null
+            group by tweets.id,quotes.referenced_tweet_id,rekt.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
+          ) as tweets on urls.tweet_id in (tweets.id, tweets.quote_id)
+      ) as tweets on tweets.link_url = links.url
+    where links.url !~ '^https?:\\/\\/twitter\\.com'
+    group by links.url
+    order by points desc
+    limit 50;`
+}
+export async function getRektArticles(uid?: string): Promise<Article[]> {
+  const articles = await swr<Article>(getRektArticlesQuery(uid));
+  log.info(`Fetched ${articles.length} articles for Rekt.`);
   return getArticlesFull(articles);
 }
