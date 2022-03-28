@@ -17,16 +17,15 @@ const limiter = new Bottleneck({
   minTime: 250,
 });
 limiter.on('error', (e) => {
-  log.error(`Limiter error: ${(e as Error).stack}`);
+  log.error(`Limiter error: ${(e as Error).message}`);
 });
 limiter.on('failed', (e) => {
-  log.warn(`Limiter job failed: ${(e as Error).stack}`);
+  log.warn(`Limiter job failed: ${(e as Error).message}`);
 });
 
 export const action: ActionFunction = async ({ request }) => {
   const { session, uid } = await getLoggedInSession(request);
   log.info(`Fetching owned and followed lists for user (${uid})...`);
-  // TODO: Should I allow potentially stale data (from redis) to be used here?
   const listIds = (await getLists(uid)).map((l) => l.id);
   log.info(`Fetching articles for ${listIds.length} user (${uid}) lists...`);
   const articlesToFetch: Article[] = [];
@@ -55,10 +54,10 @@ export const action: ActionFunction = async ({ request }) => {
     articlesToFetch.map(async (article) => {
       const { url } = article;
       try {
-        log.debug(`Fetching link (${url}) metadata...`);
+        log.trace(`Fetching link (${url}) metadata...`);
         const res = await limiter.schedule({ expiration: 5000 }, fetch, url);
         const html = await res.text();
-        log.debug(`Parsing link (${url}) metadata...`);
+        log.trace(`Parsing link (${url}) metadata...`);
         const ast = parse(html);
         /* eslint-disable-next-line one-var */
         let title, description, ogTitle, ogDescription;
@@ -97,7 +96,7 @@ export const action: ActionFunction = async ({ request }) => {
           unwound_url: res.url,
         });
       } catch (e) {
-        log.error(`Error fetching link (${url}): ${(e as Error).stack}`);
+        log.error(`Error fetching link (${url}): ${(e as Error).message}`);
       }
     })
   );

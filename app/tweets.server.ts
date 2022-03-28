@@ -66,17 +66,17 @@ export const action: ActionFunction = async ({ request }) => {
       listIds.map(async (listId, idx) => {
         const context = `user (${uid}) list (${listId})`;
         if ((listTweetsLimit?.remaining ?? listIds.length) > idx) {
-          log.info(`Fetching tweets for ${context}...`);
+          log.trace(`Fetching tweets for ${context}...`);
           const hash = createHash('sha256');
           hash.update(listId);
           hash.update(uid);
           const key = `latest-tweet-id:list-tweets:${hash.digest('hex')}`;
           const latestTweetId = await redis.get(key);
-          log.debug(`Found the latest tweet (${listId}): ${latestTweetId}`);
+          log.trace(`Found the latest tweet (${listId}): ${latestTweetId}`);
           const check = await api.v2.listTweets(listId, { max_results: 1 });
           const latestTweet = check.tweets[0];
           if (latestTweet && latestTweet.id === latestTweetId)
-            return log.info(`Skipping fetch for ${context}...`);
+            return log.trace(`Skipping fetch for ${context}...`);
           if (latestTweet) await redis.set(key, check.tweets[0].id);
           const res = await api.v2.listTweets(listId, {
             'tweet.fields': TWEET_FIELDS,

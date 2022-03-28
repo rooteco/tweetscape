@@ -165,7 +165,7 @@ export async function getListTweets(
   const tweets = await swr<TweetFull>(
     getListTweetsQuery(listId, sort, filter, limit, uid)
   );
-  log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
+  log.trace(`Fetched ${tweets.length} tweets for list (${listId}).`);
   return getTweetsFull(tweets);
 }
 export function revalidateListTweets(
@@ -173,7 +173,7 @@ export function revalidateListTweets(
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: string
 ) {
-  log.info(`Revalidating list (${listId}) tweets...`);
+  log.debug(`Revalidating list (${listId}) tweets...`);
   const promises = Object.values(TweetsSort).map((sort) => {
     if (typeof sort === 'string') return;
     return Object.values(TweetsFilter).map((filter) => {
@@ -230,7 +230,7 @@ export async function getClusterTweets(
   const tweets = await swr<TweetFull>(
     getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid)
   );
-  log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
+  log.trace(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
   return getTweetsFull(tweets);
 }
 
@@ -277,7 +277,7 @@ export async function getRektTweets(
   const tweets = await swr<TweetFull>(
     getRektTweetsQuery(sort, filter, limit, uid)
   );
-  log.info(`Fetched ${tweets.length} tweets for Rekt.`);
+  log.trace(`Fetched ${tweets.length} tweets for Rekt.`);
   return getTweetsFull(tweets);
 }
 
@@ -347,11 +347,11 @@ export async function getListArticles(
   const articles = await swr<Article>(
     getListArticlesQuery(listId, sort, filter, uid)
   );
-  log.info(`Fetched ${articles.length} articles for list (${listId}).`);
+  log.trace(`Fetched ${articles.length} articles for list (${listId}).`);
   return getArticlesFull(articles);
 }
 export function revalidateListArticles(listId: string) {
-  log.info(`Revalidating list (${listId}) articles...`);
+  log.debug(`Revalidating list (${listId}) articles...`);
   const promises = Object.values(ArticlesSort).map((sort) => {
     if (typeof sort === 'string') return;
     return Object.values(ArticlesFilter).map((filter) => {
@@ -425,7 +425,9 @@ export async function getClusterArticles(
   const articles = await swr<Article>(
     getClusterArticlesQuery(clusterSlug, sort, filter, uid)
   );
-  log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);
+  log.trace(
+    `Fetched ${articles.length} articles for cluster (${clusterSlug}).`
+  );
   return getArticlesFull(articles);
 }
 
@@ -479,6 +481,6 @@ function getRektArticlesQuery(uid?: string): Prisma.Sql {
 }
 export async function getRektArticles(uid?: string): Promise<Article[]> {
   const articles = await swr<Article>(getRektArticlesQuery(uid));
-  log.info(`Fetched ${articles.length} articles for Rekt.`);
+  log.trace(`Fetched ${articles.length} articles for Rekt.`);
   return getArticlesFull(articles);
 }

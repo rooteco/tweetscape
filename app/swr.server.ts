@@ -60,15 +60,15 @@ export async function swr<T>(
       if (!cachedResponse.length) return null;
 
       if (await cachedStillGoodPromise) {
-        log.debug(`Redis cache hit for (${responseKey}), returning...`);
+        log.trace(`Redis cache hit for (${responseKey}), returning...`);
       } else {
-        log.debug(`Redis cache stale for (${responseKey}), revalidating...`);
+        log.trace(`Redis cache stale for (${responseKey}), revalidating...`);
 
         /* eslint-disable-next-line promise/no-nesting */
         (async () => {
           await revalidate(query, maxAgeSeconds);
         })().catch((e) => {
-          log.error(`Failed to revalidate: ${(e as Error).stack}`);
+          log.error(`Failed to revalidate: ${(e as Error).message}`);
         });
       }
 
@@ -77,7 +77,7 @@ export async function swr<T>(
     .catch(() => null);
 
   if (!response) {
-    log.debug(`Redis cache miss for (${responseKey}), querying...`);
+    log.trace(`Redis cache miss for (${responseKey}), querying...`);
     logQueryExecute(query);
     response = await db.$queryRaw<T[]>(query);
 
@@ -85,7 +85,7 @@ export async function swr<T>(
       await redis.set(responseKey, JSON.stringify(response));
       await redis.setEx(stillGoodKey, maxAgeSeconds, 'true');
     })().catch((e) => {
-      log.error(`Failed to seed cache: ${(e as Error).stack}`);
+      log.error(`Failed to seed cache: ${(e as Error).message}`);
     });
   }
 
