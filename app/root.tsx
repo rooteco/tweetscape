@@ -13,7 +13,6 @@ import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import type { Cluster, Influencer, List } from '~/types';
-import { Prisma, db } from '~/db.server';
 import {
   Theme,
   ThemeBody,
@@ -23,11 +22,12 @@ import {
   useTheme,
 } from '~/theme';
 import { commitSession, getSession } from '~/session.server';
+import { log, nanoid } from '~/utils.server';
 import Empty from '~/components/empty';
 import { ErrorContext } from '~/error';
 import Footer from '~/components/footer';
+import { Prisma } from '~/db.server';
 import { getLists } from '~/query.server';
-import { log } from '~/utils.server';
 import styles from '~/styles/app.css';
 import { swr } from '~/swr.server';
 
@@ -39,49 +39,50 @@ export type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  console.time('root-loader');
-  console.time('get-session');
+  const invocationId = nanoid(5);
+  console.time(`root-loader-${invocationId}`);
+  console.time(`get-session-${invocationId}`);
   const session = await getSession(request.headers.get('Cookie'));
-  console.timeEnd('get-session');
+  console.timeEnd(`get-session-${invocationId}`);
   const uid = session.get('uid') as string | undefined;
   let user: Influencer | undefined;
   let lists: List[] = [];
   let clusters: Cluster[] = [];
-  if (uid) {
-    await Promise.all([
-      (async () => {
-        log.info('Fetching visible clusters...');
-        console.time('swr-get-clusters');
-        clusters = await swr<Cluster>(
-          Prisma.sql`select * from clusters where visible = true`
-        );
-        console.timeEnd('swr-get-clusters');
-        log.info(`Fetched ${clusters.length} visible clusters.`);
-      })(),
-      (async () => {
-        log.info(`Fetching user (${uid})...`);
-        console.time('swr-get-user');
-        const users = await swr<Influencer>(
-          Prisma.sql`select * from influencers where id = ${uid}`
-        );
-        console.timeEnd('swr-get-user');
-        if (users.length > 1) log.error(`Too many users (${uid}) found.`);
-        else if (users.length === 1) [user] = users;
-        else log.warn(`User (${uid}) could not be found.`);
-      })(),
-      (async () => {
-        log.info(`Fetching lists for user (${uid})...`);
-        console.time('swr-get-lists');
-        lists = await getLists(uid);
-        console.timeEnd('swr-get-lists');
-      })(),
-    ]);
-  }
+  await Promise.all([
+    (async () => {
+      log.info('Fetching visible clusters...');
+      console.time(`swr-get-clusters-${invocationId}`);
+      clusters = await swr<Cluster>(
+        Prisma.sql`select * from clusters where visible = true`
+      );
+      console.timeEnd(`swr-get-clusters-${invocationId}`);
+      log.info(`Fetched ${clusters.length} visible clusters.`);
+    })(),
+    (async () => {
+      if (!uid) return;
+      log.info(`Fetching user (${uid})...`);
+      console.time(`swr-get-user-${invocationId}`);
+      const users = await swr<Influencer>(
+        Prisma.sql`select * from influencers where id = ${uid}`
+      );
+      console.timeEnd(`swr-get-user-${invocationId}`);
+      if (users.length > 1) log.error(`Too many users (${uid}) found.`);
+      else if (users.length === 1) [user] = users;
+      else log.warn(`User (${uid}) could not be found.`);
+    })(),
+    (async () => {
+      if (!uid) return;
+      log.info(`Fetching lists for user (${uid})...`);
+      console.time(`swr-get-lists-${invocationId}`);
+      lists = await getLists(uid);
+      console.timeEnd(`swr-get-lists-${invocationId}`);
+    })(),
+  ]);
   const themeValue = session.get('theme') as Theme | null;
   const theme = isTheme(themeValue) ? themeValue : null;
   log.info(`Found theme cookie (${theme}).`);
   const headers = { 'Set-Cookie': await commitSession(session) };
-  console.timeEnd('root-loader');
+  console.timeEnd(`root-loader-${invocationId}`);
   return json<LoaderData>({ theme, clusters, user, lists }, { headers });
 };
 

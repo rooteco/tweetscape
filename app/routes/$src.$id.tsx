@@ -33,7 +33,7 @@ import {
   getRektArticles,
   getRektTweets,
 } from '~/query.server';
-import { lang, log } from '~/utils.server';
+import { lang, log, nanoid } from '~/utils.server';
 import ArticleItem from '~/components/article';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
@@ -52,7 +52,8 @@ export type LoaderData = {
 // $src - the type of source (e.g. clusters or lists).
 // $id - the id of a specific source (e.g. a cluster slug or user list id).
 export const loader: LoaderFunction = async ({ params, request }) => {
-  console.time('src-id-loader');
+  const invocationId = nanoid(5);
+  console.time(`src-id-loader-${invocationId}`);
   invariant(params.src, 'expected params.src');
   invariant(params.id, 'expected params.id');
   log.info(`Fetching articles and tweets for ${params.src} (${params.id})...`);
@@ -117,17 +118,17 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   let tweets: TweetFull[] = [];
   await Promise.all([
     (async () => {
-      console.time('swr-get-articles');
+      console.time(`swr-get-articles-${invocationId}`);
       articles = await articlesPromise;
-      console.timeEnd('swr-get-articles');
+      console.timeEnd(`swr-get-articles-${invocationId}`);
     })(),
     (async () => {
-      console.time('swr-get-tweets');
+      console.time(`swr-get-tweets-${invocationId}`);
       tweets = await tweetsPromise;
-      console.timeEnd('swr-get-tweets');
+      console.timeEnd(`swr-get-tweets-${invocationId}`);
     })(),
   ]);
-  console.timeEnd('src-id-loader');
+  console.timeEnd(`src-id-loader-${invocationId}`);
   return json<LoaderData>(
     { articles, tweets, locale: lang(request) },
     { headers: { 'Set-Cookie': await commitSession(session) } }

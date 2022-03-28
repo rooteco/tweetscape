@@ -5,6 +5,8 @@ import { redirect } from 'remix';
 
 import { commitSession, getSession } from '~/session.server';
 
+export { nanoid } from 'nanoid';
+
 export async function getLoggedInSession(req: Request) {
   const session = await getSession(req.headers.get('Cookie'));
   const uid = session.get('uid') as string | undefined;
