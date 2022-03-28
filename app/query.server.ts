@@ -8,9 +8,9 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
-import { Prisma, db } from '~/db.server';
+import { revalidate, swr } from '~/swr.server';
+import { Prisma } from '~/db.server';
 import { log } from '~/utils.server';
-import { revalidate } from '~/swr.server';
 
 const TWEETS_ORDER_BY: Record<TweetsSort, Prisma.Sql> = {
   [TweetsSort.TweetCount]: Prisma.sql`(tweets.retweet_count + tweets.quote_count) desc`,
@@ -63,7 +63,7 @@ export async function getTweetsByIds(
   uid?: string
 ): Promise<TweetFull[]> {
   /* prettier-ignore */
-  const tweets = await db.$queryRaw<TweetFull[]>`
+  const tweets = await swr<TweetFull>(Prisma.sql`
     select
       tweets.*,
       ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
@@ -85,7 +85,7 @@ export async function getTweetsByIds(
       ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
     where tweets.id in (${Prisma.join(tweetIds)})
     group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
-    order by created_at desc;`;
+    order by created_at desc;`);
   return getTweetsFull(tweets);
 }
 
@@ -94,7 +94,7 @@ export async function getTweetRepliesByIds(
   uid?: string
 ): Promise<TweetFull[]> {
   /* prettier-ignore */
-  const tweets = await db.$queryRaw<TweetFull[]>`
+  const tweets = await swr<TweetFull>(Prisma.sql`
     select
       tweets.*,
       ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
@@ -116,7 +116,7 @@ export async function getTweetRepliesByIds(
       ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.influencer_id = ${uid}` : Prisma.empty}
       ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
     group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
-    order by created_at desc;`;
+    order by created_at desc;`);
   return getTweetsFull(tweets);
 }
 
@@ -162,7 +162,7 @@ export async function getListTweets(
   uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
-  const tweets = await db.$queryRaw<TweetFull[]>(
+  const tweets = await swr<TweetFull>(
     getListTweetsQuery(listId, sort, filter, limit, uid)
   );
   log.info(`Fetched ${tweets.length} tweets for list (${listId}).`);
@@ -227,7 +227,7 @@ export async function getClusterTweets(
   uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
-  const tweets = await db.$queryRaw<TweetFull[]>(
+  const tweets = await swr<TweetFull>(
     getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid)
   );
   log.info(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
@@ -274,7 +274,7 @@ export async function getRektTweets(
   uid?: string
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
-  const tweets = await db.$queryRaw<TweetFull[]>(
+  const tweets = await swr<TweetFull>(
     getRektTweetsQuery(sort, filter, limit, uid)
   );
   log.info(`Fetched ${tweets.length} tweets for Rekt.`);
@@ -288,8 +288,7 @@ function getListsQuery(uid: string): Prisma.Sql {
     where lists.owner_id = ${uid} or list_followers.influencer_id = ${uid}
     `;
 }
-export const getLists = (uid: string) =>
-  db.$queryRaw<List[]>(getListsQuery(uid));
+export const getLists = (uid: string) => swr<List>(getListsQuery(uid));
 export const revalidateLists = (uid: string) => revalidate(getListsQuery(uid));
 
 function getListArticlesQuery(
@@ -345,7 +344,7 @@ export async function getListArticles(
   filter: ArticlesFilter,
   uid?: string
 ): Promise<Article[]> {
-  const articles = await db.$queryRaw<Article[]>(
+  const articles = await swr<Article>(
     getListArticlesQuery(listId, sort, filter, uid)
   );
   log.info(`Fetched ${articles.length} articles for list (${listId}).`);
@@ -423,7 +422,7 @@ export async function getClusterArticles(
   filter: ArticlesFilter,
   uid?: string
 ): Promise<Article[]> {
-  const articles = await db.$queryRaw<Article[]>(
+  const articles = await swr<Article>(
     getClusterArticlesQuery(clusterSlug, sort, filter, uid)
   );
   log.info(`Fetched ${articles.length} articles for cluster (${clusterSlug}).`);
@@ -479,7 +478,7 @@ function getRektArticlesQuery(uid?: string): Prisma.Sql {
     limit 50;`
 }
 export async function getRektArticles(uid?: string): Promise<Article[]> {
-  const articles = await db.$queryRaw<Article[]>(getRektArticlesQuery(uid));
+  const articles = await swr<Article>(getRektArticlesQuery(uid));
   log.info(`Fetched ${articles.length} articles for Rekt.`);
   return getArticlesFull(articles);
 }
