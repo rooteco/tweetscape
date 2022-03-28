@@ -47,7 +47,7 @@ limiter.on('retry', (e, job) => {
   log.debug(`Now retrying job (${job.options.id})...`);
 });
 
-const USER_FIELDS = [
+export const USER_FIELDS = [
   'id',
   'name',
   'username',
@@ -57,14 +57,14 @@ const USER_FIELDS = [
   'public_metrics',
   'created_at',
 ];
-const TWEET_FIELDS = [
+export const TWEET_FIELDS = [
   'created_at',
   'entities',
   'author_id',
   'public_metrics',
   'referenced_tweets',
 ];
-const EXPANSIONS = [
+export const TWEET_EXPANSIONS = [
   'referenced_tweets.id',
   'referenced_tweets.id.author_id',
   'entities.mentions.username',
@@ -86,8 +86,7 @@ export async function getTweets(
   log.debug(msg);
   const url =
     `https://api.twitter.com/2/users/${id}/tweets?` +
-    `tweet.fields=${TWEET_FIELDS.join()}&expansions=${EXPANSIONS.join()}&` +
-    `user.fields=${USER_FIELDS.join()}&` +
+    `tweet.fields=${TWEET_FIELDS.join()}&``expansions=${TWEET_EXPANSIONS.join()}&user.fields=${USER_FIELDS.join()}&` +
     `start_time=${start.toISOString()}&end_time=${end.toISOString()}&` +
     `max_results=100${token ? `&pagination_token=${token}` : ''}` +
     `${lastTweetId ? `&since_id=${lastTweetId}` : ''}`;
