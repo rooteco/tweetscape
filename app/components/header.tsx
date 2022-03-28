@@ -148,6 +148,10 @@ export default function Header() {
           }))}
         />
       )}
+      <Section
+        header='Rekt parlors'
+        links={[{ name: 'Crypto', to: '/rekt/crypto' }]}
+      />
       {!root?.user && (
         <section className='text-sm mt-5 pr-5'>
           <h2 className='mb-2.5 font-semibold'>Your lists</h2>
