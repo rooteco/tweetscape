@@ -26,6 +26,7 @@ function SectionLink({ to, children }: { to: string; children: string }) {
   return (
     <NavLink
       key={to}
+      prefetch='intent'
       className={({ isActive }) =>
         cn('block pl-3 py-0.5 my-1 -ml-px border-l border-transparent', {
           'border-current font-semibold dark:text-sky-400 text-sky-500':
@@ -111,6 +112,7 @@ export default function Header() {
       </div>
       <div className='h-6 mt-1.5'>
         <Link
+          prefetch='intent'
           className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
           to='/changelog'
         >
