@@ -73,58 +73,60 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     url.searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
   const limit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
-  let articles: Article[];
-  let tweets: TweetFull[];
+  let articlesPromise: Promise<Article[]>;
+  let tweetsPromise: Promise<TweetFull[]>;
   switch (params.src) {
     case 'clusters':
-      console.time('get-cluster-articles');
-      articles = await getClusterArticles(
+      articlesPromise = getClusterArticles(
         params.id,
         articlesSort,
         articlesFilter,
         uid
       );
-      console.timeEnd('get-cluster-articles');
-      console.time('get-cluster-tweets');
-      tweets = await getClusterTweets(
+      tweetsPromise = getClusterTweets(
         params.id,
         tweetsSort,
         tweetsFilter,
         limit,
         uid
       );
-      console.timeEnd('get-cluster-tweets');
       break;
     case 'lists':
-      console.time('get-list-articles');
-      articles = await getListArticles(
+      articlesPromise = getListArticles(
         params.id,
         articlesSort,
         articlesFilter,
         uid
       );
-      console.timeEnd('get-list-articles');
-      console.time('get-list-tweets');
-      tweets = await getListTweets(
+      tweetsPromise = getListTweets(
         params.id,
         tweetsSort,
         tweetsFilter,
         limit,
         uid
       );
-      console.timeEnd('get-list-tweets');
       break;
     case 'rekt':
-      console.time('get-rekt-articles');
-      articles = await getRektArticles(uid);
-      console.timeEnd('get-rekt-articles');
-      console.time('get-rekt-tweets');
-      tweets = await getRektTweets(tweetsSort, tweetsFilter, limit, uid);
-      console.timeEnd('get-rekt-tweets');
+      articlesPromise = getRektArticles(uid);
+      tweetsPromise = getRektTweets(tweetsSort, tweetsFilter, limit, uid);
       break;
     default:
       throw new Response('Not Found', { status: 404 });
   }
+  let articles: Article[] = [];
+  let tweets: TweetFull[] = [];
+  await Promise.all([
+    (async () => {
+      console.time('swr-get-articles');
+      articles = await articlesPromise;
+      console.timeEnd('swr-get-articles');
+    })(),
+    (async () => {
+      console.time('swr-get-tweets');
+      tweets = await tweetsPromise;
+      console.timeEnd('swr-get-tweets');
+    })(),
+  ]);
   console.timeEnd('src-id-loader');
   return json<LoaderData>(
     { articles, tweets, locale: lang(request) },

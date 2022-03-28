@@ -40,30 +40,42 @@ export type LoaderData = {
 
 export const loader: LoaderFunction = async ({ request }) => {
   console.time('root-loader');
-  log.info('Fetching visible clusters...');
-  console.time('swr-get-clusters');
-  const clusters = await swr<Cluster>(
-    Prisma.sql`select * from clusters where visible = true`
-  );
-  console.timeEnd('swr-get-clusters');
-  log.info(`Fetched ${clusters.length} visible clusters.`);
   console.time('get-session');
   const session = await getSession(request.headers.get('Cookie'));
   console.timeEnd('get-session');
   const uid = session.get('uid') as string | undefined;
   let user: Influencer | undefined;
   let lists: List[] = [];
+  let clusters: Cluster[] = [];
   if (uid) {
-    log.info(`Fetching user (${uid})...`);
-    console.time('db-find-unique-user');
-    const influencer = await db.influencers.findUnique({ where: { id: uid } });
-    console.timeEnd('db-find-unique-user');
-    if (influencer) user = influencer;
-    else log.warn(`User (${uid}) could not be found.`);
-    log.info(`Fetching lists for user ${user?.name} (${user?.id ?? uid})...`);
-    console.time('swr-get-lists');
-    lists = await getLists(uid);
-    console.timeEnd('swr-get-lists');
+    await Promise.all([
+      (async () => {
+        log.info('Fetching visible clusters...');
+        console.time('swr-get-clusters');
+        clusters = await swr<Cluster>(
+          Prisma.sql`select * from clusters where visible = true`
+        );
+        console.timeEnd('swr-get-clusters');
+        log.info(`Fetched ${clusters.length} visible clusters.`);
+      })(),
+      (async () => {
+        log.info(`Fetching user (${uid})...`);
+        console.time('swr-get-user');
+        const users = await swr<Influencer>(
+          Prisma.sql`select * from influencers where id = ${uid}`
+        );
+        console.timeEnd('swr-get-user');
+        if (users.length > 1) log.error(`Too many users (${uid}) found.`);
+        else if (users.length === 1) [user] = users;
+        else log.warn(`User (${uid}) could not be found.`);
+      })(),
+      (async () => {
+        log.info(`Fetching lists for user (${uid})...`);
+        console.time('swr-get-lists');
+        lists = await getLists(uid);
+        console.timeEnd('swr-get-lists');
+      })(),
+    ]);
   }
   const themeValue = session.get('theme') as Theme | null;
   const theme = isTheme(themeValue) ? themeValue : null;
