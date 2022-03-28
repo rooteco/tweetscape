@@ -30,60 +30,13 @@ limiter.on('retry', (e, job) => {
 const SORTS = ['attention_score', 'tweets_count'];
 const FILTERS = ['show_retweets', 'hide_retweets'];
 
-async function metadata(cluster, sort, filter, db) {
+async function metadata(query, context, db) {
   try {
-    log.info(
-      `Beginning database transaction (${cluster}; ${sort}; ${filter})...`
-    );
+    log.info(`Beginning database transaction for ${context}...`);
     await db.query('BEGIN');
     await db.query('SET CONSTRAINTS ALL IMMEDIATE');
-    log.info(
-      `Fetching the top 20 articles for ${cluster} (sorted by ${sort}; ${filter})...`
-    );
-    const { rows } = await db.query(
-      `
-      select * from (
-        select
-          links.*,
-          clusters.id as cluster_id,
-          clusters.name as cluster_name,
-          clusters.slug as cluster_slug,
-          sum(tweets.insider_score) as insider_score,
-          sum(tweets.attention_score) as attention_score,
-          json_agg(tweets.*) as tweets
-        from links
-          inner join (
-            select distinct on (tweets.author_id, urls.link_url)
-              urls.link_url as link_url,
-              tweets.*
-            from urls
-              inner join (
-                select 
-                  tweets.*,
-                  scores.cluster_id as cluster_id,
-                  scores.insider_score as insider_score,
-                  scores.attention_score as attention_score,
-                  to_json(influencers.*) as author,
-                  to_json(scores.*) as score
-                from tweets
-                  inner join influencers on influencers.id = tweets.author_id
-                  inner join scores on scores.influencer_id = influencers.id
-                ${
-                  filter === 'hide_retweets'
-                    ? `where not exists (select 1 from refs where refs.referencer_tweet_id = tweets.id and refs.type = 'retweeted')`
-                    : ''
-                }
-              ) as tweets on tweets.id = urls.tweet_id
-          ) as tweets on tweets.link_url = links.url
-          inner join clusters on clusters.id = tweets.cluster_id
-        group by links.url, clusters.id
-      ) as articles where (title is null or description is null) and cluster_slug = '${cluster}' and url !~ '^https?:\\/\\/twitter\\.com'
-      order by ${
-        sort === 'tweets_count' ? 'json_array_length(tweets)' : sort
-      } desc
-      limit 20;
-      `
-    );
+    log.info(`Fetching the top articles for ${context}...`);
+    const { rows } = await db.query(query);
     log.info(`Fetching ${rows.length} link metadata...`);
     const values = [];
     await Promise.all(
@@ -136,9 +89,9 @@ async function metadata(cluster, sort, filter, db) {
         }
       })
     );
-    if (!values.length) return log.info(`Skipping updates for ${cluster}...`);
+    if (!values.length) return log.info(`Skipping updates for ${context}...`);
     log.trace(`Values: ${JSON.stringify(values, null, 2)}`);
-    const query = format(
+    const update = format(
       `
       UPDATE links as l SET 
         status = d.status, 
@@ -150,40 +103,86 @@ async function metadata(cluster, sort, filter, db) {
       `,
       values
     );
-    log.trace(`Query: ${query}`);
-    log.info(`Updating ${values.length} links for ${cluster}...`);
-    await db.query(query);
-    log.info(`Committing database transaction (${cluster})...`);
+    log.trace(`Query: ${update}`);
+    log.info(`Updating ${values.length} links for ${context}...`);
+    await db.query(update);
+    log.info(`Committing database transaction (${context})...`);
     await db.query('COMMIT');
   } catch (e) {
-    log.error(`Error with database transaction (${cluster}): ${e.stack}`);
-    log.warn(`Rolling back database transaction (${cluster})...`);
+    log.error(`Error with database transaction (${context}): ${e.stack}`);
+    log.warn(`Rolling back database transaction (${context})...`);
     await db.query('ROLLBACK');
   }
+}
+
+async function importClusterMetadata(db) {
+  log.info('Fetching clusters...');
+  const { rows } = await db.query('select * from clusters');
+  log.info(`Fetching link metadata for ${rows.length} clusters...`);
+  const intervalId = setInterval(() => {
+    const c = limiter.counts();
+    const msg =
+      `Fetch calls: ${c.RECEIVED} received, ${c.QUEUED} queued, ` +
+      `${c.RUNNING} running, ${c.EXECUTING} executing, ${c.DONE} done.`;
+    log.debug(msg);
+  }, 2500);
+  for await (const { slug } of rows) {
+    for await (const sort of SORTS) {
+      for await (const filter of FILTERS) {
+        await metadata(slug, sort, filter, db);
+      }
+    }
+  }
+  clearInterval(intervalId);
+  log.info(`Fetched link metadata for ${rows.length} clusters.`);
+}
+
+async function importRektMetadata(db) {
+  const query = `
+    select
+      links.*,
+      sum(tweets.points) as points,
+      count(tweets) as tweets_count,
+      json_agg(tweets.*) as tweets
+    from links
+      inner join (
+        select distinct on (urls.link_url, tweets.author_id)
+          urls.link_url as link_url,
+          tweets.*
+        from urls
+          inner join (
+            select
+              tweets.*,
+              rekt.points as points,
+              to_json(rekt.*) as rekt,
+              to_json(influencers.*) as author,
+              quotes.referenced_tweet_id as quote_id,
+              json_agg(refs.*) as refs,
+              json_agg(ref_tweets.*) as ref_tweets,
+              json_agg(ref_authors.*) as ref_authors
+            from tweets
+              inner join influencers on influencers.id = tweets.author_id
+              inner join rekt on rekt.influencer_id = tweets.author_id
+              left outer join refs quotes on quotes.referencer_tweet_id = tweets.id and quotes.type = 'quoted'
+              left outer join refs retweets on retweets.referencer_tweet_id = tweets.id and retweets.type = 'retweeted'
+              left outer join refs on refs.referencer_tweet_id = tweets.id
+              left outer join tweets ref_tweets on ref_tweets.id = refs.referenced_tweet_id
+              left outer join influencers ref_authors on ref_authors.id = ref_tweets.author_id
+            where retweets is null
+            group by tweets.id,quotes.referenced_tweet_id,rekt.id,influencers.id
+          ) as tweets on urls.tweet_id in (tweets.id, tweets.quote_id)
+      ) as tweets on tweets.link_url = links.url
+    where links.url !~ '^https?:\\/\\/twitter\\.com'
+    group by links.url
+    order by points desc
+    limit 100;`;
+  await metadata(query, 'rekt', db);
 }
 
 (async () => {
   const db = await pool.connect();
   try {
-    log.info('Fetching clusters...');
-    const { rows } = await db.query('select * from clusters');
-    log.info(`Fetching link metadata for ${rows.length} clusters...`);
-    const intervalId = setInterval(() => {
-      const c = limiter.counts();
-      const msg =
-        `Fetch calls: ${c.RECEIVED} received, ${c.QUEUED} queued, ` +
-        `${c.RUNNING} running, ${c.EXECUTING} executing, ${c.DONE} done.`;
-      log.debug(msg);
-    }, 2500);
-    for await (const { slug } of rows) {
-      for await (const sort of SORTS) {
-        for await (const filter of FILTERS) {
-          await metadata(slug, sort, filter, db);
-        }
-      }
-    }
-    clearInterval(intervalId);
-    log.info(`Fetched link metadata for ${rows.length} clusters.`);
+    await importRektMetadata(db);
   } catch (e) {
     throw e;
   } finally {
