@@ -8,6 +8,10 @@ import Bottleneck from 'bottleneck';
 import { TWEET_EXPANSIONS, TWEET_FIELDS, USER_FIELDS } from './shared.mjs';
 import { log } from './utils.mjs';
 
+const now = new Date();
+const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+
 const db = new prisma.PrismaClient();
 const api = new TwitterApi(process.env.TWITTER_TOKEN);
 const limiter = new Bottleneck({
@@ -133,6 +137,35 @@ function toImages(u) {
   }));
 }
 
+function tweetToCreateQueue(t, authors, queue) {
+  queue.tweets.push(toTweet(t));
+  t.entities?.mentions?.forEach((m) => {
+    const mid = authors.find((u) => u.username === m.username)?.id;
+    if (mid)
+      queue.mentions.push({
+        tweet_id: t.id,
+        influencer_id: mid,
+        start: m.start,
+        end: m.end,
+      });
+  });
+  t.entities?.annotations?.forEach((a) =>
+    queue.annotations.push(toAnnotation(a, t))
+  );
+  t.entities?.hashtags?.forEach((h) => queue.tags.push(toTag(h, t, 'hashtag')));
+  t.entities?.cashtags?.forEach((c) => queue.tags.push(toTag(c, t, 'cashtag')));
+  t.referenced_tweets?.forEach((r) => {
+    // Address edge-case where the referenced tweet may be
+    // inaccessible to us (e.g. private account) or deleted.
+    if (queue.tweets.some((tw) => tw.id === r.id)) queue.refs.push(toRef(r, t));
+  });
+  t.entities?.urls?.forEach((u) => {
+    queue.links.push(toLink(u));
+    queue.urls.push(toURL(u, t));
+    toImages(u).forEach((i) => queue.images.push(i));
+  });
+}
+
 function toCreateQueue(
   res,
   queue = {
@@ -152,44 +185,14 @@ function toCreateQueue(
   const includes = new TwitterV2IncludesHelper(res);
   const authors = includes.users.map(toInfluencer);
   authors.forEach((i) => queue.influencers.push(i));
-  includes.tweets.map(toTweet).forEach((r) => queue.tweets.push(r));
-  res.tweets.map(toTweet).forEach((t) => queue.tweets.push(t));
+  includes.tweets.forEach((t) => tweetToCreateQueue(t, authors, queue));
   res.tweets.forEach((t) => {
     if (listId)
       queue.list_members.push({
         influencer_id: t.author_id,
         list_id: listId,
       });
-    t.entities?.mentions?.forEach((m) => {
-      const mid = authors.find((u) => u.username === m.username)?.id;
-      if (mid)
-        queue.mentions.push({
-          tweet_id: t.id,
-          influencer_id: mid,
-          start: m.start,
-          end: m.end,
-        });
-    });
-    t.entities?.annotations?.forEach((a) =>
-      queue.annotations.push(toAnnotation(a, t))
-    );
-    t.entities?.hashtags?.forEach((h) =>
-      queue.tags.push(toTag(h, t, 'hashtag'))
-    );
-    t.entities?.cashtags?.forEach((c) =>
-      queue.tags.push(toTag(c, t, 'cashtag'))
-    );
-    t.referenced_tweets?.forEach((r) => {
-      // Address edge-case where the referenced tweet may be
-      // inaccessible to us (e.g. private account) or deleted.
-      if (queue.tweets.some((tw) => tw.id === r.id))
-        queue.refs.push(toRef(r, t));
-    });
-    t.entities?.urls?.forEach((u) => {
-      queue.links.push(toLink(u));
-      queue.urls.push(toURL(u, t));
-      toImages(u).forEach((i) => queue.images.push(i));
-    });
+    tweetToCreateQueue(t, authors, queue);
   });
   return queue;
 }
@@ -288,9 +291,6 @@ async function importRektTweets(n = 1000) {
   log.info(`Fetching ${n} rekt scores from database...`);
   const scores = await db.rekt.findMany({ take: n });
   log.info(`Fetching recent tweets from ${scores.length} rekt influencers...`);
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   const queue = {
     influencers: [],
     list_members: [],
@@ -325,7 +325,12 @@ async function importRektTweets(n = 1000) {
   await executeCreateQueue(queue);
 }
 
-(async () => {
+async function executeStoredQueue() {
+  const queue = await fs.readFile('rekt.json');
+  await executeCreateQueue(JSON.parse(queue.toString()));
+}
+
+async function importRekt() {
   const intervalId = setInterval(() => {
     const c = limiter.counts();
     const msg =
@@ -336,4 +341,8 @@ async function importRektTweets(n = 1000) {
   await importRektScores();
   await importRektTweets();
   clearInterval(intervalId);
+}
+
+(async () => {
+  await importRektScores();
 })();
