@@ -52,6 +52,7 @@ export type LoaderData = {
 // $src - the type of source (e.g. clusters or lists).
 // $id - the id of a specific source (e.g. a cluster slug or user list id).
 export const loader: LoaderFunction = async ({ params, request }) => {
+  console.time('src-id-loader');
   invariant(params.src, 'expected params.src');
   invariant(params.id, 'expected params.id');
   log.info(`Fetching articles and tweets for ${params.src} (${params.id})...`);
@@ -76,12 +77,15 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   let tweets: TweetFull[];
   switch (params.src) {
     case 'clusters':
+      console.time('get-cluster-articles');
       articles = await getClusterArticles(
         params.id,
         articlesSort,
         articlesFilter,
         uid
       );
+      console.timeEnd('get-cluster-articles');
+      console.time('get-cluster-tweets');
       tweets = await getClusterTweets(
         params.id,
         tweetsSort,
@@ -89,14 +93,18 @@ export const loader: LoaderFunction = async ({ params, request }) => {
         limit,
         uid
       );
+      console.timeEnd('get-cluster-tweets');
       break;
     case 'lists':
+      console.time('get-list-articles');
       articles = await getListArticles(
         params.id,
         articlesSort,
         articlesFilter,
         uid
       );
+      console.timeEnd('get-list-articles');
+      console.time('get-list-tweets');
       tweets = await getListTweets(
         params.id,
         tweetsSort,
@@ -104,14 +112,20 @@ export const loader: LoaderFunction = async ({ params, request }) => {
         limit,
         uid
       );
+      console.timeEnd('get-list-tweets');
       break;
     case 'rekt':
+      console.time('get-rekt-articles');
       articles = await getRektArticles(uid);
+      console.timeEnd('get-rekt-articles');
+      console.time('get-rekt-tweets');
       tweets = await getRektTweets(tweetsSort, tweetsFilter, limit, uid);
+      console.timeEnd('get-rekt-tweets');
       break;
     default:
       throw new Response('Not Found', { status: 404 });
   }
+  console.timeEnd('src-id-loader');
   return json<LoaderData>(
     { articles, tweets, locale: lang(request) },
     { headers: { 'Set-Cookie': await commitSession(session) } }
