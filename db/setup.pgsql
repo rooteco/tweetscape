@@ -12,6 +12,7 @@ drop table if exists retweets cascade;
 drop table if exists likes cascade;
 drop table if exists tweets cascade;
 drop table if exists scores cascade; 
+drop table if exists rekt cascade;
 drop table if exists tokens cascade;
 drop table if exists list_followers cascade;
 drop table if exists list_members cascade;
@@ -29,7 +30,7 @@ create table clusters (
   "updated_at" timestamptz not null,
   "visible" boolean not null default false
 );
-create domain url as text check (value ~ '^https?:\/\/\S+$');
+create domain url as text check (value ~ '^https?:\/\/.+$');
 create table influencers (
   "id" text unique not null primary key,
   "name" text not null,
@@ -86,7 +87,18 @@ create table scores (
   "created_at" timestamptz not null,
   unique ("cluster_id", "influencer_id"),
   unique ("cluster_id", "rank")
-); 
+);
+create table rekt (
+  "id" bigint unique not null primary key,
+  "influencer_id" text references influencers(id) deferrable not null,
+  "username" text not null,
+  "name" text not null,
+  "profile_image_url" url not null,
+  "points" integer not null,
+  "rank" integer not null unique,
+  "followers_count" integer,
+  "followers_in_people_count" integer not null 
+);
 create table tweets (
   "id" text unique not null primary key,
   "author_id" text references influencers(id) deferrable not null,

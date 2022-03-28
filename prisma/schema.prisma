@@ -34,6 +34,7 @@ model influencers {
   id                String           @id
   name              String
   username          String
+  verified          Boolean?
   description       String?
   profile_image_url String?
   followers_count   Int?
@@ -41,12 +42,12 @@ model influencers {
   tweets_count      Int?
   created_at        DateTime?        @db.Timestamptz(6)
   updated_at        DateTime?        @db.Timestamptz(6)
-  verified          Boolean?
   likes             likes[]
   list_followers    list_followers[]
   list_members      list_members[]
   lists             lists[]
   mentions          mentions[]
+  rekt              rekt[]
   retweets          retweets[]
   scores            scores[]
   tokens            tokens?
@@ -215,6 +216,19 @@ model retweets {
   tweets        tweets      @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([tweet_id, influencer_id])
+}
+
+model rekt {
+  id                        BigInt      @id
+  influencer_id             String
+  username                  String
+  name                      String
+  profile_image_url         String
+  points                    Int
+  rank                      Int         @unique
+  followers_count           Int?
+  followers_in_people_count Int
+  influencers               influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum annotation_type {
