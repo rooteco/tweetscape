@@ -1,7 +1,5 @@
 import * as Select from '@radix-ui/react-select';
-import { animated, config, useTransition } from 'react-spring';
 import { useLocation, useMatches, useNavigate } from 'remix';
-import { useState } from 'react';
 
 import ExpandIcon from '~/icons/expand';
 import type { LoaderData } from '~/root';
@@ -30,70 +28,49 @@ export default function Switcher() {
   const lists = root?.lists ?? [];
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const transitions = useTransition(open, {
-    from: { opacity: 0, y: -10 },
-    enter: { opacity: 1, y: 0 },
-    leave: { opacity: 0, y: 10 },
-    config: config.stiff,
-  });
   return (
-    <Select.Root
-      value={pathname}
-      onValueChange={navigate}
-      open={open}
-      onOpenChange={setOpen}
-    >
+    <Select.Root value={pathname} onValueChange={navigate}>
       <Select.Trigger className='outline-none mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
         <Select.Value />
         <Select.Icon>
           <ExpandIcon className='shrink-0 w-3.5 h-3.5 ml-1 fill-gray-500' />
         </Select.Icon>
       </Select.Trigger>
-      {transitions((styles, item) =>
-        item ? (
-          <Select.Content asChild>
-            <animated.div
-              style={styles}
-              className='overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-md shadow-md'
-            >
-              <Select.ScrollUpButton />
-              <Select.Viewport className='p-1.5'>
-                {!!clusters.length && (
-                  <Select.Group>
-                    <Label>Hive clusters</Label>
-                    {clusters.map((c) => (
-                      <Item key={c.id} value={`/clusters/${c.slug}`}>
-                        <Select.ItemText>{c.name}</Select.ItemText>
-                        <Select.ItemIndicator />
-                      </Item>
-                    ))}
-                  </Select.Group>
-                )}
-                <Select.Group>
-                  <Label>Rekt parlors</Label>
-                  <Item value='/rekt/crypto'>
-                    <Select.ItemText>Crypto</Select.ItemText>
-                    <Select.ItemIndicator />
-                  </Item>
-                </Select.Group>
-                {!!lists.length && (
-                  <Select.Group>
-                    <Label>Your lists</Label>
-                    {lists.map((l) => (
-                      <Item key={l.id} value={`/lists/${l.id}`}>
-                        <Select.ItemText>{l.name}</Select.ItemText>
-                        <Select.ItemIndicator />
-                      </Item>
-                    ))}
-                  </Select.Group>
-                )}
-              </Select.Viewport>
-              <Select.ScrollDownButton />
-            </animated.div>
-          </Select.Content>
-        ) : null
-      )}
+      <Select.Content className='overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-md shadow-md'>
+        <Select.ScrollUpButton />
+        <Select.Viewport className='p-1.5'>
+          {!!clusters.length && (
+            <Select.Group>
+              <Label>Hive clusters</Label>
+              {clusters.map((c) => (
+                <Item key={c.id} value={`/clusters/${c.slug}`}>
+                  <Select.ItemText>{c.name}</Select.ItemText>
+                  <Select.ItemIndicator />
+                </Item>
+              ))}
+            </Select.Group>
+          )}
+          <Select.Group>
+            <Label>Rekt parlors</Label>
+            <Item value='/rekt/crypto'>
+              <Select.ItemText>Crypto</Select.ItemText>
+              <Select.ItemIndicator />
+            </Item>
+          </Select.Group>
+          {!!lists.length && (
+            <Select.Group>
+              <Label>Your lists</Label>
+              {lists.map((l) => (
+                <Item key={l.id} value={`/lists/${l.id}`}>
+                  <Select.ItemText>{l.name}</Select.ItemText>
+                  <Select.ItemIndicator />
+                </Item>
+              ))}
+            </Select.Group>
+          )}
+        </Select.Viewport>
+        <Select.ScrollDownButton />
+      </Select.Content>
     </Select.Root>
   );
 }
