@@ -17,11 +17,11 @@ export default function ThemeSwitcher() {
   }, [fetcher.submission, setTheme]);
   return (
     <fetcher.Form
-      className='ml-1.5 inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
+      className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
       action='/actions/theme'
       method='post'
     >
-      <button type='submit' className='inline-flex truncate items-center'>
+      <button type='submit' className='flex truncate items-center'>
         <Themed
           dark={
             <DarkIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
