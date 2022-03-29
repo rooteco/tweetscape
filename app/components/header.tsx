@@ -31,7 +31,7 @@ function SectionLink({ to, children }: { to: string; children: string }) {
         cn('block pl-3 py-0.5 my-1 -ml-px border-l border-transparent', {
           'border-current font-semibold dark:text-sky-400 text-sky-500':
             isActive,
-          'text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-600 transition hover:text-slate-800 dark:hover:text-slate-200':
+          'text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-600 transition hover:text-gray-800 dark:hover:text-gray-200':
             !isActive,
           'cursor-wait':
             transition.state === 'loading' &&
@@ -50,7 +50,7 @@ function Section({ header, links }: SectionProps) {
   return (
     <section className='text-sm mt-5'>
       <h2 className='mb-2.5 font-semibold'>{header}</h2>
-      <div className='border-l border-slate-200 dark:border-slate-800'>
+      <div className='border-l border-gray-200 dark:border-gray-800'>
         {links.map(({ to, name }) => (
           <SectionLink key={to} to={to}>
             {name}
@@ -70,7 +70,7 @@ export default function Header() {
   return (
     <nav
       className={cn(
-        'shrink-0 h-full border-r border-slate-200 dark:border-slate-800 pl-5 pt-5 pb-5 overflow-auto lg:static absolute w-64 inset-y-0 lg:shadow-none shadow-2xl transition-[left,box-shadow] duration-[0.25s,0.15s] ease-out bg-white dark:bg-slate-900 z-40',
+        'shrink-0 h-full border-r border-gray-200 dark:border-gray-800 pl-5 pt-5 pb-5 overflow-auto lg:static absolute w-64 inset-y-0 lg:shadow-none shadow-2xl transition-[left,box-shadow] duration-[0.25s,0.15s] ease-out bg-white dark:bg-gray-900 z-40',
         { 'left-0': open, '-left-64': !open }
       )}
     >
@@ -89,13 +89,13 @@ export default function Header() {
         {root?.user && (
           <button
             type='button'
-            className='disabled:cursor-wait mr-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+            className='disabled:cursor-wait mr-1.5 inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
             onClick={() =>
               fetcher.submit(null, { method: 'patch', action: '/logout' })
             }
             disabled={fetcher.state !== 'idle'}
           >
-            <LogoutIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
+            <LogoutIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
             <span>Logout</span>
           </button>
         )}
@@ -113,31 +113,31 @@ export default function Header() {
       <div className='h-6 mt-1.5'>
         <Link
           prefetch='intent'
-          className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+          className='inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
           to='/changelog'
         >
-          <FireIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
+          <FireIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
           <span>Changelog</span>
         </Link>
         <ThemeSwitcher />
       </div>
       <div className='h-6 mt-1.5'>
         <a
-          className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+          className='inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
           href='https://github.com/rooteco/tweetscape'
           target='_blank'
           rel='noopener noreferrer'
         >
-          <OpenInNewIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
+          <OpenInNewIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
           <span>GitHub</span>
         </a>
         <a
-          className='ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+          className='ml-1.5 inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
           href='https://discord.gg/3KYQBJwRSS'
           target='_blank'
           rel='noopener noreferrer'
         >
-          <OpenInNewIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
+          <OpenInNewIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
           <span>Community</span>
         </a>
       </div>

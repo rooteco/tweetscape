@@ -52,7 +52,7 @@ export default function Sync() {
     return (
       <a
         href={`${location.pathname}${location.search}`}
-        className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+        className='inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
       >
         <ErrorIcon />
         <span>Sync error</span>
@@ -60,7 +60,7 @@ export default function Sync() {
     );
   if (progress < 1)
     return (
-      <div className='cursor-wait inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'>
+      <div className='cursor-wait inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
         <SyncIcon />
         <span>{status}</span>
       </div>
@@ -68,7 +68,7 @@ export default function Sync() {
   return (
     <a
       href={`${location.pathname}${location.search}`}
-      className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+      className='inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
     >
       <BoltIcon />
       <span>

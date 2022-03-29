@@ -82,7 +82,7 @@ export default function ArticleItem({
     [sort, filter, tweets]
   );
   return (
-    <li className='text-sm p-3 border-b border-slate-200 dark:border-slate-800'>
+    <li className='text-sm p-3 border-b border-gray-200 dark:border-gray-800'>
       <div className='flex items-center'>
         <a
           data-cy='title'
@@ -93,7 +93,7 @@ export default function ArticleItem({
         >
           {title || (unwound_url ?? url).replace(/^https?:\/\/(www\.)?/, '')}
         </a>
-        <span className='ml-1 text-sm text-slate-500 block flex-none'>
+        <span className='ml-1 text-sm text-gray-500 block flex-none'>
           (
           <a
             data-cy='domain'
@@ -115,7 +115,7 @@ export default function ArticleItem({
           {substr(description, 235)}
         </p>
       )}
-      <div className='text-sm text-slate-500 flex items-center mt-1.5'>
+      <div className='text-sm text-gray-500 flex items-center mt-1.5'>
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
           {Array.from(tweets)
             .sort((a, b) =>
@@ -128,7 +128,7 @@ export default function ArticleItem({
             .reverse()
             .map(({ id, author }) => (
               <a
-                className='inline-block cursor-pointer duration-75 transition-transform hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-700 border-2 border-white dark:border-slate-900 -mr-2 first:mr-0 overflow-hidden'
+                className='inline-block cursor-pointer duration-75 transition-transform hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-white dark:border-gray-900 -mr-2 first:mr-0 overflow-hidden'
                 href={`https://twitter.com/${author?.username}/status/${id}`}
                 rel='noopener noreferrer'
                 target='_blank'
@@ -181,7 +181,7 @@ export default function ArticleItem({
         data-cy='tweets'
         className={cn('-mx-3 -mb-3 max-h-96 overflow-y-auto', { hidden })}
       >
-        <nav className='text-xs p-3 sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800'>
+        <nav className='text-xs p-3 sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800'>
           <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
           <button
             type='button'

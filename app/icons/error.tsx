@@ -1,7 +1,7 @@
 export default function ErrorIcon() {
   return (
     <svg
-      className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500'
+      className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500'
       xmlns='http://www.w3.org/2000/svg'
       height='24'
       viewBox='0 0 24 24'

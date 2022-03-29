@@ -131,7 +131,7 @@ function App({ children }: { children: ReactNode }) {
         <Links />
         <ThemeHead ssrTheme={Boolean(data.theme)} />
       </head>
-      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-slate-100 w-full h-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100'>
+      <body className='selection:bg-gray-200 selection:text-black dark:selection:bg-gray-700 dark:selection:text-gray-100 w-full h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100'>
         {children}
         <ThemeBody ssrTheme={Boolean(data.theme)} />
         <ScrollRestoration />

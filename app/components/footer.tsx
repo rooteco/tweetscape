@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className='py-4 mt-10 border-t-2 border-slate-900 dark:border-white whitespace-no-wrap flex justify-end items-end'>
+    <footer className='py-4 mt-10 border-t-2 border-gray-900 dark:border-white whitespace-no-wrap flex justify-end items-end'>
       <p className='text-xs text-center md:text-right'>
         all content copyright{' '}
         <a
