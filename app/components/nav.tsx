@@ -1,4 +1,15 @@
-import { Link, useFetcher, useMatches } from 'remix';
+import type { Dispatch, SetStateAction } from 'react';
+import {
+  Link,
+  NavLink,
+  useFetcher,
+  useMatches,
+  useResolvedPath,
+  useTransition,
+} from 'remix';
+import { animated, config, useSpring } from '@react-spring/web';
+import { useRef, useState } from 'react';
+import cn from 'classnames';
 
 import BirdIcon from '~/icons/bird';
 import FireIcon from '~/icons/fire';
@@ -9,12 +20,81 @@ import Switcher from '~/components/switcher';
 import Sync from '~/components/sync';
 import ThemeSwitcher from '~/components/theme-switcher';
 
+type TabProps = {
+  to: string;
+  children: string;
+  setActive: Dispatch<SetStateAction<{ x: number; width: number } | undefined>>;
+};
+function Tab({ to, children, setActive }: TabProps) {
+  const transition = useTransition();
+  const path = useResolvedPath(to);
+  const ref = useRef<HTMLAnchorElement>(null);
+  return (
+    <NavLink
+      to={to}
+      ref={ref}
+      prefetch='intent'
+      onMouseOver={() =>
+        setActive((prev) =>
+          ref.current
+            ? { x: ref.current.offsetLeft, width: ref.current.offsetWidth }
+            : prev
+        )
+      }
+      className={({ isActive }) => {
+        if (isActive)
+          setActive(
+            (prev) =>
+              prev ??
+              (ref.current
+                ? { x: ref.current.offsetLeft, width: ref.current.offsetWidth }
+                : prev)
+          );
+        return cn('mr-1.5 flex items-center text-xs rounded px-2 h-6', {
+          'bg-gray-200 dark:bg-gray-700': isActive,
+          'cursor-wait':
+            transition.state === 'loading' &&
+            transition.location.pathname === path.pathname,
+        });
+      }}
+    >
+      {children}
+    </NavLink>
+  );
+}
+
+function Tabs() {
+  const [active, setActive] = useState<{ x: number; width: number }>();
+  const styles = useSpring({
+    x: active?.x,
+    width: active?.width,
+    config: config.stiff,
+  });
+  return (
+    <nav className='flex items-stretch relative'>
+      <animated.div
+        style={styles}
+        className='absolute h-6 rounded bg-gray-100 dark:bg-gray-800 -z-[1]'
+      />
+      <Tab to='tweets' setActive={setActive}>
+        Tweets
+      </Tab>
+      <Tab to='articles' setActive={setActive}>
+        Articles
+      </Tab>
+    </nav>
+  );
+}
+
 export default function Nav() {
   const root = useMatches()[0].data as LoaderData | undefined;
   const fetcher = useFetcher();
   return (
-    <nav className='flex fixed p-1.5 top-1.5 left-1/2 -translate-x-1/2 rounded-lg border border-gray-200 dark:border-gray-800 shadow-xl bg-white dark:bg-gray-900 z-40'>
+    <nav className='flex items-stretch fixed p-1.5 top-1.5 left-1/2 -translate-x-1/2 rounded-lg border border-gray-200 dark:border-gray-800 shadow-xl bg-white dark:bg-gray-900 z-40'>
       <Switcher />
+      <div className='mr-1.5 border-l border-gray-200 dark:border-gray-800' />
+      <Tabs />
+      <div className='mr-1.5 border-l border-gray-200 dark:border-gray-800' />
       {root?.user && (
         <button
           type='button'

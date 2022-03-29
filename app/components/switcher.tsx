@@ -9,6 +9,7 @@ import {
 } from 'remix';
 import {
   animated,
+  config,
   useSpring,
   useTransition as useSpringTransition,
 } from '@react-spring/web';
@@ -22,9 +23,10 @@ import type { LoaderData } from '~/root';
 type SectionLinkProps = {
   to: string;
   children: string;
+  setActive: Dispatch<SetStateAction<string>>;
   setHoverY: Dispatch<SetStateAction<number | undefined>>;
 };
-function SectionLink({ to, children, setHoverY }: SectionLinkProps) {
+function SectionLink({ to, children, setActive, setHoverY }: SectionLinkProps) {
   const transition = useTransition();
   const path = useResolvedPath(to);
   const ref = useRef<HTMLAnchorElement>(null);
@@ -35,9 +37,12 @@ function SectionLink({ to, children, setHoverY }: SectionLinkProps) {
       prefetch='intent'
       onMouseOver={() => setHoverY((prev) => ref.current?.offsetTop ?? prev)}
       className={({ isActive }) => {
-        if (isActive) setHoverY((prev) => prev ?? ref.current?.offsetTop);
-        return cn('block px-2.5 py-1 my-0.5 rounded', {
-          'font-semibold text-sky-500 dark:text-sky-400': isActive,
+        if (isActive) {
+          setHoverY((prev) => prev ?? ref.current?.offsetTop);
+          setActive(children);
+        }
+        return cn('block mx-2 px-2 py-1 my-0.5 rounded whitespace-nowrap', {
+          'bg-gray-200 dark:bg-gray-700': isActive,
           'cursor-wait':
             transition.state === 'loading' &&
             transition.location.pathname === path.pathname,
@@ -53,14 +58,22 @@ function SectionLink({ to, children, setHoverY }: SectionLinkProps) {
 type SectionProps = {
   header: string;
   links: { to: string; name: string }[];
+  setActive: Dispatch<SetStateAction<string>>;
   setHoverY: Dispatch<SetStateAction<number | undefined>>;
 };
-function Section({ header, links, setHoverY }: SectionProps) {
+function Section({ header, links, setActive, setHoverY }: SectionProps) {
   return (
-    <section className='text-xs first-of-type:mt-0.5 mt-2.5'>
-      <h2 className='text-gray-500 px-2.5 font-semibold'>{header}</h2>
+    <section className='text-xs first-of-type:-mt-2.5 my-2.5'>
+      <h2 className='text-gray-500 py-1 px-4 bg-gray-100 dark:bg-gray-800 my-2.5'>
+        {header}
+      </h2>
       {links.map(({ to, name }) => (
-        <SectionLink key={to} to={to} setHoverY={setHoverY}>
+        <SectionLink
+          key={to}
+          to={to}
+          setActive={setActive}
+          setHoverY={setHoverY}
+        >
           {name}
         </SectionLink>
       ))}
@@ -69,21 +82,25 @@ function Section({ header, links, setHoverY }: SectionProps) {
 }
 
 export default function Switcher() {
+  const { pathname } = useLocation();
   const root = useMatches()[0].data as LoaderData | undefined;
   const clusters = (root?.clusters ?? []).map((c) => ({
     name: c.name,
-    to: `/clusters/${c.slug}`,
+    to: `/clusters/${c.slug}/${pathname.split('/').slice(3).join('/')}`,
   }));
   const lists = (root?.lists ?? []).map((l) => ({
     name: l.name,
-    to: `/lists/${l.id}`,
+    to: `/lists/${l.id}/${pathname.split('/').slice(3).join('/')}`,
   }));
   const rekt = [{ name: 'Crypto', to: '/rekt/crypto' }];
-  const { pathname } = useLocation();
+  const [active, setActive] = useState(
+    () =>
+      [...clusters, ...lists, ...rekt].find((l) => pathname.includes(l.to))
+        ?.name ?? 'Not Found'
+  );
   const [open, setOpen] = useState(false);
   const portalRef = useOnClickOutside(() => setOpen(false));
   const [ref, { x, y, width, height }] = useMeasure();
-  const config = { mass: 1, tension: 750, friction: 35 };
   const transitions = useSpringTransition(open, {
     from: {
       opacity: 0,
@@ -97,10 +114,10 @@ export default function Switcher() {
       opacity: 0,
       scale: 0.95,
     },
-    config,
+    config: config.stiff,
   });
   const [hoverY, setHoverY] = useState<number>();
-  const hoverStyles = useSpring({ y: (hoverY ?? 28) - 9, config });
+  const hoverStyles = useSpring({ y: hoverY ?? 28, config: config.stiff });
 
   return (
     <>
@@ -110,8 +127,7 @@ export default function Switcher() {
         type='button'
         onClick={() => setOpen((prev) => !prev)}
       >
-        {[...clusters, ...lists, ...rekt].find((l) => l.to === pathname)
-          ?.name ?? 'Not Found'}
+        {active}
       </button>
       {transitions((styles, mounted) =>
         mounted ? (
@@ -124,26 +140,29 @@ export default function Switcher() {
                 y: y + height,
                 x,
               }}
-              className='rounded-md origin-top-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 fixed z-30 shadow-xl p-2 relative overflow-y-auto overflow-x-hidden'
+              className='rounded-md origin-top-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 fixed z-30 shadow-xl relative overflow-y-auto overflow-x-hidden'
             >
               <animated.div
                 style={hoverStyles}
-                className='absolute inset-x-1.5 h-7 rounded bg-gray-100 dark:bg-gray-800 -z-[1]'
+                className='absolute inset-x-2 h-6 rounded bg-gray-100 dark:bg-gray-800 -z-[1]'
               />
               {!!clusters?.length && (
                 <Section
+                  setActive={setActive}
                   setHoverY={setHoverY}
                   header='Hive clusters'
                   links={clusters}
                 />
               )}
               <Section
+                setActive={setActive}
                 setHoverY={setHoverY}
                 header='Rekt parlors'
                 links={rekt}
               />
               {!!lists?.length && (
                 <Section
+                  setActive={setActive}
                   setHoverY={setHoverY}
                   header='Your lists'
                   links={lists}
