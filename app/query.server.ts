@@ -8,9 +8,9 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
-import { revalidate, swr } from '~/swr.server';
 import { Prisma } from '~/db.server';
 import { log } from '~/utils.server';
+import { swr } from '~/swr.server';
 
 const TWEETS_ORDER_BY: Record<TweetsSort, Prisma.Sql> = {
   [TweetsSort.TweetCount]: Prisma.sql`(tweets.retweet_count + tweets.quote_count) desc`,
@@ -85,7 +85,7 @@ export async function getTweetsByIds(
       ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
     where tweets.id in (${Prisma.join(tweetIds)})
     group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
-    order by created_at desc;`);
+    order by created_at desc;`, uid);
   return getTweetsFull(tweets);
 }
 
@@ -116,7 +116,7 @@ export async function getTweetRepliesByIds(
       ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.influencer_id = ${uid}` : Prisma.empty}
       ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
     group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
-    order by created_at desc;`);
+    order by created_at desc;`, uid);
   return getTweetsFull(tweets);
 }
 
@@ -163,25 +163,11 @@ export async function getListTweets(
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
   const tweets = await swr<TweetFull>(
-    getListTweetsQuery(listId, sort, filter, limit, uid)
+    getListTweetsQuery(listId, sort, filter, limit, uid),
+    uid
   );
   log.trace(`Fetched ${tweets.length} tweets for list (${listId}).`);
   return getTweetsFull(tweets);
-}
-export function revalidateListTweets(
-  listId: string,
-  limit = DEFAULT_TWEETS_LIMIT,
-  uid?: string
-) {
-  log.debug(`Revalidating list (${listId}) tweets...`);
-  const promises = Object.values(TweetsSort).map((sort) => {
-    if (typeof sort === 'string') return;
-    return Object.values(TweetsFilter).map((filter) => {
-      if (typeof filter === 'string') return;
-      return revalidate(getListTweetsQuery(listId, sort, filter, limit, uid));
-    });
-  });
-  return Promise.all(promises.flat());
 }
 
 function getClusterTweetsQuery(
@@ -228,7 +214,8 @@ export async function getClusterTweets(
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
   const tweets = await swr<TweetFull>(
-    getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid)
+    getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid),
+    uid
   );
   log.trace(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
   return getTweetsFull(tweets);
@@ -275,21 +262,21 @@ export async function getRektTweets(
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort].sql}...`);
   const tweets = await swr<TweetFull>(
-    getRektTweetsQuery(sort, filter, limit, uid)
+    getRektTweetsQuery(sort, filter, limit, uid),
+    uid
   );
   log.trace(`Fetched ${tweets.length} tweets for Rekt.`);
   return getTweetsFull(tweets);
 }
 
-function getListsQuery(uid: string): Prisma.Sql {
+export function getListsQuery(uid: string): Prisma.Sql {
   return Prisma.sql`
     select lists.* from lists
     left outer join list_followers on list_followers.list_id = lists.id
     where lists.owner_id = ${uid} or list_followers.influencer_id = ${uid}
     `;
 }
-export const getLists = (uid: string) => swr<List>(getListsQuery(uid));
-export const revalidateLists = (uid: string) => revalidate(getListsQuery(uid));
+export const getLists = (uid: string) => swr<List>(getListsQuery(uid), uid);
 
 function getListArticlesQuery(
   listId: string,
@@ -345,21 +332,11 @@ export async function getListArticles(
   uid?: string
 ): Promise<Article[]> {
   const articles = await swr<Article>(
-    getListArticlesQuery(listId, sort, filter, uid)
+    getListArticlesQuery(listId, sort, filter, uid),
+    uid
   );
   log.trace(`Fetched ${articles.length} articles for list (${listId}).`);
   return getArticlesFull(articles);
-}
-export function revalidateListArticles(listId: string) {
-  log.debug(`Revalidating list (${listId}) articles...`);
-  const promises = Object.values(ArticlesSort).map((sort) => {
-    if (typeof sort === 'string') return;
-    return Object.values(ArticlesFilter).map((filter) => {
-      if (typeof filter === 'string') return;
-      return revalidate(getListArticlesQuery(listId, sort, filter));
-    });
-  });
-  return Promise.all(promises.flat());
 }
 
 function getClusterArticlesQuery(
@@ -423,7 +400,8 @@ export async function getClusterArticles(
   uid?: string
 ): Promise<Article[]> {
   const articles = await swr<Article>(
-    getClusterArticlesQuery(clusterSlug, sort, filter, uid)
+    getClusterArticlesQuery(clusterSlug, sort, filter, uid),
+    uid
   );
   log.trace(
     `Fetched ${articles.length} articles for cluster (${clusterSlug}).`
@@ -480,7 +458,7 @@ function getRektArticlesQuery(uid?: string): Prisma.Sql {
     limit 50;`
 }
 export async function getRektArticles(uid?: string): Promise<Article[]> {
-  const articles = await swr<Article>(getRektArticlesQuery(uid));
+  const articles = await swr<Article>(getRektArticlesQuery(uid), uid);
   log.trace(`Fetched ${articles.length} articles for Rekt.`);
   return getArticlesFull(articles);
 }

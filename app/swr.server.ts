@@ -1,14 +1,27 @@
 import { createHash } from 'crypto';
 
+import {
+  ArticlesFilter,
+  ArticlesSort,
+  DEFAULT_TWEETS_LIMIT,
+  TweetsFilter,
+  TweetsSort,
+} from '~/query';
 import type { Prisma } from '~/db.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
 
+const STILL_GOOD_PREFIX = 'swr:stillgood';
+const RESPONSE_PREFIX = 'swr:response';
+
 let connectionPromise: Promise<void>;
 if (!redis.isOpen) connectionPromise = redis.connect();
 
-function keys(query: Prisma.Sql): {
+function keys(
+  query: Prisma.Sql,
+  uid?: string
+): {
   stillGoodKey: string;
   responseKey: string;
 } {
@@ -16,8 +29,8 @@ function keys(query: Prisma.Sql): {
   hash.update(query.sql);
   hash.update(JSON.stringify(query.values));
   const key = hash.digest('hex');
-  const stillGoodKey = `swr:stillgood:${key}`;
-  const responseKey = `swr:response:${key}`;
+  const stillGoodKey = `${STILL_GOOD_PREFIX}:${uid ? `${uid}:` : ''}${key}`;
+  const responseKey = `${RESPONSE_PREFIX}:${uid ? `${uid}:` : ''}${key}`;
   return { stillGoodKey, responseKey };
 }
 
@@ -26,11 +39,56 @@ function logQueryExecute(query: Prisma.Sql) {
   log.trace(`Executing PostgreSQL query ( ${msg.trim()} )...`);
 }
 
+export function cache<
+  S extends TweetsSort | ArticlesSort,
+  F extends TweetsFilter | ArticlesFilter
+>(
+  id: string,
+  sorts: S,
+  filters: F,
+  getQuery: (
+    id: string,
+    sort: S,
+    filter: F,
+    limit: number,
+    uid?: string
+  ) => Prisma.Sql,
+  revalidateOrInvalidate: (query: Prisma.Sql) => Promise<unknown>,
+  limit: number = DEFAULT_TWEETS_LIMIT,
+  uid?: string
+) {
+  log.debug(`Revalidating view (${id}) tweets...`);
+  /* eslint-disable consistent-return */
+  const promises = Object.values(sorts).map((sort: S) => {
+    if (typeof sort === 'string') return;
+    return Object.values(filters).map((filter: F) => {
+      if (typeof filter === 'string') return;
+      return revalidateOrInvalidate(getQuery(id, sort, filter, limit, uid));
+    });
+  });
+  /* eslint-enable consistent-return */
+  return Promise.all(promises.flat());
+}
+
+export async function invalidate(uid: string) {
+  log.info(`Invalidating cache keys for user (${uid})...`);
+  const scan = redis.scanIterator({
+    TYPE: 'string',
+    MATCH: `${RESPONSE_PREFIX}:${uid}:*`,
+    COUNT: 100,
+  });
+  for await (const key of scan) {
+    log.debug(`Unlinking cache key (${key})...`);
+    await redis.unlink(key);
+  }
+}
+
 export async function revalidate<T>(
   query: Prisma.Sql,
+  uid?: string,
   maxAgeSeconds = 60
 ): Promise<T[]> {
-  const { stillGoodKey, responseKey } = keys(query);
+  const { stillGoodKey, responseKey } = keys(query, uid);
   logQueryExecute(query);
   const toCache = await db.$queryRaw<T[]>(query);
   await redis.set(responseKey, JSON.stringify(toCache));
@@ -40,11 +98,12 @@ export async function revalidate<T>(
 
 export async function swr<T>(
   query: Prisma.Sql,
+  uid?: string,
   maxAgeSeconds = 60
 ): Promise<T[]> {
   await connectionPromise;
 
-  const { stillGoodKey, responseKey } = keys(query);
+  const { stillGoodKey, responseKey } = keys(query, uid);
   const cachedStillGoodPromise = redis
     .get(stillGoodKey)
     .then((cachedStillGood) => !!cachedStillGood)
@@ -62,11 +121,11 @@ export async function swr<T>(
       if (await cachedStillGoodPromise) {
         log.trace(`Redis cache hit for (${responseKey}), returning...`);
       } else {
-        log.trace(`Redis cache stale for (${responseKey}), revalidating...`);
+        log.debug(`Redis cache stale for (${responseKey}), revalidating...`);
 
         /* eslint-disable-next-line promise/no-nesting */
         (async () => {
-          await revalidate(query, maxAgeSeconds);
+          await revalidate(query, uid, maxAgeSeconds);
         })().catch((e) => {
           log.error(`Failed to revalidate: ${(e as Error).message}`);
         });
@@ -77,7 +136,7 @@ export async function swr<T>(
     .catch(() => null);
 
   if (!response) {
-    log.trace(`Redis cache miss for (${responseKey}), querying...`);
+    log.debug(`Redis cache miss for (${responseKey}), querying...`);
     logQueryExecute(query);
     response = await db.$queryRaw<T[]>(query);
 

@@ -7,6 +7,7 @@ import {
   handleTwitterApiError,
 } from '~/twitter.server';
 import { db } from '~/db.server';
+import { invalidate } from '~/swr.server';
 
 export const action: ActionFunction = async ({ request, params }) => {
   try {
@@ -48,6 +49,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       default:
         return new Response('Method Not Allowed', { status: 405 });
     }
+    await invalidate(uid);
     return await redirectToLastVisited(request, session, false);
   } catch (e) {
     return handleTwitterApiError(e);

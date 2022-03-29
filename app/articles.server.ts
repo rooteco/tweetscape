@@ -10,6 +10,7 @@ import { getListArticles, getLists } from '~/query.server';
 import { getLoggedInSession, log } from '~/utils.server';
 import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
+import { invalidate } from '~/swr.server';
 
 const limiter = new Bottleneck({
   trackDoneStatus: true,
@@ -29,6 +30,7 @@ export const action: ActionFunction = async ({ request }) => {
   const listIds = (await getLists(uid)).map((l) => l.id);
   log.info(`Fetching articles for ${listIds.length} user (${uid}) lists...`);
   const articlesToFetch: Article[] = [];
+  /* eslint-disable consistent-return */
   await Promise.all(
     listIds
       .map((listId) =>
@@ -36,7 +38,7 @@ export const action: ActionFunction = async ({ request }) => {
           if (typeof sort === 'string') return;
           return Object.values(ArticlesFilter).map(async (filter) => {
             if (typeof filter === 'string') return;
-            const articles = await getListArticles(listId, sort, filter);
+            const articles = await getListArticles(listId, sort, filter, uid);
             articles.forEach((article) => {
               if (article.status === 200) return;
               if (article.title && article.description) return;
@@ -48,6 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
       )
       .flat(2)
   );
+  /* eslint-enable consistent-return */
   log.info(`Fetching ${articlesToFetch.length} link metadata...`);
   const linksToUpdate: Link[] = [];
   await Promise.all(
@@ -108,6 +111,7 @@ export const action: ActionFunction = async ({ request }) => {
       db.links.update({ data, where: { url: data.url } })
     )
   );
+  await invalidate(uid);
   const headers = { 'Set-Cookie': await commitSession(session) };
   return new Response('Sync Success', { status: 200, headers });
 };

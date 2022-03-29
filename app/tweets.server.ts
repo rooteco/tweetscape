@@ -18,14 +18,15 @@ import {
   TWEET_EXPANSIONS,
   TWEET_FIELDS,
   USER_FIELDS,
+  executeCreateQueue,
   getTwitterClientForUser,
   handleTwitterApiError,
-  executeCreateQueue,
   toCreateQueue,
 } from '~/twitter.server';
 import { getLoggedInSession, log } from '~/utils.server';
 import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
+import { invalidate } from '~/swr.server';
 
 export const action: ActionFunction = async ({ request }) => {
   try {
@@ -94,6 +95,7 @@ export const action: ActionFunction = async ({ request }) => {
       })
     );
     await executeCreateQueue(queue);
+    await invalidate(uid);
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });
   } catch (e) {
