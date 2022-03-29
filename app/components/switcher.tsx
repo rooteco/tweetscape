@@ -1,24 +1,56 @@
-import * as Select from '@radix-ui/react-select';
-import { useLocation, useMatches, useNavigate } from 'remix';
+import * as Portal from '@radix-ui/react-portal';
+import {
+  NavLink,
+  useLocation,
+  useMatches,
+  useResolvedPath,
+  useTransition,
+} from 'remix';
+import {
+  animated,
+  useTransition as useSpringTransition,
+} from '@react-spring/web';
+import cn from 'classnames';
+import useMeasure from 'react-use-measure';
+import { useState } from 'react';
 
-import ExpandIcon from '~/icons/expand';
 import type { LoaderData } from '~/root';
 
-function Item(props: Select.SelectItemProps) {
+function SectionLink({ to, children }: { to: string; children: string }) {
+  const transition = useTransition();
+  const path = useResolvedPath(to);
   return (
-    <Select.Item
-      className='text-sm outline-none rounded px-1.5 py-0.5 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors cursor-pointer'
-      {...props}
-    />
+    <NavLink
+      key={to}
+      prefetch='intent'
+      className={({ isActive }) =>
+        cn('block px-2.5 py-1 my-0.5 rounded', {
+          'bg-gray-100 dark:bg-gray-800': isActive,
+          'hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors':
+            !isActive,
+          'cursor-wait':
+            transition.state === 'loading' &&
+            transition.location.pathname === path.pathname,
+        })
+      }
+      to={to}
+    >
+      {children}
+    </NavLink>
   );
 }
 
-function Label(props: Select.SelectLabelProps) {
+type SectionProps = { header: string; links: { to: string; name: string }[] };
+function Section({ header, links }: SectionProps) {
   return (
-    <Select.Label
-      className='text-xs px-1.5 pt-1.5 pb-0.5 text-gray-500'
-      {...props}
-    />
+    <section className='text-xs first-of-type:mt-0.5 mt-2.5'>
+      <h2 className='text-gray-500 px-2.5 font-semibold'>{header}</h2>
+      {links.map(({ to, name }) => (
+        <SectionLink key={to} to={to}>
+          {name}
+        </SectionLink>
+      ))}
+    </section>
   );
 }
 
@@ -27,50 +59,66 @@ export default function Switcher() {
   const clusters = root?.clusters ?? [];
   const lists = root?.lists ?? [];
   const { pathname } = useLocation();
-  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [ref, { x, y, width, height }] = useMeasure();
+  const transitions = useSpringTransition(open, {
+    from: {
+      opacity: 0,
+      scale: 0.9,
+    },
+    enter: {
+      opacity: 1,
+      scale: 1,
+    },
+    leave: {
+      opacity: 0,
+      scale: 0.9,
+    },
+    config: { mass: 1, tension: 750, friction: 35 },
+  });
   return (
-    <Select.Root value={pathname} onValueChange={navigate}>
-      <Select.Trigger className='outline-none mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
-        <Select.Value />
-        <Select.Icon>
-          <ExpandIcon className='shrink-0 w-3.5 h-3.5 ml-1 fill-gray-500' />
-        </Select.Icon>
-      </Select.Trigger>
-      <Select.Content className='overflow-hidden border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-md shadow-md'>
-        <Select.ScrollUpButton />
-        <Select.Viewport className='p-1.5'>
-          {!!clusters.length && (
-            <Select.Group>
-              <Label>Hive clusters</Label>
-              {clusters.map((c) => (
-                <Item key={c.id} value={`/clusters/${c.slug}`}>
-                  <Select.ItemText>{c.name}</Select.ItemText>
-                  <Select.ItemIndicator />
-                </Item>
-              ))}
-            </Select.Group>
-          )}
-          <Select.Group>
-            <Label>Rekt parlors</Label>
-            <Item value='/rekt/crypto'>
-              <Select.ItemText>Crypto</Select.ItemText>
-              <Select.ItemIndicator />
-            </Item>
-          </Select.Group>
-          {!!lists.length && (
-            <Select.Group>
-              <Label>Your lists</Label>
-              {lists.map((l) => (
-                <Item key={l.id} value={`/lists/${l.id}`}>
-                  <Select.ItemText>{l.name}</Select.ItemText>
-                  <Select.ItemIndicator />
-                </Item>
-              ))}
-            </Select.Group>
-          )}
-        </Select.Viewport>
-        <Select.ScrollDownButton />
-      </Select.Content>
-    </Select.Root>
+    <>
+      <button
+        ref={ref}
+        className='cursor-pointer outline-none mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
+        type='button'
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        {pathname}
+      </button>
+      {transitions((styles, mounted) =>
+        mounted ? (
+          <Portal.Root>
+            <animated.div
+              style={{ ...styles, minWidth: width, y: y + height, x }}
+              className='rounded-md origin-top-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 fixed z-30 shadow-xl p-2'
+            >
+              {!!clusters.length && (
+                <Section
+                  header='Hive clusters'
+                  links={clusters.map((c) => ({
+                    name: c.name,
+                    to: `/clusters/${c.slug}`,
+                  }))}
+                />
+              )}
+              <Section
+                header='Rekt parlors'
+                links={[{ name: 'Crypto', to: '/rekt/crypto' }]}
+              />
+              {!!lists.length && (
+                <Section
+                  header='Your lists'
+                  links={lists.map((l) => ({
+                    name: l.name,
+                    to: `/lists/${l.id}`,
+                  }))}
+                />
+              )}
+            </animated.div>
+          </Portal.Root>
+        ) : null
+      )}
+    </>
   );
 }
