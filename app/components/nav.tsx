@@ -5,8 +5,8 @@ import FireIcon from '~/icons/fire';
 import type { LoaderData } from '~/root';
 import LogoutIcon from '~/icons/logout';
 import OpenInNewIcon from '~/icons/open-in-new';
-import Sync from '~/components/sync';
 import Switcher from '~/components/switcher';
+import Sync from '~/components/sync';
 import ThemeSwitcher from '~/components/theme-switcher';
 
 export default function Nav() {
