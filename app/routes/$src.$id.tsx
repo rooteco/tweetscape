@@ -141,13 +141,13 @@ export function ErrorBoundary({ error }: { error: Error }) {
   const articlesRef = useRef<HTMLElement>(null);
   return (
     <div className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
-      <Header />
+      <Nav />
       <main className='flex flex-1 overflow-hidden'>
         <section
           ref={tweetsRef}
           className='flex-none w-[32rem] flex flex-col border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'
         >
-          <Nav scrollerRef={tweetsRef} header='Tweets' />
+          <Header scrollerRef={tweetsRef} header='Tweets' />
           <Empty className='flex-1 m-5'>
             <p>An unexpected runtime error occurred:</p>
             <p>{error.message}</p>
@@ -170,7 +170,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
           ref={articlesRef}
           className='flex-none w-[40rem] lg:flex hidden flex-col max-w-2xl border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'
         >
-          <Nav scrollerRef={articlesRef} header='Articles' />
+          <Header scrollerRef={articlesRef} header='Articles' />
         </section>
       </main>
     </div>
@@ -229,14 +229,14 @@ export default function Cluster() {
 
   return (
     <div className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
-      <Header />
+      <Nav />
       <main className='flex flex-1 overflow-x-auto overflow-y-hidden'>
         <section
           ref={tweetsRef}
           id='tweets'
           className='flex-none w-[32rem] flex flex-col border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'
         >
-          <Nav scrollerRef={tweetsRef} header='Tweets'>
+          <Header scrollerRef={tweetsRef} header='Tweets'>
             <div className='flex-none mr-4'>
               <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
               <NavLink
@@ -331,7 +331,7 @@ export default function Cluster() {
                 show retweets
               </NavLink>
             </div>
-          </Nav>
+          </Header>
           {!tweets.length && (
             <Empty className='flex-1 m-5'>No tweets to show</Empty>
           )}
@@ -372,7 +372,7 @@ export default function Cluster() {
           id='articles'
           className='flex-none w-[40rem] lg:flex hidden flex-col border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'
         >
-          <Nav scrollerRef={articlesRef} header='Articles'>
+          <Header scrollerRef={articlesRef} header='Articles'>
             <div className='flex-none mr-4'>
               <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
               {!isList && (
@@ -422,7 +422,7 @@ export default function Cluster() {
                 show retweets
               </NavLink>
             </div>
-          </Nav>
+          </Header>
           {!articles.length && (
             <Empty className='flex-1 m-5'>No articles to show</Empty>
           )}
