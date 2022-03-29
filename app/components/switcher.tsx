@@ -70,8 +70,15 @@ function Section({ header, links, setHoverY }: SectionProps) {
 
 export default function Switcher() {
   const root = useMatches()[0].data as LoaderData | undefined;
-  const clusters = root?.clusters ?? [];
-  const lists = root?.lists ?? [];
+  const clusters = (root?.clusters ?? []).map((c) => ({
+    name: c.name,
+    to: `/clusters/${c.slug}`,
+  }));
+  const lists = (root?.lists ?? []).map((l) => ({
+    name: l.name,
+    to: `/lists/${l.id}`,
+  }));
+  const rekt = [{ name: 'Crypto', to: '/rekt/crypto' }];
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const portalRef = useOnClickOutside(() => setOpen(false));
@@ -80,7 +87,7 @@ export default function Switcher() {
   const transitions = useSpringTransition(open, {
     from: {
       opacity: 0,
-      scale: 0.9,
+      scale: 0.95,
     },
     enter: {
       opacity: 1,
@@ -88,12 +95,13 @@ export default function Switcher() {
     },
     leave: {
       opacity: 0,
-      scale: 0.9,
+      scale: 0.95,
     },
     config,
   });
   const [hoverY, setHoverY] = useState<number>();
-  const hoverStyles = useSpring({ y: (hoverY ?? 28) - 7, config });
+  const hoverStyles = useSpring({ y: (hoverY ?? 28) - 9, config });
+
   return (
     <>
       <button
@@ -102,42 +110,43 @@ export default function Switcher() {
         type='button'
         onClick={() => setOpen((prev) => !prev)}
       >
-        {pathname}
+        {[...clusters, ...lists, ...rekt].find((l) => l.to === pathname)
+          ?.name ?? 'Not Found'}
       </button>
       {transitions((styles, mounted) =>
         mounted ? (
           <Portal.Root ref={portalRef}>
             <animated.div
-              style={{ ...styles, minWidth: width, y: y + height, x }}
-              className='rounded-md origin-top-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 fixed z-30 shadow-xl p-2 relative'
+              style={{
+                ...styles,
+                minWidth: width,
+                maxHeight: `calc(100vh - ${y}px - ${height}px - 64px)`,
+                y: y + height,
+                x,
+              }}
+              className='rounded-md origin-top-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 fixed z-30 shadow-xl p-2 relative overflow-y-auto overflow-x-hidden'
             >
               <animated.div
                 style={hoverStyles}
-                className='absolute inset-x-1.5 h-6 rounded bg-gray-100 dark:bg-gray-800 -z-[1]'
+                className='absolute inset-x-1.5 h-7 rounded bg-gray-100 dark:bg-gray-800 -z-[1]'
               />
-              {!!clusters.length && (
+              {!!clusters?.length && (
                 <Section
                   setHoverY={setHoverY}
                   header='Hive clusters'
-                  links={clusters.map((c) => ({
-                    name: c.name,
-                    to: `/clusters/${c.slug}`,
-                  }))}
+                  links={clusters}
                 />
               )}
               <Section
                 setHoverY={setHoverY}
                 header='Rekt parlors'
-                links={[{ name: 'Crypto', to: '/rekt/crypto' }]}
+                links={rekt}
               />
-              {!!lists.length && (
+              {!!lists?.length && (
                 <Section
                   setHoverY={setHoverY}
                   header='Your lists'
-                  links={lists.map((l) => ({
-                    name: l.name,
-                    to: `/lists/${l.id}`,
-                  }))}
+                  links={lists}
                 />
               )}
             </animated.div>
