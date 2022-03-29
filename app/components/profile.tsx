@@ -25,14 +25,7 @@ export default function Profile({
             target='_blank'
           >
             {profile_image_url && (
-              <img
-                width={64}
-                height={64}
-                src={`/img/${encodeURIComponent(
-                  profile_image_url
-                )}?width=64&height=64&fit=cover`}
-                alt=''
-              />
+              <img width={64} height={64} src='/pics/placeholder.png' alt='' />
             )}
           </a>
           <a

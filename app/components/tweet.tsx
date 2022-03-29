@@ -156,14 +156,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
           target='_blank'
         >
           {tweet?.author?.profile_image_url && (
-            <img
-              width={48}
-              height={48}
-              src={`/img/${encodeURIComponent(
-                tweet.author.profile_image_url
-              )}?width=48&height=48&fit=cover`}
-              alt=''
-            />
+            <img width={48} height={48} src='/pics/placeholder.png' alt='' />
           )}
         </a>
       )}
@@ -184,9 +177,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
                 <img
                   width={48}
                   height={48}
-                  src={`/img/${encodeURIComponent(
-                    tweet.author.profile_image_url
-                  )}?width=48&height=48&fit=cover`}
+                  src='/pics/placeholder.png'
                   alt=''
                 />
               )}
