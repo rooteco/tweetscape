@@ -15,9 +15,9 @@ export const loader: LoaderFunction = ({ request }): LoaderData => ({
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   return (
-    <div className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
+    <>
       <Nav />
-      <main className='flex flex-1 overflow-hidden'>
+      <main className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
         <Empty className='flex-1 m-5'>
           <p>An unexpected runtime error occurred:</p>
           <p>{error.message}</p>
@@ -36,17 +36,17 @@ export function ErrorBoundary({ error }: { error: Error }) {
           </p>
         </Empty>
       </main>
-    </div>
+    </>
   );
 }
 
 export default function Page() {
   return (
-    <div className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
+    <>
       <Nav />
-      <main className='flex flex-1 overflow-hidden'>
+      <main className='flex items-stretch justify-center pt-11'>
         <Outlet />
       </main>
-    </div>
+    </>
   );
 }

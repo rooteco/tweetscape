@@ -87,7 +87,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   return (
     <section
       ref={articlesRef}
-      className='flex-none w-[40rem] lg:flex hidden flex-col max-w-2xl border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'
+      className='flex-none w-[40rem] lg:flex hidden flex-col max-w-5xl'
     >
       <Header scrollerRef={articlesRef} header='Articles' />
       <Empty className='flex-1 m-5'>
@@ -152,7 +152,7 @@ export default function ArticlesPage() {
     <section
       ref={articlesRef}
       id='articles'
-      className='flex-none w-[40rem] lg:flex hidden flex-col border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'
+      className='flex-none w-[40rem] lg:flex hidden flex-col'
     >
       <Header scrollerRef={articlesRef} header='Articles'>
         <div className='flex-none mr-4'>

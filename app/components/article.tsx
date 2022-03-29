@@ -82,7 +82,7 @@ export default function ArticleItem({
     [sort, filter, tweets]
   );
   return (
-    <li className='text-sm p-3 border-b border-gray-200 dark:border-gray-800'>
+    <li className='text-sm px-3 py-5 border-b border-gray-200 dark:border-gray-800'>
       <div className='flex items-center'>
         <a
           data-cy='title'
