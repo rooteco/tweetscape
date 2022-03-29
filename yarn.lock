@@ -8658,6 +8658,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-cool-onclickoutside@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "react-cool-onclickoutside@npm:1.7.0"
+  peerDependencies:
+    react: ">= 16.8.0"
+  checksum: 52041d867ff275ee9e925b2fc0616febd17964a372b2319007e4c8ae375a9c583da79ab0f27238a36d7fb7e486ec2293f94b2a2362e9c48db44303884c97b2d4
+  languageName: node
+  linkType: hard
+
 "react-dom@npm:^17.0.2":
   version: 17.0.2
   resolution: "react-dom@npm:17.0.2"
@@ -10341,6 +10350,7 @@ __metadata:
     pretty-quick: ^3.1.3
     prisma: ^3.11.1
     react: ^17.0.2
+    react-cool-onclickoutside: ^1.7.0
     react-dom: ^17.0.2
     react-infinite-scroll-component: ^6.1.0
     react-use-measure: ^2.1.1
