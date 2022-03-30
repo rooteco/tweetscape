@@ -1,5 +1,11 @@
-import { Outlet, useOutletContext, useSearchParams } from 'remix';
-import { useEffect, useMemo, useState } from 'react';
+import {
+  Link,
+  Outlet,
+  useLocation,
+  useOutletContext,
+  useSearchParams,
+} from 'remix';
+import { useEffect, useMemo } from 'react';
 
 import {
   ArticleTweetsFilter,
@@ -7,25 +13,33 @@ import {
   DEFAULT_ARTICLES_FILTER,
 } from '~/query';
 import type { Article } from '~/types';
+import BoltIcon from '~/icons/bolt';
+import CloseIcon from '~/icons/close';
 import Empty from '~/components/empty';
+import FilterIcon from '~/icons/filter';
+import SortIcon from '~/icons/sort';
+import Switcher from '~/components/switcher';
+import { TimeAgo } from '~/components/timeago';
 import TweetItem from '~/components/tweet';
 
 export default function ArticlePage() {
   const article = useOutletContext<Article>();
-  const [sort, setSort] = useState(ArticleTweetsSort.AttentionScore);
-  const [searchParams] = useSearchParams();
-  const searchParamsFilter = useMemo(
-    () =>
-      Number(
-        searchParams.get('filter') ?? DEFAULT_ARTICLES_FILTER
-      ) as ArticleTweetsFilter,
-    [searchParams]
-  );
-  const [filter, setFilter] = useState(searchParamsFilter);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchParamsFilter = Number(
+    searchParams.get('filter') ?? DEFAULT_ARTICLES_FILTER
+  ) as ArticleTweetsFilter;
+  const sort = Number(
+    searchParams.get('s') ?? ArticleTweetsSort.AttentionScore
+  ) as ArticleTweetsSort;
+  const filter = Number(
+    searchParams.get('f') ?? searchParamsFilter
+  ) as ArticleTweetsFilter;
   useEffect(() => {
-    if (searchParamsFilter === ArticleTweetsFilter.HideRetweets)
-      setFilter(ArticleTweetsFilter.HideRetweets);
-  }, [searchParamsFilter]);
+    if (searchParamsFilter === ArticleTweetsFilter.HideRetweets) {
+      const prev = Object.fromEntries(searchParams.entries());
+      setSearchParams({ ...prev, f: `${ArticleTweetsFilter.HideRetweets}` });
+    }
+  }, [searchParamsFilter, searchParams, setSearchParams]);
   const results = useMemo(
     () =>
       Array.from(article.tweets)
@@ -59,9 +73,73 @@ export default function ArticlePage() {
         }),
     [sort, filter, article.tweets]
   );
+  const { pathname } = useLocation();
   return (
     <>
       <section className='border-x border-gray-200 dark:border-gray-800 flex-none max-w-xl overflow-y-scroll'>
+        <nav className='p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
+          <Link
+            to={pathname.replaceAll(`/${encodeURIComponent(article.url)}`, '')}
+            className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
+          >
+            <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
+            <span>Close</span>
+          </Link>
+          <Switcher
+            icon={
+              <SortIcon className='fill-current h-4 w-4 mr-1 inline-block' />
+            }
+            sections={[
+              {
+                header: 'Sorts',
+                links: [
+                  {
+                    name: 'Attention score',
+                    to: `?s=${ArticleTweetsSort.AttentionScore}`,
+                  },
+                  {
+                    name: 'Retweet count',
+                    to: `?s=${ArticleTweetsSort.RetweetCount}`,
+                  },
+                  {
+                    name: 'Latest first',
+                    to: `?s=${ArticleTweetsSort.Latest}`,
+                  },
+                  {
+                    name: 'Earliest first',
+                    to: `?s=${ArticleTweetsSort.Earliest}`,
+                  },
+                ],
+              },
+            ]}
+          />
+          <Switcher
+            icon={
+              <FilterIcon className='fill-current h-4 w-4 mr-1 inline-block' />
+            }
+            sections={[
+              {
+                header: 'Filters',
+                links: [
+                  {
+                    name: 'Hide retweets',
+                    to: `?f=${ArticleTweetsFilter.HideRetweets}`,
+                  },
+                  {
+                    name: 'Show retweets',
+                    to: `?f=${ArticleTweetsFilter.ShowRetweets}`,
+                  },
+                ],
+              },
+            ]}
+          />
+          <div className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
+            <BoltIcon />
+            <span>
+              Synced <TimeAgo datetime={new Date()} locale='en_short' />
+            </span>
+          </div>
+        </nav>
         {!results.length && (
           <Empty className='m-3 h-48'>No tweets to show</Empty>
         )}
