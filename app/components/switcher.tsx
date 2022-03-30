@@ -1,6 +1,12 @@
 import * as Portal from '@radix-ui/react-portal';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import { NavLink, useLocation, useResolvedPath, useTransition } from 'remix';
+import {
+  NavLink,
+  useLocation,
+  useResolvedPath,
+  useSearchParams,
+  useTransition,
+} from 'remix';
 import {
   animated,
   config,
@@ -9,6 +15,7 @@ import {
 } from '@react-spring/web';
 import { useRef, useState } from 'react';
 import cn from 'classnames';
+import { ResizeObserver as polyfill } from '@juggle/resize-observer';
 import useMeasure from 'react-use-measure';
 import useOnClickOutside from 'react-cool-onclickoutside';
 
@@ -25,6 +32,19 @@ function SectionLink({
   setActive: Dispatch<SetStateAction<string>>;
   setHoverY: Dispatch<SetStateAction<number | undefined>>;
 }) {
+  const [searchParams] = useSearchParams();
+  let matches = true;
+  if (to.includes('?')) {
+    const [pathname, query] = to.split('?');
+    const params = new URLSearchParams(query);
+    matches = [...params.entries()].every(
+      ([k, v]) => searchParams.get(k) === v
+    );
+    [...searchParams.entries()].forEach(([k, v]) => {
+      if (!params.has(k)) params.set(k, v);
+    });
+    to = `${pathname}?${params.toString()}`;
+  }
   const transition = useTransition();
   const path = useResolvedPath(to);
   const ref = useRef<HTMLAnchorElement>(null);
@@ -36,9 +56,9 @@ function SectionLink({
       onMouseOver={() => setHoverY((prev) => ref.current?.offsetTop ?? prev)}
       onMouseOut={() => setHoverY(undefined)}
       className={({ isActive }) => {
-        if (isActive) setActive(name);
+        if (isActive && matches) setActive(name);
         return cn('block mx-2 px-2 py-1 my-0.5 rounded whitespace-nowrap', {
-          'bg-gray-200 dark:bg-gray-700': isActive,
+          'bg-gray-200 dark:bg-gray-700': isActive && matches,
           'cursor-wait':
             transition.state === 'loading' &&
             transition.location.pathname === path.pathname,
@@ -82,8 +102,8 @@ function Section({
   );
 }
 
-export type SwitcherProps = { sections: SectionProps[]; children?: ReactNode };
-export default function Switcher({ sections, children }: SwitcherProps) {
+export type SwitcherProps = { sections: SectionProps[]; icon?: ReactNode };
+export default function Switcher({ sections, icon }: SwitcherProps) {
   const { pathname } = useLocation();
   const [active, setActive] = useState(
     () =>
@@ -94,7 +114,7 @@ export default function Switcher({ sections, children }: SwitcherProps) {
   );
   const [open, setOpen] = useState(false);
   const portalRef = useOnClickOutside(() => setOpen(false));
-  const [ref, { x, y, width, height }] = useMeasure();
+  const [ref, { x, y, width, height }] = useMeasure({ polyfill });
   const transitions = useSpringTransition(open, {
     from: {
       opacity: 0,
@@ -120,11 +140,14 @@ export default function Switcher({ sections, children }: SwitcherProps) {
     <>
       <button
         ref={ref}
-        className='ignore-onclickoutside cursor-pointer outline-none mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
         type='button'
         onClick={() => setOpen((prev) => !prev)}
+        className={cn(
+          'cursor-pointer outline-none mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6',
+          { 'ignore-onclickoutside': open }
+        )}
       >
-        {children}
+        {icon}
         {active}
       </button>
       {transitions((styles, mounted) =>
