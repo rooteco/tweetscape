@@ -13,7 +13,7 @@ import {
   useSpring,
   useTransition as useSpringTransition,
 } from '@react-spring/web';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import cn from 'classnames';
 import { ResizeObserver as polyfill } from '@juggle/resize-observer';
 import useMeasure from 'react-use-measure';
@@ -26,16 +26,14 @@ type SectionLinkProps = {
 function SectionLink({
   to,
   name,
-  setActive,
   setHoverY,
 }: SectionLinkProps & {
-  setActive: Dispatch<SetStateAction<string>>;
   setHoverY: Dispatch<SetStateAction<number | undefined>>;
 }) {
   const [searchParams] = useSearchParams();
   let matches = true;
   if (to.includes('?')) {
-    const [pathname, query] = to.split('?');
+    const [path, query] = to.split('?');
     const params = new URLSearchParams(query);
     matches = [...params.entries()].every(
       ([k, v]) => searchParams.get(k) === v
@@ -43,7 +41,7 @@ function SectionLink({
     [...searchParams.entries()].forEach(([k, v]) => {
       if (!params.has(k)) params.set(k, v);
     });
-    to = `${pathname}?${params.toString()}`;
+    to = `${path}?${params.toString()}`;
   }
   const transition = useTransition();
   const path = useResolvedPath(to);
@@ -55,15 +53,15 @@ function SectionLink({
       prefetch='intent'
       onMouseOver={() => setHoverY((prev) => ref.current?.offsetTop ?? prev)}
       onMouseOut={() => setHoverY(undefined)}
-      className={({ isActive }) => {
-        if (isActive && matches) setActive(name);
-        return cn('block mx-2 px-2 py-1 my-0.5 rounded whitespace-nowrap', {
+      className={({ isActive }) =>
+        cn('block mx-2 px-2 py-1 my-0.5 rounded whitespace-nowrap', {
           'bg-gray-200 dark:bg-gray-700': isActive && matches,
           'cursor-wait':
             transition.state === 'loading' &&
-            transition.location.pathname === path.pathname,
-        });
-      }}
+            transition.location.pathname === path.pathname &&
+            transition.location.search === path.search,
+        })
+      }
       to={to}
     >
       {name}
@@ -78,10 +76,8 @@ type SectionProps = {
 function Section({
   header,
   links,
-  setActive,
   setHoverY,
 }: SectionProps & {
-  setActive: Dispatch<SetStateAction<string>>;
   setHoverY: Dispatch<SetStateAction<number | undefined>>;
 }) {
   return (
@@ -90,13 +86,7 @@ function Section({
         {header}
       </h2>
       {links.map(({ to, name }) => (
-        <SectionLink
-          key={to}
-          to={to}
-          name={name}
-          setActive={setActive}
-          setHoverY={setHoverY}
-        />
+        <SectionLink key={to} to={to} name={name} setHoverY={setHoverY} />
       ))}
     </section>
   );
@@ -105,16 +95,28 @@ function Section({
 export type SwitcherProps = { sections: SectionProps[]; icon?: ReactNode };
 export default function Switcher({ sections, icon }: SwitcherProps) {
   const { pathname } = useLocation();
-  const [active, setActive] = useState(
-    () =>
-      sections
-        .map((s) => s.links)
-        .flat()
-        .find((l) => pathname.includes(l.to))?.name ?? 'Not Found'
-  );
+  const [searchParams] = useSearchParams();
+  const active =
+    sections
+      .map((s) => s.links)
+      .flat()
+      .find((l) => {
+        const [path, query] = l.to.split('?');
+        let matches = true;
+        if (query) {
+          const params = new URLSearchParams(query);
+          matches = [...params.entries()].every(
+            ([k, v]) => searchParams.get(k) === v
+          );
+        }
+        return pathname.includes(path) && matches;
+      })?.name ?? 'Not Found';
   const [open, setOpen] = useState(false);
   const portalRef = useOnClickOutside(() => setOpen(false));
   const [ref, { x, y, width, height }] = useMeasure({ polyfill });
+  useEffect(() => {
+    console.log('Measure:', { x, y, width, height });
+  }, [x, y, width, height]);
   const transitions = useSpringTransition(open, {
     from: {
       opacity: 0,
@@ -174,7 +176,6 @@ export default function Switcher({ sections, icon }: SwitcherProps) {
                     key={header}
                     header={header}
                     links={links}
-                    setActive={setActive}
                     setHoverY={setHoverY}
                   />
                 ))}
