@@ -84,11 +84,11 @@ export default function Switcher() {
   const root = useMatches()[0].data as LoaderData | undefined;
   const clusters = (root?.clusters ?? []).map((c) => ({
     name: c.name,
-    to: `/clusters/${c.slug}/${pathname.split('/').slice(3).join('/')}`,
+    to: `/clusters/${c.slug}/${pathname.split('/')[3] ?? 'articles'}`,
   }));
   const lists = (root?.lists ?? []).map((l) => ({
     name: l.name,
-    to: `/lists/${l.id}/${pathname.split('/').slice(3).join('/')}`,
+    to: `/lists/${l.id}/${pathname.split('/')[3] ?? 'articles'}`,
   }));
   const rekt = [{ name: 'Crypto', to: '/rekt/crypto' }];
   const [active, setActive] = useState(
