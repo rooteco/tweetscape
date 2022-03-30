@@ -156,7 +156,12 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
           target='_blank'
         >
           {tweet?.author?.profile_image_url && (
-            <img width={48} height={48} src='/pics/placeholder.png' alt='' />
+            <img
+              width={48}
+              height={48}
+              src={tweet.author.profile_image_url}
+              alt=''
+            />
           )}
         </a>
       )}
@@ -177,7 +182,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
                 <img
                   width={48}
                   height={48}
-                  src='/pics/placeholder.png'
+                  src={tweet.author.profile_image_url}
                   alt=''
                 />
               )}
