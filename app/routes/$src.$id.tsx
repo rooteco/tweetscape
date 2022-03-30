@@ -42,9 +42,9 @@ export function ErrorBoundary({ error }: { error: Error }) {
 
 export default function Page() {
   return (
-    <main className='flex flex-col fixed inset-0 overflow-hidden'>
+    <main className='fixed inset-0 overflow-hidden'>
       <Nav />
-      <div className='flex items-stretch justify-center overflow-hidden'>
+      <div className='flex w-fit mx-auto items-stretch overflow-y-hidden overflow-x-auto'>
         <Outlet />
       </div>
     </main>
