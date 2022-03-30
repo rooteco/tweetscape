@@ -63,7 +63,7 @@ export default function ArticlePage() {
     [sort, filter, article.tweets]
   );
   return (
-    <section className='p-5 flex-none flex flex-col max-w-xl overflow-y-scroll'>
+    <section className='border-x border-gray-200 dark:border-gray-800 flex-none flex flex-col max-w-xl overflow-y-scroll'>
       {!results.length && <Empty className='m-3 h-48'>No tweets to show</Empty>}
       {!!results.length && (
         <div className='relative'>
