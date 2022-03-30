@@ -84,7 +84,7 @@ export default function Nav() {
   const root = useMatches()[0].data as LoaderData | undefined;
   const fetcher = useFetcher();
   return (
-    <header className='border-b border-gray-200 dark:border-gray-800'>
+    <header className='flex-none border-b border-gray-200 dark:border-gray-800'>
       <nav className='flex items-stretch justify-center p-1.5 mx-auto'>
         <Switcher />
         <div className='mr-1.5 border-l border-gray-200 dark:border-gray-800' />
