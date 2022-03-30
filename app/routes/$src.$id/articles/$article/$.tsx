@@ -56,9 +56,9 @@ function Section({ tweet, replies }: LoaderData[number]) {
     prevSyncing.current = syncing;
   }, [syncing]);
   return (
-    <section className='flex-none w-[32rem] flex flex-col border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'>
+    <section className='border-r border-gray-200 dark:border-gray-800 flex-none max-w-xl overflow-y-scroll'>
       <header className='z-30 sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow'>
-        <nav className='px-3 py-1.5 border-b border-gray-200 dark:border-gray-800'>
+        <nav className='p-1.5 border-b border-gray-200 dark:border-gray-800'>
           <Link
             to={pathname.replaceAll(`/${tweet.id}`, '')}
             className='inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'

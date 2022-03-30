@@ -1,16 +1,13 @@
+import { Outlet, useOutletContext, useSearchParams } from 'remix';
 import { useEffect, useMemo, useState } from 'react';
-import { useOutletContext, useSearchParams } from 'remix';
-import cn from 'classnames';
 
-import type { Article } from '~/types';
 import {
   ArticleTweetsFilter,
   ArticleTweetsSort,
   DEFAULT_ARTICLES_FILTER,
 } from '~/query';
+import type { Article } from '~/types';
 import Empty from '~/components/empty';
-import FilterIcon from '~/icons/filter';
-import SortIcon from '~/icons/sort';
 import TweetItem from '~/components/tweet';
 
 export default function ArticlePage() {
@@ -63,15 +60,20 @@ export default function ArticlePage() {
     [sort, filter, article.tweets]
   );
   return (
-    <section className='border-x border-gray-200 dark:border-gray-800 flex-none flex flex-col max-w-xl overflow-y-scroll'>
-      {!results.length && <Empty className='m-3 h-48'>No tweets to show</Empty>}
-      {!!results.length && (
-        <div className='relative'>
-          {results.map((tweet) => (
-            <TweetItem tweet={tweet} key={tweet.id} />
-          ))}
-        </div>
-      )}
-    </section>
+    <>
+      <section className='border-x border-gray-200 dark:border-gray-800 flex-none max-w-xl overflow-y-scroll'>
+        {!results.length && (
+          <Empty className='m-3 h-48'>No tweets to show</Empty>
+        )}
+        {!!results.length && (
+          <div className='relative'>
+            {results.map((tweet) => (
+              <TweetItem tweet={tweet} key={tweet.id} />
+            ))}
+          </div>
+        )}
+      </section>
+      <Outlet />
+    </>
   );
 }
