@@ -68,20 +68,14 @@ export function ArticleContent({ article }: { article: Article }) {
             .slice(0, 10)
             .reverse()
             .map(({ id, author }) => (
-              <a
-                className='inline-block cursor-pointer duration-75 transition-transform hover:border-0 hover:scale-125 hover:z-0 h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-white dark:border-gray-900 -mr-2 first:mr-0 overflow-hidden'
-                href={`https://twitter.com/${author?.username}/status/${id}`}
-                rel='noopener noreferrer'
-                target='_blank'
+              <img
+                className='inline-block h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-white dark:border-gray-900 -mr-2 first:mr-0 overflow-hidden'
                 key={id}
-              >
-                <img
-                  width={25}
-                  height={25}
-                  src={author?.profile_image_url ?? '/pics/placeholder.png'}
-                  alt=''
-                />
-              </a>
+                width={25}
+                height={25}
+                src={author?.profile_image_url ?? '/pics/placeholder.png'}
+                alt=''
+              />
             ))}
         </span>
         <span className='ml-1'>
