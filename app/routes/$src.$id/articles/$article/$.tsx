@@ -58,17 +58,17 @@ function Section({ tweet, replies }: LoaderData[number]) {
   return (
     <section className='border-r border-gray-200 dark:border-gray-800 flex-none max-w-xl overflow-y-scroll'>
       <header className='z-30 sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow'>
-        <nav className='p-1.5 border-b border-gray-200 dark:border-gray-800'>
+        <nav className='p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
           <Link
             to={pathname.replaceAll(`/${tweet.id}`, '')}
-            className='inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
+            className='flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
           >
             <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
             <span>Close</span>
           </Link>
           <div
             className={cn(
-              'ml-1.5 inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6',
+              'ml-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6',
               { 'cursor-wait': syncing, 'cursor-default': !syncing }
             )}
           >
