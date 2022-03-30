@@ -85,13 +85,19 @@ export default function ArticlePage() {
             <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
             <span>Close</span>
           </Link>
+          <div className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
+            <BoltIcon />
+            <span>
+              Synced <TimeAgo datetime={new Date()} locale='en_short' />
+            </span>
+          </div>
           <Switcher
             icon={
               <SortIcon className='fill-current h-4 w-4 mr-1 inline-block' />
             }
             sections={[
               {
-                header: 'Sorts',
+                header: 'Sort by',
                 links: [
                   {
                     name: 'Attention score',
@@ -119,7 +125,7 @@ export default function ArticlePage() {
             }
             sections={[
               {
-                header: 'Filters',
+                header: 'Filter',
                 links: [
                   {
                     name: 'Hide retweets',
@@ -133,12 +139,6 @@ export default function ArticlePage() {
               },
             ]}
           />
-          <div className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
-            <BoltIcon />
-            <span>
-              Synced <TimeAgo datetime={new Date()} locale='en_short' />
-            </span>
-          </div>
         </nav>
         {!results.length && (
           <Empty className='m-3 h-48'>No tweets to show</Empty>
