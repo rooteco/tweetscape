@@ -4,41 +4,40 @@
 
 ::-webkit-scrollbar {
   width: 12px;
-  background: theme('colors.gray.100');
-  display: none;
+  background: theme('colors.white');
 }
 
 ::-webkit-scrollbar-thumb {
-  background: theme('colors.gray.300');
+  background: theme('colors.gray.100');
   border-radius: 6px;
-  border: 3px solid theme('colors.gray.100');
+  border: 3px solid theme('colors.white');
 }
 
 ::-webkit-scrollbar-corner {
-  background: theme('colors.gray.300');
+  background: theme('colors.gray.100');
 }
 
 .dark ::-webkit-scrollbar {
-  background: theme('colors.gray.800');
+  background: theme('colors.gray.900');
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: theme('colors.gray.700');
-  border: 3px solid theme('colors.gray.800');
+  background: theme('colors.gray.800');
+  border: 3px solid theme('colors.gray.900');
 }
 
 .dark ::-webkit-scrollbar-corner {
-  background: theme('colors.gray.700');
+  background: theme('colors.gray.800');
 }
 
 * {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  scrollbar-color: theme('colors.gray.300') theme('colors.gray.100');
+  -ms-overflow-style: initial;
+  scrollbar-width: initial;
+  scrollbar-color: theme('colors.gray.100') theme('colors.white');
 }
 
 .dark * {
-  scrollbar-color: theme('colors.gray.700') theme('colors.gray.800');
+  scrollbar-color: theme('colors.gray.800') theme('colors.gray.900');
 }
 
 #nprogress {
