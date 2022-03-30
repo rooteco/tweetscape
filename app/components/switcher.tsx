@@ -1,12 +1,6 @@
 import * as Portal from '@radix-ui/react-portal';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import {
-  NavLink,
-  useLocation,
-  useMatches,
-  useResolvedPath,
-  useTransition,
-} from 'remix';
+import { NavLink, useLocation, useResolvedPath, useTransition } from 'remix';
 import {
   animated,
   config,
@@ -17,8 +11,6 @@ import { useRef, useState } from 'react';
 import cn from 'classnames';
 import useMeasure from 'react-use-measure';
 import useOnClickOutside from 'react-cool-onclickoutside';
-
-import type { LoaderData } from '~/root';
 
 type SectionLinkProps = {
   to: string;
@@ -90,8 +82,8 @@ function Section({
   );
 }
 
-type SwitcherProps = { sections: SectionProps[]; children?: ReactNode };
-function Switcher({ sections, children }: SwitcherProps) {
+export type SwitcherProps = { sections: SectionProps[]; children?: ReactNode };
+export default function Switcher({ sections, children }: SwitcherProps) {
   const { pathname } = useLocation();
   const [active, setActive] = useState(
     () =>
@@ -168,29 +160,5 @@ function Switcher({ sections, children }: SwitcherProps) {
         ) : null
       )}
     </>
-  );
-}
-
-export default function PageSwitcher() {
-  const { pathname } = useLocation();
-  const root = useMatches()[0].data as LoaderData | undefined;
-  const type = pathname.split('/')[3] ?? 'articles';
-  const clusters = (root?.clusters ?? []).map((c) => ({
-    name: c.name,
-    to: `/clusters/${c.slug}/${type}`,
-  }));
-  const lists = (root?.lists ?? []).map((l) => ({
-    name: l.name,
-    to: `/lists/${l.id}/${type}`,
-  }));
-  const rekt = [{ name: 'Crypto', to: `/rekt/crypto/${type}` }];
-  return (
-    <Switcher
-      sections={[
-        { header: 'Hive clusters', links: clusters },
-        { header: 'Rekt parlors', links: rekt },
-        { header: 'Your lists', links: lists },
-      ]}
-    />
   );
 }

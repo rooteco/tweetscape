@@ -3,6 +3,7 @@ import {
   Link,
   NavLink,
   useFetcher,
+  useLocation,
   useMatches,
   useResolvedPath,
   useTransition,
@@ -19,6 +20,30 @@ import OpenInNewIcon from '~/icons/open-in-new';
 import Switcher from '~/components/switcher';
 import Sync from '~/components/sync';
 import ThemeSwitcher from '~/components/theme-switcher';
+
+function PageSwitcher() {
+  const { pathname } = useLocation();
+  const root = useMatches()[0].data as LoaderData | undefined;
+  const type = pathname.split('/')[3] ?? 'articles';
+  const clusters = (root?.clusters ?? []).map((c) => ({
+    name: c.name,
+    to: `/clusters/${c.slug}/${type}`,
+  }));
+  const lists = (root?.lists ?? []).map((l) => ({
+    name: l.name,
+    to: `/lists/${l.id}/${type}`,
+  }));
+  const rekt = [{ name: 'Crypto', to: `/rekt/crypto/${type}` }];
+  return (
+    <Switcher
+      sections={[
+        { header: 'Hive clusters', links: clusters },
+        { header: 'Rekt parlors', links: rekt },
+        { header: 'Your lists', links: lists },
+      ]}
+    />
+  );
+}
 
 type TabProps = {
   to: string;
@@ -86,7 +111,7 @@ export default function Nav() {
   return (
     <header className='flex-none border-b border-gray-200 dark:border-gray-800'>
       <nav className='flex items-stretch justify-center p-1.5 mx-auto'>
-        <Switcher />
+        <PageSwitcher />
         <div className='mr-1.5 border-l border-gray-200 dark:border-gray-800' />
         <Tabs />
         <div className='mr-1.5 border-l border-gray-200 dark:border-gray-800' />
