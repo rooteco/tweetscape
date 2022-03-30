@@ -166,6 +166,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@juggle/resize-observer@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "@juggle/resize-observer@npm:3.3.1"
+  checksum: ddabc4044276a2cb57d469c4917206c7e39f2463aa8e3430e33e4eda554412afe29c22afa40e6708b49dad5d56768dc83acd68a704b1dcd49a0906bb96b991b2
+  languageName: node
+  linkType: hard
+
 "@node-redis/bloom@npm:1.0.1":
   version: 1.0.1
   resolution: "@node-redis/bloom@npm:1.0.1"
@@ -10295,6 +10302,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "tweetscape@workspace:."
   dependencies:
+    "@juggle/resize-observer": ^3.3.1
     "@percy/cli": ^1.0.0-beta.76
     "@percy/cypress": ^3.1.1
     "@prisma/client": ^3.11.1
