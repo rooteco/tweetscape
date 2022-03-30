@@ -1,8 +1,16 @@
-import { Link, json, useLoaderData, useLocation, useSearchParams } from 'remix';
+import {
+  Link,
+  Outlet,
+  json,
+  useLoaderData,
+  useLocation,
+  useSearchParams,
+} from 'remix';
+import { animated, useSpring } from '@react-spring/web';
+import { useRef, useState } from 'react';
 import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
-import { useRef } from 'react';
 
 import {
   ArticlesFilter,
@@ -85,10 +93,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   const articlesRef = useRef<HTMLElement>(null);
   return (
-    <section
-      ref={articlesRef}
-      className='flex-none w-[40rem] lg:flex hidden flex-col max-w-5xl'
-    >
+    <section ref={articlesRef} className='flex-none flex flex-col max-w-2xl'>
       <Header scrollerRef={articlesRef} header='Articles' />
       <Empty className='flex-1 m-5'>
         <p>An unexpected runtime error occurred:</p>
@@ -148,65 +153,88 @@ export default function ArticlesPage() {
   const { pathname } = useLocation();
   const isList = /lists/.test(pathname);
 
+  const [hover, setHover] = useState<{ y: number; height: number }>();
+  const styles = useSpring({
+    y: hover?.y,
+    height: hover?.height,
+    opacity: hover ? 1 : 0,
+  });
+
+  const [article, setArticle] = useState<Article>(articles[0]);
+
   return (
-    <section
-      ref={articlesRef}
-      id='articles'
-      className='flex-none w-[40rem] lg:flex hidden flex-col'
-    >
-      <Header scrollerRef={articlesRef} header='Articles'>
-        <div className='flex-none mr-4'>
-          <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-          {!isList && (
-            <NavLink
-              articlesSort={ArticlesSort.AttentionScore}
-              articlesFilter={articlesFilter}
-              active={articlesSort === ArticlesSort.AttentionScore}
-            >
-              attention score
-            </NavLink>
-          )}
-          {isList && (
-            <span className='cursor-not-allowed'>attention score</span>
-          )}
-          {' · '}
-          <NavLink
-            articlesSort={ArticlesSort.TweetCount}
-            articlesFilter={articlesFilter}
-            active={articlesSort === ArticlesSort.TweetCount || isList}
-          >
-            tweets
-          </NavLink>
-        </div>
-        <div className='flex-none'>
-          <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-          <NavLink
-            articlesSort={articlesSort}
-            articlesFilter={ArticlesFilter.HideRetweets}
-            active={articlesFilter === ArticlesFilter.HideRetweets}
-          >
-            hide retweets
-          </NavLink>
-          {' · '}
-          <NavLink
-            articlesSort={articlesSort}
-            articlesFilter={ArticlesFilter.ShowRetweets}
-            active={articlesFilter === ArticlesFilter.ShowRetweets}
-          >
-            show retweets
-          </NavLink>
-        </div>
-      </Header>
-      {!articles.length && (
-        <Empty className='flex-1 m-5'>No articles to show</Empty>
-      )}
-      {!!articles.length && (
-        <ol>
-          {articles.map((a) => (
-            <ArticleItem {...a} key={a.url} />
-          ))}
-        </ol>
-      )}
-    </section>
+    <>
+      <section
+        ref={articlesRef}
+        id='articles'
+        className='p-5 flex-none flex flex-col max-w-2xl overflow-y-scroll relative'
+      >
+        {false && (
+          <Header scrollerRef={articlesRef} header='Articles'>
+            <div className='flex-none mr-4'>
+              <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
+              {!isList && (
+                <NavLink
+                  articlesSort={ArticlesSort.AttentionScore}
+                  articlesFilter={articlesFilter}
+                  active={articlesSort === ArticlesSort.AttentionScore}
+                >
+                  attention score
+                </NavLink>
+              )}
+              {isList && (
+                <span className='cursor-not-allowed'>attention score</span>
+              )}
+              {' · '}
+              <NavLink
+                articlesSort={ArticlesSort.TweetCount}
+                articlesFilter={articlesFilter}
+                active={articlesSort === ArticlesSort.TweetCount || isList}
+              >
+                tweets
+              </NavLink>
+            </div>
+            <div className='flex-none'>
+              <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
+              <NavLink
+                articlesSort={articlesSort}
+                articlesFilter={ArticlesFilter.HideRetweets}
+                active={articlesFilter === ArticlesFilter.HideRetweets}
+              >
+                hide retweets
+              </NavLink>
+              {' · '}
+              <NavLink
+                articlesSort={articlesSort}
+                articlesFilter={ArticlesFilter.ShowRetweets}
+                active={articlesFilter === ArticlesFilter.ShowRetweets}
+              >
+                show retweets
+              </NavLink>
+            </div>
+          </Header>
+        )}
+        {!articles.length && (
+          <Empty className='flex-1 m-5'>No articles to show</Empty>
+        )}
+        {!!articles.length && (
+          <div className='relative'>
+            <animated.div
+              style={styles}
+              className='absolute rounded-lg bg-gray-100 dark:bg-gray-800 w-full -z-[1]'
+            />
+            {articles.map((a) => (
+              <ArticleItem
+                article={a}
+                key={a.url}
+                setHover={setHover}
+                setArticle={setArticle}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+      <Outlet context={article} />
+    </>
   );
 }

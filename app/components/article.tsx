@@ -1,123 +1,64 @@
-import { useEffect, useMemo, useState } from 'react';
-import cn from 'classnames';
-import { useSearchParams } from 'remix';
+import type { Dispatch, SetStateAction } from 'react';
+import { animated, useSpring } from '@react-spring/web';
+import { memo, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'remix';
 
-import {
-  ArticleTweetsFilter,
-  ArticleTweetsSort,
-  DEFAULT_ARTICLES_FILTER,
-} from '~/query';
 import type { Article } from '~/types';
-import Empty from '~/components/empty';
-import FilterIcon from '~/icons/filter';
-import SortIcon from '~/icons/sort';
 import { TimeAgo } from '~/components/timeago';
-import TweetItem from '~/components/tweet';
 import { substr } from '~/utils';
 
-export type ArticleItemProps = Article;
-
-export default function ArticleItem({
-  url,
-  unwound_url,
-  attention_score,
-  title,
-  description,
-  tweets,
-}: ArticleItemProps) {
-  const [hidden, setHidden] = useState(true);
+export function ArticleContent({ article }: { article: Article }) {
   const earliestTweet = useMemo(
     () =>
-      Array.from(tweets).sort(
+      Array.from(article.tweets).sort(
         (a, b) =>
           new Date(a.created_at).valueOf() - new Date(b.created_at).valueOf()
       )[0],
-    [tweets]
-  );
-  const [sort, setSort] = useState(ArticleTweetsSort.AttentionScore);
-  const [searchParams] = useSearchParams();
-  const searchParamsFilter = useMemo(
-    () =>
-      Number(
-        searchParams.get('filter') ?? DEFAULT_ARTICLES_FILTER
-      ) as ArticleTweetsFilter,
-    [searchParams]
-  );
-  const [filter, setFilter] = useState(searchParamsFilter);
-  useEffect(() => {
-    if (searchParamsFilter === ArticleTweetsFilter.HideRetweets)
-      setFilter(ArticleTweetsFilter.HideRetweets);
-  }, [searchParamsFilter]);
-  const results = useMemo(
-    () =>
-      Array.from(tweets)
-        .filter(
-          (t) =>
-            filter === ArticleTweetsFilter.ShowRetweets ||
-            !/^RT @\w+\b:/.test(t.text)
-        )
-        .sort((a, b) => {
-          if (sort === ArticleTweetsSort.RetweetCount)
-            return (
-              b.retweet_count +
-              b.quote_count -
-              (a.retweet_count + a.quote_count)
-            );
-          if (sort === ArticleTweetsSort.Latest)
-            return (
-              new Date(b.created_at).valueOf() -
-              new Date(a.created_at).valueOf()
-            );
-          if (sort === ArticleTweetsSort.Earliest)
-            return (
-              new Date(a.created_at).valueOf() -
-              new Date(b.created_at).valueOf()
-            );
-          if (b.score && a.score)
-            return (
-              Number(b.score.attention_score) - Number(a.score.attention_score)
-            );
-          return 0;
-        }),
-    [sort, filter, tweets]
+    [article.tweets]
   );
   return (
-    <li className='text-sm px-3 py-5 border-b border-gray-200 dark:border-gray-800'>
+    <>
       <div className='flex items-center'>
         <a
           data-cy='title'
-          className='font-semibold hover:underline text-base truncate'
-          href={unwound_url ?? url}
+          className='hover:underline font-semibold text-base truncate'
+          href={article.unwound_url ?? article.url}
           target='_blank'
           rel='noopener noreferrer'
         >
-          {title || (unwound_url ?? url).replace(/^https?:\/\/(www\.)?/, '')}
+          {article.title ||
+            (article.unwound_url ?? article.url).replace(
+              /^https?:\/\/(www\.)?/,
+              ''
+            )}
         </a>
         <span className='ml-1 text-sm text-gray-500 block flex-none'>
           (
           <a
             data-cy='domain'
             className='hover:underline'
-            href={`https://${new URL(unwound_url ?? url).hostname.replace(
-              /^www\./,
-              ''
-            )}`}
+            href={`https://${new URL(
+              article.unwound_url ?? article.url
+            ).hostname.replace(/^www\./, '')}`}
             target='_blank'
             rel='noopener noreferrer'
           >
-            {new URL(unwound_url ?? url).hostname.replace(/^www\./, '')}
+            {new URL(article.unwound_url ?? article.url).hostname.replace(
+              /^www\./,
+              ''
+            )}
           </a>
           )
         </span>
       </div>
-      {description && (
+      {article.description && (
         <p data-cy='description' className='text-sm'>
-          {substr(description, 235)}
+          {substr(article.description, 235)}
         </p>
       )}
       <div className='text-sm text-gray-500 flex items-center mt-1.5'>
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
-          {Array.from(tweets)
+          {Array.from(article.tweets)
             .sort((a, b) =>
               b.score && a.score
                 ? Number(b.score.attention_score) -
@@ -137,37 +78,30 @@ export default function ArticleItem({
                 <img
                   width={25}
                   height={25}
-                  src='/pics/placeholder.png'
+                  src={author?.profile_image_url ?? '/pics/placeholder.png'}
                   alt=''
                 />
               </a>
             ))}
         </span>
-        <button
-          type='button'
-          aria-pressed={!hidden}
-          className='ml-1 hover:underline cursor-pointer'
-          onClick={() => setHidden((prev) => !prev)}
-        >
-          {tweets.length} tweet
-          {tweets.length > 1 && 's'}
-        </button>
+        <span className='ml-1'>
+          {article.tweets.length} tweet
+          {article.tweets.length > 1 && 's'}
+        </span>
         <span className='mx-1'>·</span>
-        {attention_score && (
+        {article.attention_score && (
           <>
             <a
-              className='hover:underline'
               href='https://borgcollective.notion.site/FAQ-5434e4695d60456cb481acb98bb88b18'
               target='_blank'
               rel='noopener noreferrer'
             >
-              {Math.round(attention_score)} points
+              {Math.round(article.attention_score)} points
             </a>
             <span className='mx-1'>·</span>
           </>
         )}
         <a
-          className='hover:underline'
           href={`https://twitter.com/${earliestTweet.author?.username}/status/${earliestTweet.id}`}
           target='_blank'
           rel='noopener noreferrer'
@@ -175,86 +109,61 @@ export default function ArticleItem({
           <TimeAgo datetime={earliestTweet.created_at} locale='en_short' />
         </a>
       </div>
-      <section
-        data-cy='tweets'
-        className={cn('-mx-3 -mb-3 max-h-96 overflow-y-auto', { hidden })}
-      >
-        <nav className='text-xs p-3 sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800'>
-          <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-          <button
-            type='button'
-            aria-pressed={sort === ArticleTweetsSort.AttentionScore}
-            className={cn({
-              underline: sort === ArticleTweetsSort.AttentionScore,
-            })}
-            onClick={() => setSort(ArticleTweetsSort.AttentionScore)}
-          >
-            attention score
-          </button>
-          {' · '}
-          <button
-            type='button'
-            aria-pressed={sort === ArticleTweetsSort.RetweetCount}
-            className={cn({
-              underline: sort === ArticleTweetsSort.RetweetCount,
-            })}
-            onClick={() => setSort(ArticleTweetsSort.RetweetCount)}
-          >
-            retweet count
-          </button>
-          {' · '}
-          <button
-            type='button'
-            aria-pressed={sort === ArticleTweetsSort.Latest}
-            className={cn({ underline: sort === ArticleTweetsSort.Latest })}
-            onClick={() => setSort(ArticleTweetsSort.Latest)}
-          >
-            latest
-          </button>
-          {' · '}
-          <button
-            type='button'
-            aria-pressed={sort === ArticleTweetsSort.Earliest}
-            className={cn({ underline: sort === ArticleTweetsSort.Earliest })}
-            onClick={() => setSort(ArticleTweetsSort.Earliest)}
-          >
-            earliest
-          </button>
-          <FilterIcon className='fill-current h-4 w-4 ml-4 mr-1.5 inline-block' />
-          <button
-            type='button'
-            aria-pressed={filter === ArticleTweetsFilter.HideRetweets}
-            className={cn({
-              underline: filter === ArticleTweetsFilter.HideRetweets,
-            })}
-            onClick={() => setFilter(ArticleTweetsFilter.HideRetweets)}
-          >
-            hide retweets
-          </button>
-          {' · '}
-          <button
-            type='button'
-            disabled={searchParamsFilter === ArticleTweetsFilter.HideRetweets}
-            aria-pressed={filter === ArticleTweetsFilter.ShowRetweets}
-            className={cn('disabled:cursor-not-allowed', {
-              underline: filter === ArticleTweetsFilter.ShowRetweets,
-            })}
-            onClick={() => setFilter(ArticleTweetsFilter.ShowRetweets)}
-          >
-            show retweets
-          </button>
-        </nav>
-        {!results.length && (
-          <Empty className='m-3 h-48'>No tweets to show</Empty>
-        )}
-        {!!results.length && (
-          <ol>
-            {results.map((tweet) => (
-              <TweetItem tweet={tweet} key={tweet.id} />
-            ))}
-          </ol>
-        )}
-      </section>
-    </li>
+    </>
   );
 }
+
+export type ArticleItemProps = {
+  article: Article;
+  setHover: Dispatch<SetStateAction<{ y: number; height: number } | undefined>>;
+  setArticle: Dispatch<SetStateAction<Article>>;
+};
+function ArticleItem({ article, setHover, setArticle }: ArticleItemProps) {
+  const [hovering, setHovering] = useState(false);
+  const ref = useRef<HTMLButtonElement>(null);
+  const onHoverIn = () => {
+    setHovering(true);
+    setHover((prev) =>
+      ref.current
+        ? { y: ref.current.offsetTop, height: ref.current.offsetHeight }
+        : prev
+    );
+  };
+  const onHoverOut = () => {
+    setHovering(false);
+    setHover(undefined);
+  };
+  const { pathname } = useLocation();
+  const isActive = pathname.includes(encodeURIComponent(article.url));
+  const navigate = useNavigate();
+  const content = useMemo(
+    () => <ArticleContent article={article} />,
+    [article]
+  );
+  const styles = useSpring({
+    blur: hovering || pathname.endsWith('articles') || isActive ? 0 : 2,
+    opacity: hovering || pathname.endsWith('articles') || isActive ? 1 : 0.5,
+  });
+  return (
+    <animated.button
+      style={{
+        opacity: styles.opacity,
+        filter: styles.blur.to((blur) => `blur(${blur}px)`),
+      }}
+      type='button'
+      ref={ref}
+      onFocus={onHoverIn}
+      onBlur={onHoverOut}
+      onMouseOver={onHoverIn}
+      onMouseOut={onHoverOut}
+      className='relative p-3 text-left my-3 first-of-type:mt-0 last-of-type:mb-0 w-full rounded-lg cursor-pointer block'
+      onClick={() => {
+        setArticle(article);
+        navigate(encodeURIComponent(article.url));
+      }}
+    >
+      {content}
+    </animated.button>
+  );
+}
+export default memo(ArticleItem);

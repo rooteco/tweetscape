@@ -5,6 +5,7 @@
 ::-webkit-scrollbar {
   width: 12px;
   background: theme('colors.gray.100');
+  display: none;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -30,8 +31,9 @@
   background: theme('colors.gray.700');
 }
 
-body {
-  scrollbar-width: thin;
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   scrollbar-color: theme('colors.gray.300') theme('colors.gray.100');
 }
 
