@@ -44,7 +44,7 @@ export default function Page() {
   return (
     <main className='fixed inset-0 overflow-hidden'>
       <Nav />
-      <div className='flex w-fit mx-auto items-stretch overflow-y-hidden overflow-x-auto'>
+      <div className='flex w-fit h-full mx-auto items-stretch overflow-y-hidden overflow-x-auto'>
         <Outlet />
       </div>
     </main>
