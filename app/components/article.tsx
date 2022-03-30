@@ -141,8 +141,8 @@ function ArticleItem({ article, setHover, setArticle }: ArticleItemProps) {
     [article]
   );
   const styles = useSpring({
-    blur: hovering || pathname.endsWith('articles') || isActive ? 0 : 2,
-    opacity: hovering || pathname.endsWith('articles') || isActive ? 1 : 0.5,
+    blur: hovering || pathname.endsWith('articles') || isActive ? 0 : 1,
+    opacity: hovering || pathname.endsWith('articles') || isActive ? 1 : 0.25,
   });
   return (
     <animated.button
