@@ -1,5 +1,5 @@
 import * as Portal from '@radix-ui/react-portal';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import {
   NavLink,
   useLocation,
@@ -22,11 +22,17 @@ import type { LoaderData } from '~/root';
 
 type SectionLinkProps = {
   to: string;
-  children: string;
+  name: string;
+};
+function SectionLink({
+  to,
+  name,
+  setActive,
+  setHoverY,
+}: SectionLinkProps & {
   setActive: Dispatch<SetStateAction<string>>;
   setHoverY: Dispatch<SetStateAction<number | undefined>>;
-};
-function SectionLink({ to, children, setActive, setHoverY }: SectionLinkProps) {
+}) {
   const transition = useTransition();
   const path = useResolvedPath(to);
   const ref = useRef<HTMLAnchorElement>(null);
@@ -38,7 +44,7 @@ function SectionLink({ to, children, setActive, setHoverY }: SectionLinkProps) {
       onMouseOver={() => setHoverY((prev) => ref.current?.offsetTop ?? prev)}
       onMouseOut={() => setHoverY(undefined)}
       className={({ isActive }) => {
-        if (isActive) setActive(children);
+        if (isActive) setActive(name);
         return cn('block mx-2 px-2 py-1 my-0.5 rounded whitespace-nowrap', {
           'bg-gray-200 dark:bg-gray-700': isActive,
           'cursor-wait':
@@ -48,18 +54,24 @@ function SectionLink({ to, children, setActive, setHoverY }: SectionLinkProps) {
       }}
       to={to}
     >
-      {children}
+      {name}
     </NavLink>
   );
 }
 
 type SectionProps = {
   header: string;
-  links: { to: string; name: string }[];
+  links: SectionLinkProps[];
+};
+function Section({
+  header,
+  links,
+  setActive,
+  setHoverY,
+}: SectionProps & {
   setActive: Dispatch<SetStateAction<string>>;
   setHoverY: Dispatch<SetStateAction<number | undefined>>;
-};
-function Section({ header, links, setActive, setHoverY }: SectionProps) {
+}) {
   return (
     <section className='text-xs first-of-type:-mt-2.5 my-2.5'>
       <h2 className='text-gray-500 py-1 px-4 bg-gray-100 dark:bg-gray-800 my-2.5'>
@@ -69,32 +81,24 @@ function Section({ header, links, setActive, setHoverY }: SectionProps) {
         <SectionLink
           key={to}
           to={to}
+          name={name}
           setActive={setActive}
           setHoverY={setHoverY}
-        >
-          {name}
-        </SectionLink>
+        />
       ))}
     </section>
   );
 }
 
-export default function Switcher() {
+type SwitcherProps = { sections: SectionProps[]; children?: ReactNode };
+function Switcher({ sections, children }: SwitcherProps) {
   const { pathname } = useLocation();
-  const root = useMatches()[0].data as LoaderData | undefined;
-  const clusters = (root?.clusters ?? []).map((c) => ({
-    name: c.name,
-    to: `/clusters/${c.slug}/${pathname.split('/')[3] ?? 'articles'}`,
-  }));
-  const lists = (root?.lists ?? []).map((l) => ({
-    name: l.name,
-    to: `/lists/${l.id}/${pathname.split('/')[3] ?? 'articles'}`,
-  }));
-  const rekt = [{ name: 'Crypto', to: '/rekt/crypto' }];
   const [active, setActive] = useState(
     () =>
-      [...clusters, ...lists, ...rekt].find((l) => pathname.includes(l.to))
-        ?.name ?? 'Not Found'
+      sections
+        .map((s) => s.links)
+        .flat()
+        .find((l) => pathname.includes(l.to))?.name ?? 'Not Found'
   );
   const [open, setOpen] = useState(false);
   const portalRef = useOnClickOutside(() => setOpen(false));
@@ -128,6 +132,7 @@ export default function Switcher() {
         type='button'
         onClick={() => setOpen((prev) => !prev)}
       >
+        {children}
         {active}
       </button>
       {transitions((styles, mounted) =>
@@ -147,32 +152,45 @@ export default function Switcher() {
                 style={hoverStyles}
                 className='absolute inset-x-2 h-6 rounded bg-gray-100 dark:bg-gray-800 -z-[1]'
               />
-              {!!clusters?.length && (
-                <Section
-                  setActive={setActive}
-                  setHoverY={setHoverY}
-                  header='Hive clusters'
-                  links={clusters}
-                />
-              )}
-              <Section
-                setActive={setActive}
-                setHoverY={setHoverY}
-                header='Rekt parlors'
-                links={rekt}
-              />
-              {!!lists?.length && (
-                <Section
-                  setActive={setActive}
-                  setHoverY={setHoverY}
-                  header='Your lists'
-                  links={lists}
-                />
-              )}
+              {sections
+                .filter((s) => s.links.length)
+                .map(({ header, links }) => (
+                  <Section
+                    key={header}
+                    header={header}
+                    links={links}
+                    setActive={setActive}
+                    setHoverY={setHoverY}
+                  />
+                ))}
             </animated.div>
           </Portal.Root>
         ) : null
       )}
     </>
+  );
+}
+
+export default function PageSwitcher() {
+  const { pathname } = useLocation();
+  const root = useMatches()[0].data as LoaderData | undefined;
+  const type = pathname.split('/')[3] ?? 'articles';
+  const clusters = (root?.clusters ?? []).map((c) => ({
+    name: c.name,
+    to: `/clusters/${c.slug}/${type}`,
+  }));
+  const lists = (root?.lists ?? []).map((l) => ({
+    name: l.name,
+    to: `/lists/${l.id}/${type}`,
+  }));
+  const rekt = [{ name: 'Crypto', to: `/rekt/crypto/${type}` }];
+  return (
+    <Switcher
+      sections={[
+        { header: 'Hive clusters', links: clusters },
+        { header: 'Rekt parlors', links: rekt },
+        { header: 'Your lists', links: lists },
+      ]}
+    />
   );
 }
