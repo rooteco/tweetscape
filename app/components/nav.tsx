@@ -41,22 +41,15 @@ function Tab({ to, children, setActive }: TabProps) {
             : prev
         )
       }
-      className={({ isActive }) => {
-        if (isActive)
-          setActive(
-            (prev) =>
-              prev ??
-              (ref.current
-                ? { x: ref.current.offsetLeft, width: ref.current.offsetWidth }
-                : prev)
-          );
-        return cn('mr-1.5 flex items-center text-xs rounded px-2 h-6', {
+      onMouseOut={() => setActive(undefined)}
+      className={({ isActive }) =>
+        cn('mr-1.5 flex items-center text-xs rounded px-2 h-6', {
           'bg-gray-200 dark:bg-gray-700': isActive,
           'cursor-wait':
             transition.state === 'loading' &&
             transition.location.pathname === path.pathname,
-        });
-      }}
+        })
+      }
     >
       {children}
     </NavLink>
@@ -68,6 +61,7 @@ function Tabs() {
   const styles = useSpring({
     x: active?.x,
     width: active?.width,
+    opacity: active ? 1 : 0,
     config: config.stiff,
   });
   return (

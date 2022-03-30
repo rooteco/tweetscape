@@ -36,11 +36,9 @@ function SectionLink({ to, children, setActive, setHoverY }: SectionLinkProps) {
       ref={ref}
       prefetch='intent'
       onMouseOver={() => setHoverY((prev) => ref.current?.offsetTop ?? prev)}
+      onMouseOut={() => setHoverY(undefined)}
       className={({ isActive }) => {
-        if (isActive) {
-          setHoverY((prev) => prev ?? ref.current?.offsetTop);
-          setActive(children);
-        }
+        if (isActive) setActive(children);
         return cn('block mx-2 px-2 py-1 my-0.5 rounded whitespace-nowrap', {
           'bg-gray-200 dark:bg-gray-700': isActive,
           'cursor-wait':
@@ -117,7 +115,10 @@ export default function Switcher() {
     config: config.stiff,
   });
   const [hoverY, setHoverY] = useState<number>();
-  const hoverStyles = useSpring({ y: hoverY ?? 28, config: config.stiff });
+  const hoverStyles = useSpring({
+    y: hoverY,
+    opacity: hoverY !== undefined ? 1 : 0,
+  });
 
   return (
     <>
