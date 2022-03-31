@@ -1,8 +1,8 @@
 import { animated, useSpring } from '@react-spring/web';
+import { useEffect, useRef } from 'react';
 import type { LoaderFunction } from 'remix';
 import { Outlet } from 'remix';
 import useMeasure from 'react-use-measure';
-import { useRef } from 'react';
 
 import Empty from '~/components/empty';
 import Header from '~/components/header';
@@ -49,9 +49,14 @@ export default function Page() {
   const [measureRef, { width }] = useMeasure();
   const centered = vw / 2 + (width - 2 * vw) / 2;
   const righted = width - 2 * vw;
+  const mountRun = useRef(true);
+  useEffect(() => {
+    if (mountRun.current && vw && width) mountRun.current = false;
+  }, [vw, width]);
   useSpring({
     left: righted > centered ? righted : centered,
     behavior: 'instant',
+    immediate: mountRun.current,
     onChange: ({ value }) => scrollRef.current?.scroll(value),
   });
   return (
