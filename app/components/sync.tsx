@@ -15,6 +15,36 @@ export default function Sync() {
   const [lastSynced, setLastSynced] = useState<Date>();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('Syncing user');
+  const lists = useFetcher();
+  useEffect(() => {
+    if (error) return;
+    if (user && lists.type === 'init') {
+      lists.submit(null, { method: 'patch', action: '/sync/lists' });
+      setProgress(1 / 6);
+      setStatus('Syncing lists');
+    } else if (lists.type === 'done') setProgress(2 / 6);
+  }, [error, user, lists]);
+  const tweets = useFetcher();
+  useEffect(() => {
+    if (error) return;
+    if (user && lists.type === 'done' && tweets.type === 'init') {
+      tweets.submit(null, { method: 'patch', action: '/sync/tweets' });
+      setProgress(3 / 6);
+      setStatus('Syncing tweets');
+    } else if (tweets.type === 'done') setProgress(4 / 6);
+  }, [error, user, lists.type, tweets]);
+  const articles = useFetcher();
+  useEffect(() => {
+    if (error) return;
+    if (user && tweets.type === 'done' && articles.type === 'init') {
+      articles.submit(null, { method: 'patch', action: '/sync/articles' });
+      setProgress(5 / 6);
+      setStatus('Syncing articles');
+    } else if (articles.type === 'done') {
+      setProgress(6 / 6);
+      setLastSynced((prev) => prev ?? new Date());
+    }
+  }, [error, user, tweets.type, articles]);
 
   const location = useLocation();
 
@@ -22,7 +52,7 @@ export default function Sync() {
     return (
       <a
         href={`${location.pathname}${location.search}`}
-        className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
+        className='inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
       >
         <ErrorIcon />
         <span>Sync error</span>
@@ -30,7 +60,7 @@ export default function Sync() {
     );
   if (progress < 1)
     return (
-      <div className='mr-1.5 cursor-wait flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
+      <div className='cursor-wait inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
         <SyncIcon />
         <span>{status}</span>
       </div>
@@ -38,7 +68,7 @@ export default function Sync() {
   return (
     <a
       href={`${location.pathname}${location.search}`}
-      className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
+      className='inline-flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
     >
       <BoltIcon />
       <span>
