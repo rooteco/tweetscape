@@ -25,7 +25,7 @@ export default function Profile({
             target='_blank'
           >
             {profile_image_url && (
-              <img width={64} height={64} src='/pics/placeholder.png' alt='' />
+              <img width={64} height={64} src={profile_image_url} alt='' />
             )}
           </a>
           <a
