@@ -87,7 +87,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   const articlesRef = useRef<HTMLElement>(null);
   return (
-    <section ref={articlesRef} className='flex-none flex flex-col max-w-2xl'>
+    <section ref={articlesRef} className='flex-none flex flex-col w-[42rem]'>
       <Header scrollerRef={articlesRef} header='Articles' />
       <Empty className='flex-1 m-5'>
         <p>An unexpected runtime error occurred:</p>

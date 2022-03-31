@@ -146,7 +146,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
       {!nested && (
         <a
           className={cn(
-            'block flex-none mr-3 w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden',
+            'block flex-none mr-3 w-12 h-12 rounded-full bg-gray-200/50 dark:bg-gray-700/50 overflow-hidden',
             { 'animate-pulse': !tweet }
           )}
           href={
@@ -169,7 +169,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
         <header className='mb-0.5 flex items-end'>
           {nested && (
             <a
-              className='block flex-none mr-1 w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden'
+              className='block flex-none mr-1 w-5 h-5 rounded-full bg-gray-200/50 dark:bg-gray-700/50 overflow-hidden'
               href={
                 tweet?.author
                   ? `https://twitter.com/${tweet.author.username}`
@@ -199,7 +199,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
             className={cn(
               'peer hover:underline block font-semibold min-w-0 shrink truncate',
               {
-                'h-4 w-40 mt-1 mb-1.5 bg-gray-200 dark:bg-gray-700 animate-pulse rounded':
+                'h-4 w-40 mt-1 mb-1.5 bg-gray-200/50 dark:bg-gray-700/50 animate-pulse rounded':
                   !tweet,
               }
             )}
@@ -215,7 +215,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
           <a
             data-cy='author'
             className={cn('peer text-gray-500 block flex-none', {
-              'h-2.5 w-32 mb-1.5 ml-1.5 bg-gray-200 dark:bg-gray-700 animate-pulse rounded':
+              'h-2.5 w-32 mb-1.5 ml-1.5 bg-gray-200/50 dark:bg-gray-700/50 animate-pulse rounded':
                 !tweet,
             })}
             href={
@@ -249,7 +249,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
         <p
           data-cy='text'
           className={cn('mb-3', {
-            'h-12 w-full bg-gray-200 dark:bg-gray-700 animate-pulse rounded':
+            'h-12 w-full bg-gray-200/50 dark:bg-gray-700/50 animate-pulse rounded':
               !tweet,
           })}
           dangerouslySetInnerHTML={{ __html: tweet?.html ?? tweet?.text ?? '' }}

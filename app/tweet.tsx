@@ -58,7 +58,7 @@ function Section({ tweet, replies }: LoaderData[number]) {
   }, [syncing]);
   return (
     <Column className='w-[36rem] border-r border-gray-200 dark:border-gray-800'>
-      <header className='z-30 sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow'>
+      <header className='z-30 sticky top-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow'>
         <nav className='p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
           <Link
             to={pathname.replaceAll(`/${tweet.id}`, '')}
