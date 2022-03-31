@@ -120,7 +120,7 @@ export default function Switcher({ sections, icon }: SwitcherProps) {
     'Not Found';
   const [open, setOpen] = useState(false);
   const portalRef = useOnClickOutside(() => setOpen(false));
-  const [ref, { x, y, width, height }] = useMeasure({ polyfill });
+  const [ref, { x, y, width, height }] = useMeasure({ polyfill, scroll: open });
   const transitions = useSpringTransition(open, {
     from: {
       opacity: 0,
