@@ -1,8 +1,7 @@
-import { Link, json, useLoaderData, useLocation, useSearchParams } from 'remix';
+import { json, useLoaderData, useSearchParams } from 'remix';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
-import { useRef } from 'react';
 
 import {
   DEFAULT_TWEETS_FILTER,
@@ -14,14 +13,11 @@ import {
 import { commitSession, getSession } from '~/session.server';
 import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
 import { log, nanoid } from '~/utils.server';
-import BoltIcon from '~/icons/bolt';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
-import Header from '~/components/header';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
-import { TimeAgo } from '~/components/timeago';
 import type { TweetFull } from '~/types';
 import TweetItem from '~/components/tweet';
 import { useError } from '~/error';
@@ -76,13 +72,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
-  const tweetsRef = useRef<HTMLElement>(null);
   return (
-    <section
-      ref={tweetsRef}
-      className='flex-none w-[32rem] flex flex-col border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'
-    >
-      <Header scrollerRef={tweetsRef} header='Tweets' />
+    <section className='flex-none w-[32rem] flex flex-col border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'>
       <Empty className='flex-1 m-5'>
         <p>An unexpected runtime error occurred:</p>
         <p>{error.message}</p>
