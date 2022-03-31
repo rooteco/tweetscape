@@ -21,6 +21,7 @@ import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
+import ErrorDisplay from '~/components/error';
 import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
@@ -87,23 +88,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   return (
     <Column className='w-[42rem] border-x border-gray-200 dark:border-gray-800 flex items-stretch'>
-      <Empty className='flex-1 m-5'>
-        <p>An unexpected runtime error occurred:</p>
-        <p>{error.message}</p>
-        <p className='mt-2'>
-          Try logging out and in again. Or smash your keyboard; that sometimes
-          helps. If you still have trouble, come and complain in{' '}
-          <a
-            className='underline'
-            href='https://discord.gg/3KYQBJwRSS'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            our Discord server
-          </a>
-          ; we’re always more than happy to help.
-        </p>
-      </Empty>
+      <ErrorDisplay error={error} />
     </Column>
   );
 }

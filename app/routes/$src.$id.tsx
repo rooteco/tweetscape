@@ -4,7 +4,7 @@ import type { LoaderFunction } from 'remix';
 import { Outlet } from 'remix';
 import useMeasure from 'react-use-measure';
 
-import Empty from '~/components/empty';
+import ErrorDisplay from '~/components/error';
 import Header from '~/components/header';
 import { lang } from '~/utils.server';
 import { useError } from '~/error';
@@ -20,23 +20,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   return (
     <main className='flex flex-col fixed inset-0 overflow-hidden'>
       <Header />
-      <Empty className='flex-1 m-5'>
-        <p>An unexpected runtime error occurred:</p>
-        <p>{error.message}</p>
-        <p className='mt-2'>
-          Try logging out and in again. Or smash your keyboard; that sometimes
-          helps. If you still have trouble, come and complain in{' '}
-          <a
-            className='underline'
-            href='https://discord.gg/3KYQBJwRSS'
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            our Discord server
-          </a>
-          ; we’re always more than happy to help.
-        </p>
-      </Empty>
+      <ErrorDisplay error={error} />
     </main>
   );
 }
