@@ -1,9 +1,8 @@
-import { Link, json, useLoaderData, useSearchParams } from 'remix';
-import { useRef, useState } from 'react';
+import { Link, json, useLoaderData, useLocation, useSearchParams } from 'remix';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
-import cn from 'classnames';
 import invariant from 'tiny-invariant';
+import { useRef } from 'react';
 
 import {
   DEFAULT_TWEETS_FILTER,
@@ -15,10 +14,15 @@ import {
 import { commitSession, getSession } from '~/session.server';
 import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
 import { log, nanoid } from '~/utils.server';
+import BoltIcon from '~/icons/bolt';
+import CloseIcon from '~/icons/close';
+import Column from '~/components/column';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
 import Header from '~/components/header';
 import SortIcon from '~/icons/sort';
+import Switcher from '~/components/switcher';
+import { TimeAgo } from '~/components/timeago';
 import type { TweetFull } from '~/types';
 import TweetItem from '~/components/tweet';
 import { useError } from '~/error';
@@ -37,35 +41,23 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const session = await getSession(request.headers.get('Cookie'));
   const uid = session.get('uid') as string | undefined;
   session.set('href', `${url.pathname}${url.search}`);
-  const tweetsSort = Number(
-    url.searchParams.get('c') ?? DEFAULT_TWEETS_SORT
+  const sort = Number(
+    url.searchParams.get('s') ?? DEFAULT_TWEETS_SORT
   ) as TweetsSort;
-  const tweetsFilter = Number(
-    url.searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
+  const filter = Number(
+    url.searchParams.get('f') ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
   const limit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
   let tweetsPromise: Promise<TweetFull[]>;
   switch (params.src) {
     case 'clusters':
-      tweetsPromise = getClusterTweets(
-        params.id,
-        tweetsSort,
-        tweetsFilter,
-        limit,
-        uid
-      );
+      tweetsPromise = getClusterTweets(params.id, sort, filter, limit, uid);
       break;
     case 'lists':
-      tweetsPromise = getListTweets(
-        params.id,
-        tweetsSort,
-        tweetsFilter,
-        limit,
-        uid
-      );
+      tweetsPromise = getListTweets(params.id, sort, filter, limit, uid);
       break;
     case 'rekt':
-      tweetsPromise = getRektTweets(tweetsSort, tweetsFilter, limit, uid);
+      tweetsPromise = getRektTweets(sort, filter, limit, uid);
       break;
     default:
       throw new Response('Not Found', { status: 404 });
@@ -113,121 +105,87 @@ export function ErrorBoundary({ error }: { error: Error }) {
   );
 }
 
-type NavLinkProps = {
-  active: boolean;
-  children: string;
-  tweetsSort: TweetsSort;
-  tweetsFilter: TweetsFilter;
-};
-function NavLink({ active, children, tweetsSort, tweetsFilter }: NavLinkProps) {
-  return (
-    <Link
-      className={cn({ underline: active })}
-      to={`?c=${tweetsSort}&d=${tweetsFilter}`}
-    >
-      {children}
-    </Link>
-  );
-}
-
 export default function TweetsPage() {
   const tweets = useLoaderData<LoaderData>();
-  const tweetsRef = useRef<HTMLElement>(null);
-
   const [searchParams, setSearchParams] = useSearchParams();
-  const tweetsSort = Number(
-    searchParams.get('c') ?? DEFAULT_TWEETS_SORT
-  ) as TweetsSort;
-  const tweetsFilter = Number(
-    searchParams.get('d') ?? DEFAULT_TWEETS_FILTER
-  ) as TweetsFilter;
-
-  const [activeTweet, setActiveTweet] = useState<TweetFull>();
-
+  const { pathname } = useLocation();
   return (
-    <section
-      ref={tweetsRef}
-      id='tweets'
-      className='flex-none w-[32rem] flex flex-col border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'
-    >
-      <Header scrollerRef={tweetsRef} header='Tweets'>
-        <div className='flex-none mr-4'>
-          <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-          <NavLink
-            tweetsSort={TweetsSort.TweetCount}
-            tweetsFilter={tweetsFilter}
-            active={tweetsSort === TweetsSort.TweetCount}
-          >
-            tweets
-          </NavLink>
-          {' · '}
-          <NavLink
-            tweetsSort={TweetsSort.RetweetCount}
-            tweetsFilter={tweetsFilter}
-            active={tweetsSort === TweetsSort.RetweetCount}
-          >
-            retweets
-          </NavLink>
-          {' · '}
-          <NavLink
-            tweetsSort={TweetsSort.QuoteCount}
-            tweetsFilter={tweetsFilter}
-            active={tweetsSort === TweetsSort.QuoteCount}
-          >
-            quotes
-          </NavLink>
-          {' · '}
-          <NavLink
-            tweetsSort={TweetsSort.LikeCount}
-            tweetsFilter={tweetsFilter}
-            active={tweetsSort === TweetsSort.LikeCount}
-          >
-            likes
-          </NavLink>
-          {' · '}
-          <NavLink
-            tweetsSort={TweetsSort.FollowerCount}
-            tweetsFilter={tweetsFilter}
-            active={tweetsSort === TweetsSort.FollowerCount}
-          >
-            followers
-          </NavLink>
-          {' · '}
-          <NavLink
-            tweetsSort={TweetsSort.Latest}
-            tweetsFilter={tweetsFilter}
-            active={tweetsSort === TweetsSort.Latest}
-          >
-            latest
-          </NavLink>
-          {' · '}
-          <NavLink
-            tweetsSort={TweetsSort.Earliest}
-            tweetsFilter={tweetsFilter}
-            active={tweetsSort === TweetsSort.Earliest}
-          >
-            earliest
-          </NavLink>
+    <Column className='max-w-xl border-x border-gray-200 dark:border-gray-800'>
+      <nav className='sticky top-0 z-10 bg-white/75 dark:bg-gray-900/75 backdrop-blur-sm p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
+        <Link
+          to={pathname.replaceAll('/tweets', '')}
+          className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
+        >
+          <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
+          <span>Close</span>
+        </Link>
+        <div className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
+          <BoltIcon />
+          <span>
+            Synced <TimeAgo datetime={new Date()} locale='en_short' />
+          </span>
         </div>
-        <div className='flex-none'>
-          <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-          <NavLink
-            tweetsSort={tweetsSort}
-            tweetsFilter={TweetsFilter.HideRetweets}
-            active={tweetsFilter === TweetsFilter.HideRetweets}
-          >
-            hide retweets
-          </NavLink>
-          {' · '}
-          <NavLink
-            tweetsSort={tweetsSort}
-            tweetsFilter={TweetsFilter.ShowRetweets}
-            active={tweetsFilter === TweetsFilter.ShowRetweets}
-          >
-            show retweets
-          </NavLink>
-        </div>
-      </Header>
+        <Switcher
+          icon={<SortIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
+          sections={[
+            {
+              header: 'Sort by',
+              links: [
+                {
+                  name: 'Tweet count',
+                  to: `?s=${TweetsSort.TweetCount}`,
+                },
+                {
+                  name: 'Retweet count',
+                  to: `?s=${TweetsSort.RetweetCount}`,
+                },
+                {
+                  name: 'Quote count',
+                  to: `?s=${TweetsSort.QuoteCount}`,
+                },
+                {
+                  name: 'Like count',
+                  to: `?s=${TweetsSort.LikeCount}`,
+                },
+                {
+                  name: 'Follower count',
+                  to: `?s=${TweetsSort.FollowerCount}`,
+                },
+                {
+                  name: 'Latest first',
+                  to: `?s=${TweetsSort.Latest}`,
+                  isActiveByDefault: true,
+                },
+                {
+                  name: 'Earliest first',
+                  to: `?s=${TweetsSort.Earliest}`,
+                },
+              ],
+            },
+          ]}
+        />
+        <Switcher
+          icon={
+            <FilterIcon className='fill-current h-4 w-4 mr-1 inline-block' />
+          }
+          sections={[
+            {
+              header: 'Filter',
+              links: [
+                {
+                  name: 'Hide retweets',
+                  to: `?f=${TweetsFilter.HideRetweets}`,
+                },
+                {
+                  name: 'Show retweets',
+                  to: `?f=${TweetsFilter.ShowRetweets}`,
+                  isActiveByDefault: true,
+                },
+              ],
+            },
+          ]}
+        />
+      </nav>
       {!tweets.length && (
         <Empty className='flex-1 m-5'>No tweets to show</Empty>
       )}
@@ -252,15 +210,11 @@ export default function TweetsPage() {
             hasMore
           >
             {tweets.map((tweet) => (
-              <TweetItem
-                tweet={tweet}
-                setActiveTweet={setActiveTweet}
-                key={tweet.id}
-              />
+              <TweetItem tweet={tweet} key={tweet.id} />
             ))}
           </InfiniteScroll>
         </ol>
       )}
-    </section>
+    </Column>
   );
 }
