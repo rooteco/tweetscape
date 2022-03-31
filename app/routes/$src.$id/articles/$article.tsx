@@ -28,18 +28,24 @@ export default function ArticlePage() {
   const searchParamsFilter = Number(
     searchParams.get('filter') ?? DEFAULT_ARTICLES_FILTER
   ) as ArticleTweetsFilter;
-  const sort = Number(
-    searchParams.get('s') ?? ArticleTweetsSort.AttentionScore
-  ) as ArticleTweetsSort;
-  const filter = Number(
-    searchParams.get('f') ?? searchParamsFilter
-  ) as ArticleTweetsFilter;
+
   useEffect(() => {
     if (searchParamsFilter === ArticleTweetsFilter.HideRetweets) {
       const prev = Object.fromEntries(searchParams.entries());
       setSearchParams({ ...prev, f: `${ArticleTweetsFilter.HideRetweets}` });
     }
   }, [searchParamsFilter, searchParams, setSearchParams]);
+
+  const defaultSort = ArticleTweetsSort.AttentionScore;
+  const defaultFilter = searchParamsFilter;
+
+  const sort = Number(
+    searchParams.get('s') ?? defaultSort
+  ) as ArticleTweetsSort;
+  const filter = Number(
+    searchParams.get('f') ?? defaultFilter
+  ) as ArticleTweetsFilter;
+
   const results = useMemo(
     () =>
       Array.from(article.tweets)
@@ -77,7 +83,7 @@ export default function ArticlePage() {
   return (
     <>
       <section className='border-x border-gray-200 dark:border-gray-800 flex-none max-w-xl overflow-y-scroll'>
-        <nav className='p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
+        <nav className='sticky top-0 z-10 bg-white/75 dark:bg-gray-900/75 backdrop-blur-sm p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
           <Link
             to={pathname.replaceAll(`/${encodeURIComponent(article.url)}`, '')}
             className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
@@ -102,6 +108,8 @@ export default function ArticlePage() {
                   {
                     name: 'Attention score',
                     to: `?s=${ArticleTweetsSort.AttentionScore}`,
+                    isActiveByDefault:
+                      defaultSort === ArticleTweetsSort.AttentionScore,
                   },
                   {
                     name: 'Retweet count',
@@ -130,10 +138,14 @@ export default function ArticlePage() {
                   {
                     name: 'Hide retweets',
                     to: `?f=${ArticleTweetsFilter.HideRetweets}`,
+                    isActiveByDefault:
+                      defaultFilter === ArticleTweetsFilter.HideRetweets,
                   },
                   {
                     name: 'Show retweets',
                     to: `?f=${ArticleTweetsFilter.ShowRetweets}`,
+                    isActiveByDefault:
+                      defaultFilter === ArticleTweetsFilter.ShowRetweets,
                   },
                 ],
               },
