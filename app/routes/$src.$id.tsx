@@ -18,28 +18,26 @@ export const loader: LoaderFunction = ({ request }): LoaderData => ({
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   return (
-    <>
+    <main className='flex flex-col fixed inset-0 overflow-hidden'>
       <Header />
-      <main className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
-        <Empty className='flex-1 m-5'>
-          <p>An unexpected runtime error occurred:</p>
-          <p>{error.message}</p>
-          <p className='mt-2'>
-            Try logging out and in again. Or smash your keyboard; that sometimes
-            helps. If you still have trouble, come and complain in{' '}
-            <a
-              className='underline'
-              href='https://discord.gg/3KYQBJwRSS'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              our Discord server
-            </a>
-            ; we’re always more than happy to help.
-          </p>
-        </Empty>
-      </main>
-    </>
+      <Empty className='flex-1 m-5'>
+        <p>An unexpected runtime error occurred:</p>
+        <p>{error.message}</p>
+        <p className='mt-2'>
+          Try logging out and in again. Or smash your keyboard; that sometimes
+          helps. If you still have trouble, come and complain in{' '}
+          <a
+            className='underline'
+            href='https://discord.gg/3KYQBJwRSS'
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            our Discord server
+          </a>
+          ; we’re always more than happy to help.
+        </p>
+      </Empty>
+    </main>
   );
 }
 

@@ -86,7 +86,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   return (
-    <section className='flex-none flex flex-col w-[42rem]'>
+    <Column className='w-[42rem] border-x border-gray-200 dark:border-gray-800 flex items-stretch'>
       <Empty className='flex-1 m-5'>
         <p>An unexpected runtime error occurred:</p>
         <p>{error.message}</p>
@@ -104,7 +104,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
           ; we’re always more than happy to help.
         </p>
       </Empty>
-    </section>
+    </Column>
   );
 }
 
@@ -123,7 +123,6 @@ export default function ArticlesPage() {
 
   return (
     <Column
-      id='articles'
       ref={scrollerRef}
       className='w-[42rem] border-x border-gray-200 dark:border-gray-800'
       context={article}

@@ -75,7 +75,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   return (
-    <section className='flex-none w-[32rem] flex flex-col border-r border-gray-200 dark:border-gray-800 overflow-y-scroll'>
+    <Column className='w-[36rem] border-x border-gray-200 dark:border-gray-800 flex items-stretch'>
       <Empty className='flex-1 m-5'>
         <p>An unexpected runtime error occurred:</p>
         <p>{error.message}</p>
@@ -93,7 +93,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
           ; we’re always more than happy to help.
         </p>
       </Empty>
-    </section>
+    </Column>
   );
 }
 
@@ -104,6 +104,7 @@ export default function TweetsPage() {
   return (
     <Column
       ref={scrollerRef}
+      id='tweets'
       className='w-[36rem] border-x border-gray-200 dark:border-gray-800'
     >
       <Nav scrollerRef={scrollerRef}>
