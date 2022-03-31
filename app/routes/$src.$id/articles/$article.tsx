@@ -84,7 +84,7 @@ export default function ArticlePage() {
     >
       <Nav scrollerRef={scrollerRef}>
         <Link
-          to={pathname.replaceAll(`/${encodeURIComponent(article.url)}`, '')}
+          to={pathname.split('/').slice(0, 4).join('/')}
           className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
         >
           <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
