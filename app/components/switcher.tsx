@@ -13,7 +13,7 @@ import {
   useSpring,
   useTransition as useSpringTransition,
 } from '@react-spring/web';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import cn from 'classnames';
 import { ResizeObserver as polyfill } from '@juggle/resize-observer';
 import useMeasure from 'react-use-measure';
