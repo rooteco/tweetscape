@@ -8,6 +8,7 @@ import { commitSession, getSession } from '~/session.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
 import BoltIcon from '~/icons/bolt';
 import CloseIcon from '~/icons/close';
+import Column from '~/components/column';
 import Empty from '~/components/empty';
 import SyncIcon from '~/icons/sync';
 import { TimeAgo } from '~/components/timeago';
@@ -56,7 +57,7 @@ function Section({ tweet, replies }: LoaderData[number]) {
     prevSyncing.current = syncing;
   }, [syncing]);
   return (
-    <section className='border-r border-gray-200 dark:border-gray-800 flex-none max-w-xl overflow-y-scroll'>
+    <Column className='max-w-xl border-r border-gray-200 dark:border-gray-800'>
       <header className='z-30 sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow'>
         <nav className='p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
           <Link
@@ -103,7 +104,7 @@ function Section({ tweet, replies }: LoaderData[number]) {
       {!syncing && !replies.length && (
         <Empty className='flex-1 m-5'>No replies to show</Empty>
       )}
-    </section>
+    </Column>
   );
 }
 
