@@ -15,7 +15,6 @@ import { commitSession, getSession } from '~/session.server';
 import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
 import { log, nanoid } from '~/utils.server';
 import BoltIcon from '~/icons/bolt';
-import CloseIcon from '~/icons/close';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
@@ -108,23 +107,9 @@ export function ErrorBoundary({ error }: { error: Error }) {
 export default function TweetsPage() {
   const tweets = useLoaderData<LoaderData>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   return (
     <Column className='max-w-xl border-x border-gray-200 dark:border-gray-800'>
       <nav className='sticky top-0 z-10 bg-white/75 dark:bg-gray-900/75 backdrop-blur-sm p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
-        <Link
-          to={pathname.replaceAll('/tweets', '')}
-          className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
-        >
-          <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
-          <span>Close</span>
-        </Link>
-        <div className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
-          <BoltIcon />
-          <span>
-            Synced <TimeAgo datetime={new Date()} locale='en_short' />
-          </span>
-        </div>
         <Switcher
           icon={<SortIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
           sections={[
