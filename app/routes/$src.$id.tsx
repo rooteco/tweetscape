@@ -5,7 +5,7 @@ import useMeasure from 'react-use-measure';
 import { useRef } from 'react';
 
 import Empty from '~/components/empty';
-import Nav from '~/components/nav';
+import Header from '~/components/header';
 import { lang } from '~/utils.server';
 import { useError } from '~/error';
 
@@ -19,7 +19,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   return (
     <>
-      <Nav />
+      <Header />
       <main className='w-full h-full min-h-full fixed inset-0 overflow-hidden flex items-stretch'>
         <Empty className='flex-1 m-5'>
           <p>An unexpected runtime error occurred:</p>
@@ -56,7 +56,7 @@ export default function Page() {
   });
   return (
     <main ref={mainRef} className='flex flex-col fixed inset-0 overflow-hidden'>
-      <Nav />
+      <Header />
       <animated.div
         id='scroller'
         ref={scrollRef}

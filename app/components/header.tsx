@@ -105,7 +105,7 @@ function Tabs() {
   );
 }
 
-export default function Nav() {
+export default function Header() {
   const root = useMatches()[0].data as LoaderData | undefined;
   const fetcher = useFetcher();
   return (
