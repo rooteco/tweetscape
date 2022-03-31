@@ -1,5 +1,7 @@
+import type { Dispatch, SetStateAction } from 'react';
 import { useContext, useEffect, useState } from 'react';
 import { useFetcher, useLocation, useMatches } from 'remix';
+import type { Fetcher } from '@remix-run/react/transition';
 
 import BoltIcon from '~/icons/bolt';
 import { ErrorContext } from '~/error';
@@ -8,43 +10,38 @@ import type { LoaderData } from '~/root';
 import SyncIcon from '~/icons/sync';
 import { TimeAgo } from '~/components/timeago';
 
-export default function Sync() {
+function useSync(
+  action: string,
+  obj: string,
+  setStatus: Dispatch<SetStateAction<string>>,
+  prev?: Fetcher
+) {
   const user = (useMatches()[0].data as LoaderData | undefined)?.user;
   const { error } = useContext(ErrorContext);
+  const fetcher = useFetcher();
+  useEffect(() => {
+    if (error) return;
+    if (user && fetcher.type === 'init' && (!prev || prev.type === 'done')) {
+      fetcher.submit(null, { method: 'patch', action });
+      setStatus(`Syncing ${obj}`);
+    }
+  }, [action, obj, setStatus, error, user, fetcher, prev]);
+  return fetcher;
+}
+
+export default function Sync() {
+  const { error } = useContext(ErrorContext);
+
+  const [status, setStatus] = useState('Syncing user');
+  const follows = useSync('/sync/follows', 'follows', setStatus);
+  const lists = useSync('/sync/lists', 'lists', setStatus, follows);
+  const tweets = useSync('/sync/tweets', 'tweets', setStatus, lists);
+  const articles = useSync('/sync/articles', 'articles', setStatus, tweets);
 
   const [lastSynced, setLastSynced] = useState<Date>();
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState('Syncing user');
-  const lists = useFetcher();
   useEffect(() => {
-    if (error) return;
-    if (user && lists.type === 'init') {
-      lists.submit(null, { method: 'patch', action: '/sync/lists' });
-      setProgress(1 / 6);
-      setStatus('Syncing lists');
-    } else if (lists.type === 'done') setProgress(2 / 6);
-  }, [error, user, lists]);
-  const tweets = useFetcher();
-  useEffect(() => {
-    if (error) return;
-    if (user && lists.type === 'done' && tweets.type === 'init') {
-      tweets.submit(null, { method: 'patch', action: '/sync/tweets' });
-      setProgress(3 / 6);
-      setStatus('Syncing tweets');
-    } else if (tweets.type === 'done') setProgress(4 / 6);
-  }, [error, user, lists.type, tweets]);
-  const articles = useFetcher();
-  useEffect(() => {
-    if (error) return;
-    if (user && tweets.type === 'done' && articles.type === 'init') {
-      articles.submit(null, { method: 'patch', action: '/sync/articles' });
-      setProgress(5 / 6);
-      setStatus('Syncing articles');
-    } else if (articles.type === 'done') {
-      setProgress(6 / 6);
-      setLastSynced((prev) => prev ?? new Date());
-    }
-  }, [error, user, tweets.type, articles]);
+    if (articles.type === 'done') setLastSynced((prev) => prev ?? new Date());
+  }, [articles.type]);
 
   const location = useLocation();
 
@@ -58,7 +55,7 @@ export default function Sync() {
         <span>Sync error</span>
       </a>
     );
-  if (progress < 1)
+  if (articles.type !== 'done')
     return (
       <div className='cursor-wait mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'>
         <SyncIcon />

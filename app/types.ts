@@ -2,6 +2,7 @@ import type {
   annotation_type,
   annotations,
   clusters,
+  follows,
   images,
   influencers,
   likes,
@@ -41,6 +42,7 @@ export type ListMember = list_members;
 export type AnnotationType = annotation_type;
 export type RefType = ref_type;
 export type TagType = tag_type;
+export type Follow = follows;
 export type InfluencerFull = Influencer & { html?: string };
 export type TweetFull = Tweet & {
   html?: string;

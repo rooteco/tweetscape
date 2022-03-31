@@ -1,4 +1,5 @@
 import type { Session } from 'remix';
+import type { TwitterRateLimit } from 'twitter-api-v2';
 import invariant from 'tiny-invariant';
 import { parse } from 'accept-language-parser';
 import { redirect } from 'remix';
@@ -8,6 +9,48 @@ import { commitSession, getSession } from '~/session.server';
 export { nanoid } from 'nanoid';
 
 const DEFAULT_REDIRECT = '/rekt/crypto/articles';
+
+export enum LogLevel {
+  Trace,
+  Debug,
+  Info,
+  Warn,
+  Error,
+}
+
+export class Logger {
+  public constructor(private level: LogLevel) {}
+
+  public trace(msg: string): void {
+    if (this.level <= LogLevel.Trace) console.log(`[trace] ${msg}`);
+  }
+
+  public debug(msg: string): void {
+    if (this.level <= LogLevel.Debug) console.log(`[debug] ${msg}`);
+  }
+
+  public info(msg: string): void {
+    if (this.level <= LogLevel.Info) console.info(`[info] ${msg}`);
+  }
+
+  public warn(msg: string): void {
+    if (this.level <= LogLevel.Warn) console.warn(`[warn] ${msg}`);
+  }
+
+  public error(msg: string): void {
+    if (this.level <= LogLevel.Error) console.error(`[error] ${msg}`);
+  }
+}
+
+export const log = new Logger(LogLevel.Debug);
+
+export function warnAboutRateLimit(
+  limit: TwitterRateLimit | void,
+  context: string
+) {
+  const reset = new Date((limit?.reset ?? 0) * 1000).toLocaleString();
+  log.warn(`Rate limit hit for ${context}, skipping until ${reset}...`);
+}
 
 export async function getLoggedInSession(req: Request) {
   const session = await getSession(req.headers.get('Cookie'));
@@ -43,37 +86,3 @@ export function lang(request: Request): string {
     ? `${langs[0].code}${langs[0].region ? `-${langs[0].region}` : ''}`
     : 'en-US';
 }
-
-export enum LogLevel {
-  Trace,
-  Debug,
-  Info,
-  Warn,
-  Error,
-}
-
-export class Logger {
-  public constructor(private level: LogLevel) {}
-
-  public trace(msg: string): void {
-    if (this.level <= LogLevel.Trace) console.log(`[trace] ${msg}`);
-  }
-
-  public debug(msg: string): void {
-    if (this.level <= LogLevel.Debug) console.log(`[debug] ${msg}`);
-  }
-
-  public info(msg: string): void {
-    if (this.level <= LogLevel.Info) console.info(`[info] ${msg}`);
-  }
-
-  public warn(msg: string): void {
-    if (this.level <= LogLevel.Warn) console.warn(`[warn] ${msg}`);
-  }
-
-  public error(msg: string): void {
-    if (this.level <= LogLevel.Error) console.error(`[error] ${msg}`);
-  }
-}
-
-export const log = new Logger(LogLevel.Debug);
