@@ -1,8 +1,8 @@
 import { animated, useSpring } from '@react-spring/web';
 import { json, useLoaderData } from 'remix';
-import { useRef, useState } from 'react';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
+import { useState } from 'react';
 
 import {
   ArticlesFilter,
@@ -22,7 +22,6 @@ import ArticleItem from '~/components/article';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
-import Header from '~/components/header';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
 import { useError } from '~/error';
@@ -85,10 +84,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
-  const articlesRef = useRef<HTMLElement>(null);
   return (
-    <section ref={articlesRef} className='flex-none flex flex-col w-[42rem]'>
-      <Header scrollerRef={articlesRef} header='Articles' />
+    <section className='flex-none flex flex-col w-[42rem]'>
       <Empty className='flex-1 m-5'>
         <p>An unexpected runtime error occurred:</p>
         <p>{error.message}</p>
@@ -112,7 +109,6 @@ export function ErrorBoundary({ error }: { error: Error }) {
 
 export default function ArticlesPage() {
   const articles = useLoaderData<LoaderData>();
-  const articlesRef = useRef<HTMLElement>(null);
 
   const [hover, setHover] = useState<{ y: number; height: number }>();
   const styles = useSpring({
@@ -125,7 +121,6 @@ export default function ArticlesPage() {
 
   return (
     <Column
-      ref={articlesRef}
       id='articles'
       className='w-[42rem] border-x border-gray-200 dark:border-gray-800'
       context={article}
