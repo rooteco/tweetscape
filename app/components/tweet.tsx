@@ -324,7 +324,7 @@ export default function TweetItem({
   return (
     <li
       className={cn(
-        'w-full list-none text-sm border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors',
+        'w-full list-none text-sm border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-800/10 transition-colors',
         {
           'mb-3 border rounded-lg': nested,
           'border-b last-of-type:border-0': !nested,
