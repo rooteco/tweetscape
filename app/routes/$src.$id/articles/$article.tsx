@@ -76,7 +76,7 @@ export default function ArticlePage() {
   );
   const { pathname } = useLocation();
   return (
-    <Column className='max-w-xl border-x border-gray-200 dark:border-gray-800'>
+    <Column className='w-[36rem] border-x border-gray-200 dark:border-gray-800'>
       <nav className='sticky top-0 z-10 bg-white/75 dark:bg-gray-900/75 backdrop-blur-sm p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
         <Link
           to={pathname.replaceAll(`/${encodeURIComponent(article.url)}`, '')}

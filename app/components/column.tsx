@@ -28,10 +28,7 @@ function Column<T>(
           ref={ref}
           key={key}
           id={id}
-          className={cn(
-            'first-of-type:ml-auto last-of-type:mr-auto flex-none flex flex-col overflow-y-scroll',
-            className
-          )}
+          className={cn('flex-none flex flex-col overflow-y-scroll', className)}
         >
           {item}
         </animated.section>

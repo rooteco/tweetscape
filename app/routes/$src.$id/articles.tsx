@@ -160,7 +160,7 @@ export default function ArticlesPage() {
     <Column
       ref={articlesRef}
       id='articles'
-      className='max-w-2xl p-5 relative'
+      className='w-[42rem] p-5 relative'
       context={article}
     >
       {false && (
