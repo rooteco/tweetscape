@@ -4,39 +4,41 @@
 
 ::-webkit-scrollbar {
   width: 12px;
-  background: theme('colors.slate.100');
+  background: theme('colors.white');
+  display: none;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: theme('colors.slate.300');
+  background: theme('colors.gray.100');
   border-radius: 6px;
-  border: 3px solid theme('colors.slate.100');
+  border: 3px solid theme('colors.white');
 }
 
 ::-webkit-scrollbar-corner {
-  background: theme('colors.slate.300');
+  background: theme('colors.gray.100');
 }
 
 .dark ::-webkit-scrollbar {
-  background: theme('colors.slate.800');
+  background: theme('colors.gray.900');
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: theme('colors.slate.700');
-  border: 3px solid theme('colors.slate.800');
+  background: theme('colors.gray.800');
+  border: 3px solid theme('colors.gray.900');
 }
 
 .dark ::-webkit-scrollbar-corner {
-  background: theme('colors.slate.700');
+  background: theme('colors.gray.800');
 }
 
-body {
-  scrollbar-width: thin;
-  scrollbar-color: theme('colors.slate.300') theme('colors.slate.100');
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  scrollbar-color: theme('colors.gray.100') theme('colors.white');
 }
 
-.dark body {
-  scrollbar-color: theme('colors.slate.700') theme('colors.slate.800');
+.dark * {
+  scrollbar-color: theme('colors.gray.800') theme('colors.gray.900');
 }
 
 #nprogress {
@@ -66,9 +68,9 @@ body {
   box-shadow: 0 0 10px theme('colors.sky.500'), 0 0 5px theme('colors.sky.500');
   opacity: 1;
 
-  -webkit-transform: rotate(3deg) translate(0px, -4px);
-  -ms-transform: rotate(3deg) translate(0px, -4px);
-  transform: rotate(3deg) translate(0px, -4px);
+  -webkit-transform: rotate(3deg) trangray(0px, -4px);
+  -ms-transform: rotate(3deg) trangray(0px, -4px);
+  transform: rotate(3deg) trangray(0px, -4px);
 }
 
 .dark #nprogress .peg {

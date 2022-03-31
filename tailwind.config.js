@@ -1,7 +1,17 @@
+const colors = require('tailwindcss/colors');
+
 module.exports = {
   darkMode: 'class',
   content: ['./app/**/*.{js,ts,jsx,tsx}'],
   theme: {
+    colors: {
+      transparent: 'transparent',
+      current: 'currentColor',
+      black: colors.black,
+      white: colors.white,
+      gray: colors.zinc,
+      sky: colors.sky,
+    },
     fontFamily: {
       sans: [
         'Inter',

@@ -2,7 +2,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 100;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-100.eot');
   src: local(''),
        url('/fonts/inter-100.eot?#iefix') format('embedded-opentype'),
@@ -15,7 +15,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 200;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-200.eot');
   src: local(''),
        url('/fonts/inter-200.eot?#iefix') format('embedded-opentype'),
@@ -28,7 +28,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 300;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-300.eot');
   src: local(''),
        url('/fonts/inter-300.eot?#iefix') format('embedded-opentype'),
@@ -41,7 +41,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 400;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-400.eot');
   src: local(''),
        url('/fonts/inter-400.eot?#iefix') format('embedded-opentype'),
@@ -54,7 +54,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 500;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-500.eot');
   src: local(''),
        url('/fonts/inter-500.eot?#iefix') format('embedded-opentype'),
@@ -67,7 +67,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 600;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-600.eot');
   src: local(''),
        url('/fonts/inter-600.eot?#iefix') format('embedded-opentype'),
@@ -80,7 +80,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 700;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-700.eot');
   src: local(''),
        url('/fonts/inter-700.eot?#iefix') format('embedded-opentype'),
@@ -93,7 +93,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 800;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-800.eot');
   src: local(''),
        url('/fonts/inter-800.eot?#iefix') format('embedded-opentype'),
@@ -106,7 +106,7 @@
   font-family: 'Inter';
   font-style: normal;
   font-weight: 900;
-  font-display: optional;
+  font-display: swap;
   src: url('/fonts/inter-900.eot');
   src: local(''),
        url('/fonts/inter-900.eot?#iefix') format('embedded-opentype'),

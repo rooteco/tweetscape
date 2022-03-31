@@ -1,14 +1,14 @@
-export default function ErrorIcon() {
+export default function ExpandIcon({ className }: { className?: string }) {
   return (
     <svg
-      className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500'
+      className={className}
       xmlns='http://www.w3.org/2000/svg'
       height='24'
       viewBox='0 0 24 24'
       width='24'
     >
       <path d='M0 0h24v24H0z' fill='none' />
-      <path d='M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z' />
+      <path d='M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z' />
     </svg>
   );
 }

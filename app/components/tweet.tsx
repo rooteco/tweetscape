@@ -146,7 +146,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
       {!nested && (
         <a
           className={cn(
-            'block flex-none mr-3 w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden',
+            'block flex-none mr-3 w-12 h-12 rounded-full bg-gray-200/50 dark:bg-gray-700/50 overflow-hidden',
             { 'animate-pulse': !tweet }
           )}
           href={
@@ -159,9 +159,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
             <img
               width={48}
               height={48}
-              src={`/img/${encodeURIComponent(
-                tweet.author.profile_image_url
-              )}?width=48&height=48&fit=cover`}
+              src={tweet.author.profile_image_url}
               alt=''
             />
           )}
@@ -171,7 +169,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
         <header className='mb-0.5 flex items-end'>
           {nested && (
             <a
-              className='block flex-none mr-1 w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden'
+              className='block flex-none mr-1 w-5 h-5 rounded-full bg-gray-200/50 dark:bg-gray-700/50 overflow-hidden'
               href={
                 tweet?.author
                   ? `https://twitter.com/${tweet.author.username}`
@@ -184,9 +182,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
                 <img
                   width={48}
                   height={48}
-                  src={`/img/${encodeURIComponent(
-                    tweet.author.profile_image_url
-                  )}?width=48&height=48&fit=cover`}
+                  src={tweet.author.profile_image_url}
                   alt=''
                 />
               )}
@@ -203,7 +199,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
             className={cn(
               'peer hover:underline block font-semibold min-w-0 shrink truncate',
               {
-                'h-4 w-40 mt-1 mb-1.5 bg-slate-200 dark:bg-slate-700 animate-pulse rounded':
+                'h-4 w-40 mt-1 mb-1.5 bg-gray-200/50 dark:bg-gray-700/50 animate-pulse rounded':
                   !tweet,
               }
             )}
@@ -218,8 +214,8 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
           <span className='block peer pl-1 h-5' />
           <a
             data-cy='author'
-            className={cn('peer text-slate-500 block flex-none', {
-              'h-2.5 w-32 mb-1.5 ml-1.5 bg-slate-200 dark:bg-slate-700 animate-pulse rounded':
+            className={cn('peer text-gray-500 block flex-none', {
+              'h-2.5 w-32 mb-1.5 ml-1.5 bg-gray-200/50 dark:bg-gray-700/50 animate-pulse rounded':
                 !tweet,
             })}
             href={
@@ -233,11 +229,11 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
             {tweet?.author ? `@${tweet.author.username}` : ''}
           </a>
           {tweet && (
-            <span className='mx-1 text-slate-500 block flex-none'>·</span>
+            <span className='mx-1 text-gray-500 block flex-none'>·</span>
           )}
           <a
             data-cy='date'
-            className='hover:underline text-slate-500 block flex-none'
+            className='hover:underline text-gray-500 block flex-none'
             href={
               tweet?.author
                 ? `https://twitter.com/${tweet.author.username}/status/${tweet.id}`
@@ -253,7 +249,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
         <p
           data-cy='text'
           className={cn('mb-3', {
-            'h-12 w-full bg-slate-200 dark:bg-slate-700 animate-pulse rounded':
+            'h-12 w-full bg-gray-200/50 dark:bg-gray-700/50 animate-pulse rounded':
               !tweet,
           })}
           dangerouslySetInnerHTML={{ __html: tweet?.html ?? tweet?.text ?? '' }}
@@ -269,7 +265,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
                 key={t.id}
               />
             ))}
-        <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-slate-500'>
+        <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-gray-500'>
           <Action
             color='blue'
             icon={<ReplyIcon />}
@@ -328,7 +324,7 @@ export default function TweetItem({
   return (
     <li
       className={cn(
-        'w-full list-none text-sm border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors',
+        'w-full list-none text-sm border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors',
         {
           'mb-3 border rounded-lg': nested,
           'border-b last-of-type:border-0': !nested,
@@ -338,7 +334,7 @@ export default function TweetItem({
       )}
     >
       {isRetweet && (
-        <header className='text-slate-500 text-xs px-3 mb-0.5'>
+        <header className='text-gray-500 text-xs px-3 mb-0.5'>
           <svg viewBox='0 0 24 24' className='ml-8 w-4 h-4 fill-current inline'>
             <g>
               <path d='M23.615 15.477c-.47-.47-1.23-.47-1.697 0l-1.326 1.326V7.4c0-2.178-1.772-3.95-3.95-3.95h-5.2c-.663 0-1.2.538-1.2 1.2s.537 1.2 1.2 1.2h5.2c.854 0 1.55.695 1.55 1.55v9.403l-1.326-1.326c-.47-.47-1.23-.47-1.697 0s-.47 1.23 0 1.697l3.374 3.375c.234.233.542.35.85.35s.613-.116.848-.35l3.375-3.376c.467-.47.467-1.23-.002-1.697zM12.562 18.5h-5.2c-.854 0-1.55-.695-1.55-1.55V7.547l1.326 1.326c.234.235.542.352.848.352s.614-.117.85-.352c.468-.47.468-1.23 0-1.697L5.46 3.8c-.47-.468-1.23-.468-1.697 0L.388 7.177c-.47.47-.47 1.23 0 1.697s1.23.47 1.697 0L3.41 7.547v9.403c0 2.178 1.773 3.95 3.95 3.95h5.2c.664 0 1.2-.538 1.2-1.2s-.535-1.2-1.198-1.2z' />

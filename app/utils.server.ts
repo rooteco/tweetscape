@@ -7,6 +7,8 @@ import { commitSession, getSession } from '~/session.server';
 
 export { nanoid } from 'nanoid';
 
+const DEFAULT_REDIRECT = '/rekt/crypto/articles';
+
 export async function getLoggedInSession(req: Request) {
   const session = await getSession(req.headers.get('Cookie'));
   const uid = session.get('uid') as string | undefined;
@@ -29,7 +31,7 @@ export async function redirectToLastVisited(
   reset = true
 ) {
   const url = getBaseURL(req);
-  const dest = new URL(`${url}${session.get('href') ?? '/clusters/ethereum'}`);
+  const dest = new URL(`${url}${session.get('href') ?? DEFAULT_REDIRECT}`);
   if (reset) dest.searchParams.delete('l'); // Reset infinite scroller limit.
   const headers = { 'Set-Cookie': await commitSession(session) };
   return redirect(dest.href, { headers });

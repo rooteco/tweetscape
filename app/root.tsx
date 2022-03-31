@@ -23,8 +23,8 @@ import {
 } from '~/theme';
 import { commitSession, getSession } from '~/session.server';
 import { log, nanoid } from '~/utils.server';
-import Empty from '~/components/empty';
 import { ErrorContext } from '~/error';
+import ErrorDisplay from '~/components/error';
 import Footer from '~/components/footer';
 import { Prisma } from '~/db.server';
 import { getLists } from '~/query.server';
@@ -131,8 +131,8 @@ function App({ children }: { children: ReactNode }) {
         <Links />
         <ThemeHead ssrTheme={Boolean(data.theme)} />
       </head>
-      <body className='selection:bg-slate-200 selection:text-black dark:selection:bg-slate-700 dark:selection:text-slate-100 w-full h-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100'>
-        {children}
+      <body className='selection:bg-gray-200 selection:text-black dark:selection:bg-gray-700 dark:selection:text-gray-100 w-full h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100'>
+        <div className='fixed inset-0 overflow-auto'>{children}</div>
         <ThemeBody ssrTheme={Boolean(data.theme)} />
         <ScrollRestoration />
         <Scripts />
@@ -150,26 +150,7 @@ export function ErrorBoundary({ error: e }: { error: Error }) {
       <ErrorContext.Provider value={context}>
         <App>
           <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
-            <Empty className='m-10 flex-1'>
-              <article className='max-w-md'>
-                <p>An unexpected runtime error occurred:</p>
-                <p>{e.message}</p>
-                <p className='mt-2'>
-                  Try logging out and in again. Or smash your keyboard; that
-                  sometimes helps. If you still have trouble, come and complain
-                  in{' '}
-                  <a
-                    className='underline'
-                    href='https://discord.gg/3KYQBJwRSS'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    our Discord server
-                  </a>
-                  ; we’re always more than happy to help.
-                </p>
-              </article>
-            </Empty>
+            <ErrorDisplay error={e} />
           </div>
           <Footer />
         </App>

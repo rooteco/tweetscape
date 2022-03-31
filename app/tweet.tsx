@@ -8,6 +8,7 @@ import { commitSession, getSession } from '~/session.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
 import BoltIcon from '~/icons/bolt';
 import CloseIcon from '~/icons/close';
+import Column from '~/components/column';
 import Empty from '~/components/empty';
 import SyncIcon from '~/icons/sync';
 import { TimeAgo } from '~/components/timeago';
@@ -56,19 +57,19 @@ function Section({ tweet, replies }: LoaderData[number]) {
     prevSyncing.current = syncing;
   }, [syncing]);
   return (
-    <section className='flex-none w-[32rem] flex flex-col border-r border-slate-200 dark:border-slate-800 overflow-y-scroll'>
-      <header className='z-30 sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow'>
-        <nav className='px-3 py-1.5 border-b border-slate-200 dark:border-slate-800'>
+    <Column className='w-[36rem] border-r border-gray-200 dark:border-gray-800'>
+      <header className='z-30 sticky top-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow'>
+        <nav className='p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
           <Link
             to={pathname.replaceAll(`/${tweet.id}`, '')}
-            className='inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6'
+            className='flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
           >
-            <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-slate-500' />
+            <CloseIcon className='shrink-0 w-3.5 h-3.5 mr-1 fill-gray-500' />
             <span>Close</span>
           </Link>
           <div
             className={cn(
-              'ml-1.5 inline-flex truncate items-center text-xs bg-slate-200 dark:bg-slate-700 rounded px-2 h-6',
+              'ml-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6',
               { 'cursor-wait': syncing, 'cursor-default': !syncing }
             )}
           >
@@ -103,7 +104,7 @@ function Section({ tweet, replies }: LoaderData[number]) {
       {!syncing && !replies.length && (
         <Empty className='flex-1 m-5'>No replies to show</Empty>
       )}
-    </section>
+    </Column>
   );
 }
 

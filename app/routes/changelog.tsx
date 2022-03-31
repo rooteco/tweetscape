@@ -12,10 +12,10 @@ export default function Changelog() {
         <div className='w-1/4 min-w-[160px] mr-6' />
         <div className='py-14'>
           <h1 className='mb-5 text-5xl font-bold tracking-tight'>Changelog</h1>
-          <p className='mb-2.5 text-slate-600 dark:text-slate-400'>
+          <p className='mb-2.5 text-gray-600 dark:text-gray-400'>
             New updates and improvements to Tweetscape.
           </p>
-          <p className='text-slate-600 dark:text-slate-400'>
+          <p className='text-gray-600 dark:text-gray-400'>
             <a
               className='dark:text-sky-400 text-sky-500'
               href='https://discord.gg/3KYQBJwRSS'
@@ -39,9 +39,9 @@ export default function Changelog() {
       <main className='my-8 relative'>
         {posts.map((post) => (
           <section key={post.id}>
-            <hr className='border-t border-slate-200 dark:border-slate-700' />
+            <hr className='border-t border-gray-200 dark:border-gray-700' />
             <div className='my-20 flex items-start'>
-              <h4 className='w-1/4 sticky top-6 mr-6 shrink-0 text-slate-600 dark:text-slate-400 font-medium'>
+              <h4 className='w-1/4 sticky top-6 mr-6 shrink-0 text-gray-600 dark:text-gray-400 font-medium'>
                 {new Date(post.date).toLocaleString(undefined, {
                   month: 'short',
                   day: 'numeric',
@@ -49,7 +49,7 @@ export default function Changelog() {
                 })}
               </h4>
               <article
-                className='-mt-8 prose prose-slate dark:prose-invert max-w-none prose-img:rounded-xl prose-headings:font-semibold prose-blockquote:font-normal prose-p:before:hidden prose-p:after:hidden prose-blockquote:text-slate-600 dark:prose-blockquote:text-slate-400 prose-a:text-inherit prose-a:font-normal'
+                className='-mt-8 prose prose-gray dark:prose-invert max-w-none prose-img:rounded-xl prose-headings:font-semibold prose-blockquote:font-normal prose-p:before:hidden prose-p:after:hidden prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400 prose-a:text-inherit prose-a:font-normal'
                 key={post.id}
                 dangerouslySetInnerHTML={{ __html: post.html }}
               />

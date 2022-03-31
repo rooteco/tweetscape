@@ -1,11 +1,12 @@
 import type { ActionFunction } from 'remix';
 import invariant from 'tiny-invariant';
 
-import { getLoggedInSession, log, redirectToLastVisited } from '~/utils.server';
+import { getLoggedInSession, log } from '~/utils.server';
 import {
   getTwitterClientForUser,
   handleTwitterApiError,
 } from '~/twitter.server';
+import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
 import { invalidate } from '~/swr.server';
 
@@ -50,7 +51,8 @@ export const action: ActionFunction = async ({ request, params }) => {
         return new Response('Method Not Allowed', { status: 405 });
     }
     await invalidate(uid);
-    return await redirectToLastVisited(request, session, false);
+    const headers = { 'Set-Cookie': await commitSession(session) };
+    return new Response('Success', { headers });
   } catch (e) {
     return handleTwitterApiError(e);
   }
