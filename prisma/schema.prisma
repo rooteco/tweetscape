@@ -31,27 +31,29 @@ model clusters {
 }
 
 model influencers {
-  id                String           @id
-  name              String
-  username          String
-  verified          Boolean?
-  description       String?
-  profile_image_url String?
-  followers_count   Int?
-  following_count   Int?
-  tweets_count      Int?
-  created_at        DateTime?        @db.Timestamptz(6)
-  updated_at        DateTime?        @db.Timestamptz(6)
-  likes             likes[]
-  list_followers    list_followers[]
-  list_members      list_members[]
-  lists             lists[]
-  mentions          mentions[]
-  rekt              rekt[]
-  retweets          retweets[]
-  scores            scores[]
-  tokens            tokens?
-  tweets            tweets[]
+  id                                                  String           @id
+  name                                                String
+  username                                            String
+  description                                         String?
+  profile_image_url                                   String?
+  followers_count                                     Int?
+  following_count                                     Int?
+  tweets_count                                        Int?
+  created_at                                          DateTime?        @db.Timestamptz(6)
+  updated_at                                          DateTime?        @db.Timestamptz(6)
+  verified                                            Boolean?
+  follows_follows_followed_influencer_idToinfluencers follows[]        @relation("follows_followed_influencer_idToinfluencers")
+  follows_follows_follower_influencer_idToinfluencers follows[]        @relation("follows_follower_influencer_idToinfluencers")
+  likes                                               likes[]
+  list_followers                                      list_followers[]
+  list_members                                        list_members[]
+  lists                                               lists[]
+  mentions                                            mentions[]
+  rekt                                                rekt[]
+  retweets                                            retweets[]
+  scores                                              scores[]
+  tokens                                              tokens?
+  tweets                                              tweets[]
 }
 
 model links {
@@ -229,6 +231,15 @@ model rekt {
   followers_count           Int?
   followers_in_people_count Int
   influencers               influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model follows {
+  followed_influencer_id                                  String
+  follower_influencer_id                                  String
+  influencers_follows_followed_influencer_idToinfluencers influencers @relation("follows_followed_influencer_idToinfluencers", fields: [followed_influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  influencers_follows_follower_influencer_idToinfluencers influencers @relation("follows_follower_influencer_idToinfluencers", fields: [follower_influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([followed_influencer_id, follower_influencer_id])
 }
 
 enum annotation_type {
