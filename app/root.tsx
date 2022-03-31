@@ -9,7 +9,7 @@ import {
   useLoaderData,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
-import { useMemo, useState } from 'react';
+import { StrictMode, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import type { Cluster, Influencer, List } from '~/types';
@@ -146,16 +146,18 @@ export function ErrorBoundary({ error: e }: { error: Error }) {
   const [error, setError] = useState<Error | undefined>(e);
   const context = useMemo(() => ({ error, setError }), [error, setError]);
   return (
-    <ThemeProvider specifiedTheme={null}>
-      <ErrorContext.Provider value={context}>
-        <App>
-          <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
-            <ErrorDisplay error={e} />
-          </div>
-          <Footer />
-        </App>
-      </ErrorContext.Provider>
-    </ThemeProvider>
+    <StrictMode>
+      <ThemeProvider specifiedTheme={null}>
+        <ErrorContext.Provider value={context}>
+          <App>
+            <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
+              <ErrorDisplay error={e} />
+            </div>
+            <Footer />
+          </App>
+        </ErrorContext.Provider>
+      </ThemeProvider>
+    </StrictMode>
   );
 }
 
@@ -164,12 +166,14 @@ export default function AppWithProviders() {
   const context = useMemo(() => ({ error, setError }), [error, setError]);
   const data = useLoaderData<LoaderData>();
   return (
-    <ThemeProvider specifiedTheme={data.theme}>
-      <ErrorContext.Provider value={context}>
-        <App>
-          <Outlet />
-        </App>
-      </ErrorContext.Provider>
-    </ThemeProvider>
+    <StrictMode>
+      <ThemeProvider specifiedTheme={data.theme}>
+        <ErrorContext.Provider value={context}>
+          <App>
+            <Outlet />
+          </App>
+        </ErrorContext.Provider>
+      </ThemeProvider>
+    </StrictMode>
   );
 }
