@@ -17,6 +17,7 @@ drop table if exists tokens cascade;
 drop table if exists list_followers cascade;
 drop table if exists list_members cascade;
 drop table if exists lists cascade;
+drop table if exists follows cascade;
 drop table if exists influencers cascade;
 drop domain if exists url cascade;
 drop table if exists clusters cascade;
@@ -43,6 +44,11 @@ create table influencers (
   "tweets_count" integer,
   "created_at" timestamptz,
   "updated_at" timestamptz
+);
+create table follows (
+  "followed_influencer_id" text references influencers(id) deferrable not null,
+  "follower_influencer_id" text references influencers(id) deferrable not null,
+  primary key ("followed_influencer_id", "follower_influencer_id")
 );
 create table lists (
   "id" text unique not null primary key,
