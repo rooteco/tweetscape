@@ -1,1 +1,1 @@
-export { action } from '~/articles.server';
+export { action } from '~/sync/articles.server';
