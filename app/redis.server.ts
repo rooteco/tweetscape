@@ -1,9 +1,10 @@
 import { createClient } from 'redis';
 
 declare global {
-  var redis: ReturnType<typeof createClient>;
+  var __redis: ReturnType<typeof createClient>;
 }
 
-if (!global.redis) global.redis = createClient({ url: process.env.REDIS_URL });
+if (!global.__redis)
+  global.__redis = createClient({ url: process.env.REDIS_URL });
 
-export const redis = global.redis;
+export const redis = global.__redis;
