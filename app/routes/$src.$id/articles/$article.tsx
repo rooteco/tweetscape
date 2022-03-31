@@ -1,5 +1,5 @@
 import { Link, useLocation, useOutletContext, useSearchParams } from 'remix';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import {
   ArticleTweetsFilter,
@@ -12,6 +12,7 @@ import CloseIcon from '~/icons/close';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
+import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
 import { TimeAgo } from '~/components/timeago';
@@ -75,9 +76,13 @@ export default function ArticlePage() {
     [sort, filter, article.tweets]
   );
   const { pathname } = useLocation();
+  const scrollerRef = useRef<HTMLElement>(null);
   return (
-    <Column className='w-[36rem] border-r border-gray-200 dark:border-gray-800'>
-      <nav className='sticky top-0 z-10 bg-white/75 dark:bg-gray-900/75 backdrop-blur-sm p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
+    <Column
+      ref={scrollerRef}
+      className='w-[36rem] border-r border-gray-200 dark:border-gray-800'
+    >
+      <Nav scrollerRef={scrollerRef}>
         <Link
           to={pathname.replaceAll(`/${encodeURIComponent(article.url)}`, '')}
           className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
@@ -143,7 +148,7 @@ export default function ArticlePage() {
             },
           ]}
         />
-      </nav>
+      </Nav>
       {!results.length && <Empty className='m-3 h-48'>No tweets to show</Empty>}
       {!!results.length && (
         <div className='relative'>

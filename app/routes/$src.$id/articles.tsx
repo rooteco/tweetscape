@@ -1,8 +1,8 @@
 import { animated, useSpring } from '@react-spring/web';
 import { json, useLoaderData } from 'remix';
+import { useRef, useState } from 'react';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
-import { useState } from 'react';
 
 import {
   ArticlesFilter,
@@ -22,6 +22,7 @@ import ArticleItem from '~/components/article';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
+import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
 import { useError } from '~/error';
@@ -109,6 +110,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
 
 export default function ArticlesPage() {
   const articles = useLoaderData<LoaderData>();
+  const scrollerRef = useRef<HTMLElement>(null);
 
   const [hover, setHover] = useState<{ y: number; height: number }>();
   const styles = useSpring({
@@ -122,10 +124,11 @@ export default function ArticlesPage() {
   return (
     <Column
       id='articles'
+      ref={scrollerRef}
       className='w-[42rem] border-x border-gray-200 dark:border-gray-800'
       context={article}
     >
-      <nav className='sticky top-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
+      <Nav scrollerRef={scrollerRef}>
         <Switcher
           icon={<SortIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
           sections={[
@@ -168,7 +171,7 @@ export default function ArticlesPage() {
             },
           ]}
         />
-      </nav>
+      </Nav>
       {!articles.length && (
         <Empty className='flex-1 m-5'>No articles to show</Empty>
       )}
