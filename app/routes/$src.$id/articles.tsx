@@ -1,8 +1,7 @@
-import { Link, json, useLoaderData, useLocation, useSearchParams } from 'remix';
 import { animated, useSpring } from '@react-spring/web';
+import { json, useLoaderData } from 'remix';
 import { useRef, useState } from 'react';
 import type { LoaderFunction } from 'remix';
-import cn from 'classnames';
 import invariant from 'tiny-invariant';
 
 import {
@@ -25,6 +24,7 @@ import Empty from '~/components/empty';
 import FilterIcon from '~/icons/filter';
 import Header from '~/components/header';
 import SortIcon from '~/icons/sort';
+import Switcher from '~/components/switcher';
 import { useError } from '~/error';
 
 export type LoaderData = Article[];
@@ -42,10 +42,10 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const uid = session.get('uid') as string | undefined;
   session.set('href', `${url.pathname}${url.search}`);
   const articlesSort = Number(
-    url.searchParams.get('a') ?? DEFAULT_ARTICLES_SORT
+    url.searchParams.get('s') ?? DEFAULT_ARTICLES_SORT
   ) as ArticlesSort;
   const articlesFilter = Number(
-    url.searchParams.get('b') ?? DEFAULT_ARTICLES_FILTER
+    url.searchParams.get('f') ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
   let articlesPromise: Promise<Article[]>;
   switch (params.src) {
@@ -110,42 +110,9 @@ export function ErrorBoundary({ error }: { error: Error }) {
   );
 }
 
-type NavLinkProps = {
-  active: boolean;
-  children: string;
-  articlesSort: ArticlesSort;
-  articlesFilter: ArticlesFilter;
-};
-function NavLink({
-  active,
-  children,
-  articlesSort,
-  articlesFilter,
-}: NavLinkProps) {
-  return (
-    <Link
-      className={cn({ underline: active })}
-      to={`?a=${articlesSort}&b=${articlesFilter}`}
-    >
-      {children}
-    </Link>
-  );
-}
-
 export default function ArticlesPage() {
   const articles = useLoaderData<LoaderData>();
   const articlesRef = useRef<HTMLElement>(null);
-
-  const [searchParams] = useSearchParams();
-  const articlesSort = Number(
-    searchParams.get('a') ?? DEFAULT_ARTICLES_SORT
-  ) as ArticlesSort;
-  const articlesFilter = Number(
-    searchParams.get('b') ?? DEFAULT_ARTICLES_FILTER
-  ) as ArticlesFilter;
-
-  const { pathname } = useLocation();
-  const isList = /lists/.test(pathname);
 
   const [hover, setHover] = useState<{ y: number; height: number }>();
   const styles = useSpring({
@@ -160,59 +127,58 @@ export default function ArticlesPage() {
     <Column
       ref={articlesRef}
       id='articles'
-      className='w-[42rem] p-5 relative'
+      className='w-[42rem] border-x border-gray-200 dark:border-gray-800'
       context={article}
     >
-      {false && (
-        <Header scrollerRef={articlesRef} header='Articles'>
-          <div className='flex-none mr-4'>
-            <SortIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-            {!isList && (
-              <NavLink
-                articlesSort={ArticlesSort.AttentionScore}
-                articlesFilter={articlesFilter}
-                active={articlesSort === ArticlesSort.AttentionScore}
-              >
-                attention score
-              </NavLink>
-            )}
-            {isList && (
-              <span className='cursor-not-allowed'>attention score</span>
-            )}
-            {' · '}
-            <NavLink
-              articlesSort={ArticlesSort.TweetCount}
-              articlesFilter={articlesFilter}
-              active={articlesSort === ArticlesSort.TweetCount || isList}
-            >
-              tweets
-            </NavLink>
-          </div>
-          <div className='flex-none'>
-            <FilterIcon className='fill-current h-4 w-4 mr-1.5 inline-block' />
-            <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={ArticlesFilter.HideRetweets}
-              active={articlesFilter === ArticlesFilter.HideRetweets}
-            >
-              hide retweets
-            </NavLink>
-            {' · '}
-            <NavLink
-              articlesSort={articlesSort}
-              articlesFilter={ArticlesFilter.ShowRetweets}
-              active={articlesFilter === ArticlesFilter.ShowRetweets}
-            >
-              show retweets
-            </NavLink>
-          </div>
-        </Header>
-      )}
+      <nav className='sticky top-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-1.5 flex items-stretch border-b border-gray-200 dark:border-gray-800'>
+        <Switcher
+          icon={<SortIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
+          sections={[
+            {
+              header: 'Sort by',
+              links: [
+                {
+                  name: 'Attention score',
+                  to: `?s=${ArticlesSort.AttentionScore}`,
+                  isActiveByDefault:
+                    DEFAULT_ARTICLES_SORT === ArticlesSort.AttentionScore,
+                },
+                {
+                  name: 'Tweet count',
+                  to: `?s=${ArticlesSort.TweetCount}`,
+                },
+              ],
+            },
+          ]}
+        />
+        <Switcher
+          icon={
+            <FilterIcon className='fill-current h-4 w-4 mr-1 inline-block' />
+          }
+          sections={[
+            {
+              header: 'Filter',
+              links: [
+                {
+                  name: 'Hide retweets',
+                  to: `?f=${ArticlesFilter.HideRetweets}`,
+                },
+                {
+                  name: 'Show retweets',
+                  to: `?f=${ArticlesFilter.ShowRetweets}`,
+                  isActiveByDefault:
+                    DEFAULT_ARTICLES_FILTER === ArticlesFilter.ShowRetweets,
+                },
+              ],
+            },
+          ]}
+        />
+      </nav>
       {!articles.length && (
         <Empty className='flex-1 m-5'>No articles to show</Empty>
       )}
       {!!articles.length && (
-        <div className='relative'>
+        <div className='relative m-3'>
           <animated.div
             style={styles}
             className='absolute rounded-lg bg-gray-100 dark:bg-gray-800 w-full -z-[1]'
