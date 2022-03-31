@@ -1,1 +1,1 @@
-export { action } from '~/lists.server';
+export { action } from '~/sync/lists.server';

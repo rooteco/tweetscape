@@ -1,1 +1,1 @@
-export { action } from '~/tweets.server';
+export { action } from '~/sync/tweets.server';
