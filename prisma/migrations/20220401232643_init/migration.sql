@@ -9,7 +9,7 @@ CREATE TYPE "tag_type" AS ENUM ('cashtag', 'hashtag');
 
 -- CreateTable
 CREATE TABLE "annotations" (
-    "tweet_id" TEXT NOT NULL,
+    "tweet_id" BIGINT NOT NULL,
     "normalized_text" TEXT NOT NULL,
     "probability" DECIMAL NOT NULL,
     "type" "annotation_type" NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE "annotations" (
 
 -- CreateTable
 CREATE TABLE "clusters" (
-    "id" TEXT NOT NULL,
+    "id" BIGINT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "active" BOOLEAN NOT NULL DEFAULT false,
@@ -34,7 +34,7 @@ CREATE TABLE "clusters" (
 
 -- CreateTable
 CREATE TABLE "influencers" (
-    "id" TEXT NOT NULL,
+    "id" BIGINT NOT NULL,
     "name" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "verified" BOOLEAN,
@@ -63,8 +63,8 @@ CREATE TABLE "links" (
 
 -- CreateTable
 CREATE TABLE "mentions" (
-    "tweet_id" TEXT NOT NULL,
-    "influencer_id" TEXT NOT NULL,
+    "tweet_id" BIGINT NOT NULL,
+    "influencer_id" BIGINT NOT NULL,
     "start" INTEGER NOT NULL,
     "end" INTEGER NOT NULL,
 
@@ -73,8 +73,8 @@ CREATE TABLE "mentions" (
 
 -- CreateTable
 CREATE TABLE "refs" (
-    "referenced_tweet_id" TEXT NOT NULL,
-    "referencer_tweet_id" TEXT NOT NULL,
+    "referenced_tweet_id" BIGINT NOT NULL,
+    "referencer_tweet_id" BIGINT NOT NULL,
     "type" "ref_type" NOT NULL,
 
     CONSTRAINT "refs_pkey" PRIMARY KEY ("referenced_tweet_id","referencer_tweet_id")
@@ -82,9 +82,9 @@ CREATE TABLE "refs" (
 
 -- CreateTable
 CREATE TABLE "scores" (
-    "id" TEXT NOT NULL,
-    "influencer_id" TEXT NOT NULL,
-    "cluster_id" TEXT NOT NULL,
+    "id" BIGINT NOT NULL,
+    "influencer_id" BIGINT NOT NULL,
+    "cluster_id" BIGINT NOT NULL,
     "attention_score" DECIMAL NOT NULL,
     "attention_score_change_week" DECIMAL,
     "insider_score" DECIMAL NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE "scores" (
 
 -- CreateTable
 CREATE TABLE "tags" (
-    "tweet_id" TEXT NOT NULL,
+    "tweet_id" BIGINT NOT NULL,
     "tag" TEXT NOT NULL,
     "type" "tag_type" NOT NULL,
     "start" INTEGER NOT NULL,
@@ -109,8 +109,8 @@ CREATE TABLE "tags" (
 
 -- CreateTable
 CREATE TABLE "tweets" (
-    "id" TEXT NOT NULL,
-    "author_id" TEXT NOT NULL,
+    "id" BIGINT NOT NULL,
+    "author_id" BIGINT NOT NULL,
     "text" TEXT NOT NULL,
     "retweet_count" INTEGER NOT NULL,
     "reply_count" INTEGER NOT NULL,
@@ -123,7 +123,7 @@ CREATE TABLE "tweets" (
 
 -- CreateTable
 CREATE TABLE "urls" (
-    "tweet_id" TEXT NOT NULL,
+    "tweet_id" BIGINT NOT NULL,
     "link_url" TEXT NOT NULL,
     "start" INTEGER NOT NULL,
     "end" INTEGER NOT NULL,
@@ -143,7 +143,7 @@ CREATE TABLE "images" (
 
 -- CreateTable
 CREATE TABLE "tokens" (
-    "influencer_id" TEXT NOT NULL,
+    "influencer_id" BIGINT NOT NULL,
     "token_type" TEXT NOT NULL,
     "expires_in" INTEGER NOT NULL,
     "access_token" TEXT NOT NULL,
@@ -157,8 +157,8 @@ CREATE TABLE "tokens" (
 
 -- CreateTable
 CREATE TABLE "lists" (
-    "id" TEXT NOT NULL,
-    "owner_id" TEXT NOT NULL,
+    "id" BIGINT NOT NULL,
+    "owner_id" BIGINT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "private" BOOLEAN NOT NULL,
@@ -171,32 +171,32 @@ CREATE TABLE "lists" (
 
 -- CreateTable
 CREATE TABLE "list_followers" (
-    "influencer_id" TEXT NOT NULL,
-    "list_id" TEXT NOT NULL,
+    "influencer_id" BIGINT NOT NULL,
+    "list_id" BIGINT NOT NULL,
 
     CONSTRAINT "list_followers_pkey" PRIMARY KEY ("influencer_id","list_id")
 );
 
 -- CreateTable
 CREATE TABLE "list_members" (
-    "influencer_id" TEXT NOT NULL,
-    "list_id" TEXT NOT NULL,
+    "influencer_id" BIGINT NOT NULL,
+    "list_id" BIGINT NOT NULL,
 
     CONSTRAINT "list_members_pkey" PRIMARY KEY ("influencer_id","list_id")
 );
 
 -- CreateTable
 CREATE TABLE "likes" (
-    "tweet_id" TEXT NOT NULL,
-    "influencer_id" TEXT NOT NULL,
+    "tweet_id" BIGINT NOT NULL,
+    "influencer_id" BIGINT NOT NULL,
 
     CONSTRAINT "likes_pkey" PRIMARY KEY ("tweet_id","influencer_id")
 );
 
 -- CreateTable
 CREATE TABLE "retweets" (
-    "tweet_id" TEXT NOT NULL,
-    "influencer_id" TEXT NOT NULL,
+    "tweet_id" BIGINT NOT NULL,
+    "influencer_id" BIGINT NOT NULL,
 
     CONSTRAINT "retweets_pkey" PRIMARY KEY ("tweet_id","influencer_id")
 );
@@ -204,7 +204,7 @@ CREATE TABLE "retweets" (
 -- CreateTable
 CREATE TABLE "rekt" (
     "id" BIGINT NOT NULL,
-    "influencer_id" TEXT NOT NULL,
+    "influencer_id" BIGINT NOT NULL,
     "username" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "profile_image_url" TEXT NOT NULL,

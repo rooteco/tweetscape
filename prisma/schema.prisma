@@ -8,7 +8,7 @@ datasource db {
 }
 
 model annotations {
-  tweet_id        String
+  tweet_id        BigInt
   normalized_text String
   probability     Decimal         @db.Decimal
   type            annotation_type
@@ -20,7 +20,7 @@ model annotations {
 }
 
 model clusters {
-  id         String   @id
+  id         BigInt   @id
   name       String   @unique
   slug       String   @unique
   active     Boolean  @default(false)
@@ -31,7 +31,7 @@ model clusters {
 }
 
 model influencers {
-  id                String           @id
+  id                BigInt           @id
   name              String
   username          String
   verified          Boolean?
@@ -66,8 +66,8 @@ model links {
 }
 
 model mentions {
-  tweet_id      String
-  influencer_id String
+  tweet_id      BigInt
+  influencer_id BigInt
   start         Int
   end           Int
   influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -77,8 +77,8 @@ model mentions {
 }
 
 model refs {
-  referenced_tweet_id                     String
-  referencer_tweet_id                     String
+  referenced_tweet_id                     BigInt
+  referencer_tweet_id                     BigInt
   type                                    ref_type
   tweets_refs_referenced_tweet_idTotweets tweets   @relation("refs_referenced_tweet_idTotweets", fields: [referenced_tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tweets_refs_referencer_tweet_idTotweets tweets   @relation("refs_referencer_tweet_idTotweets", fields: [referencer_tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -87,9 +87,9 @@ model refs {
 }
 
 model scores {
-  id                          String      @id
-  influencer_id               String
-  cluster_id                  String
+  id                          BigInt      @id
+  influencer_id               BigInt
+  cluster_id                  BigInt
   attention_score             Decimal     @db.Decimal
   attention_score_change_week Decimal?    @db.Decimal
   insider_score               Decimal     @db.Decimal
@@ -105,7 +105,7 @@ model scores {
 }
 
 model tags {
-  tweet_id String
+  tweet_id BigInt
   tag      String
   type     tag_type
   start    Int
@@ -116,8 +116,8 @@ model tags {
 }
 
 model tweets {
-  id                                    String        @id
-  author_id                             String
+  id                                    BigInt        @id
+  author_id                             BigInt
   text                                  String
   retweet_count                         Int
   reply_count                           Int
@@ -136,7 +136,7 @@ model tweets {
 }
 
 model urls {
-  tweet_id String
+  tweet_id BigInt
   link_url String
   start    Int
   end      Int
@@ -157,7 +157,7 @@ model images {
 }
 
 model tokens {
-  influencer_id String      @id
+  influencer_id BigInt      @id
   token_type    String
   expires_in    Int
   access_token  String      @unique
@@ -169,8 +169,8 @@ model tokens {
 }
 
 model lists {
-  id             String           @id
-  owner_id       String
+  id             BigInt           @id
+  owner_id       BigInt
   name           String
   description    String
   private        Boolean
@@ -183,8 +183,8 @@ model lists {
 }
 
 model list_followers {
-  influencer_id String
-  list_id       String
+  influencer_id BigInt
+  list_id       BigInt
   influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lists         lists       @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -192,8 +192,8 @@ model list_followers {
 }
 
 model list_members {
-  influencer_id String
-  list_id       String
+  influencer_id BigInt
+  list_id       BigInt
   influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lists         lists       @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -201,8 +201,8 @@ model list_members {
 }
 
 model likes {
-  tweet_id      String
-  influencer_id String
+  tweet_id      BigInt
+  influencer_id BigInt
   influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tweets        tweets      @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -210,8 +210,8 @@ model likes {
 }
 
 model retweets {
-  tweet_id      String
-  influencer_id String
+  tweet_id      BigInt
+  influencer_id BigInt
   influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tweets        tweets      @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -220,7 +220,7 @@ model retweets {
 
 model rekt {
   id                        BigInt      @id
-  influencer_id             String
+  influencer_id             BigInt
   username                  String
   name                      String
   profile_image_url         String
