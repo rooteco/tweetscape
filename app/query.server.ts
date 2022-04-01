@@ -301,7 +301,7 @@ function getListArticlesQuery(
               ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
               ${uid ? Prisma.sql`retweets is not null as retweeted,` : Prisma.empty}
               to_json(influencers.*) as author,
-              quotes.referenced_tweet_id as quote_id,
+              quote.referenced_tweet_id as quote_id,
               json_agg(refs.*) as refs,
               json_agg(ref_tweets.*) as ref_tweets,
               ${uid ? Prisma.sql`json_agg(ref_likes.*) as ref_likes,` : Prisma.empty}
@@ -312,7 +312,7 @@ function getListArticlesQuery(
               inner join list_members on list_members.influencer_id = tweets.author_id and list_members.list_id = ${listId}
               ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.influencer_id = ${uid}` : Prisma.empty}
-              left outer join refs quotes on quotes.referencer_tweet_id = tweets.id and quotes.type = 'quoted'
+              left outer join refs quote on quote.referencer_tweet_id = tweets.id and quote.type = 'quoted'
               left outer join refs retweet on retweet.referencer_tweet_id = tweets.id and retweet.type = 'retweeted'
               left outer join refs on refs.referencer_tweet_id = tweets.id
               left outer join tweets ref_tweets on ref_tweets.id = refs.referenced_tweet_id
@@ -320,7 +320,7 @@ function getListArticlesQuery(
               ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.influencer_id = ${uid}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
             ${filter === ArticlesFilter.HideRetweets ? Prisma.sql`where retweet is null` : Prisma.empty}
-            group by tweets.id,quotes.referenced_tweet_id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
+            group by tweets.id,quote.referenced_tweet_id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
           ) as tweets on urls.tweet_id in (tweets.id, tweets.quote_id)
       ) as tweets on tweets.link_url = links.url
     where url !~ '^https?:\\/\\/twitter\\.com'
@@ -371,7 +371,7 @@ function getClusterArticlesQuery(
               ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
               ${uid ? Prisma.sql`retweets is not null as retweeted,` : Prisma.empty}
               to_json(influencers.*) as author,
-              quotes.referenced_tweet_id as quote_id,
+              quote.referenced_tweet_id as quote_id,
               json_agg(refs.*) as refs,
               json_agg(ref_tweets.*) as ref_tweets,
               ${uid ? Prisma.sql`json_agg(ref_likes.*) as ref_likes,` : Prisma.empty}
@@ -383,14 +383,14 @@ function getClusterArticlesQuery(
               inner join clusters on clusters.id = scores.cluster_id and clusters.slug = ${clusterSlug}
               ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.influencer_id = ${uid}` : Prisma.empty}
-              left outer join refs quotes on quotes.referencer_tweet_id = tweets.id and quotes.type = 'quoted'
+              left outer join refs quote on quote.referencer_tweet_id = tweets.id and quote.type = 'quoted'
               left outer join refs retweet on retweet.referencer_tweet_id = tweets.id and retweet.type = 'retweeted'
               left outer join refs on refs.referencer_tweet_id = tweets.id
               left outer join tweets ref_tweets on ref_tweets.id = refs.referenced_tweet_id
               left outer join influencers ref_authors on ref_authors.id = ref_tweets.author_id
               ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.influencer_id = ${uid}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
-            group by tweets.id,quotes.referenced_tweet_id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}scores.id,influencers.id
+            group by tweets.id,quote.referenced_tweet_id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}scores.id,influencers.id
             ${filter === ArticlesFilter.HideRetweets ? Prisma.sql`where retweet is null` : Prisma.empty}
           ) as tweets on tweets.id = urls.tweet_id
       ) as tweets on tweets.link_url = links.url
@@ -436,7 +436,7 @@ function getRektArticlesQuery(uid?: string): Prisma.Sql {
               ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
               ${uid ? Prisma.sql`retweets is not null as retweeted,` : Prisma.empty}
               to_json(influencers.*) as author,
-              quotes.referenced_tweet_id as quote_id,
+              quote.referenced_tweet_id as quote_id,
               json_agg(refs.*) as refs,
               json_agg(ref_tweets.*) as ref_tweets,
               ${uid ? Prisma.sql`json_agg(ref_likes.*) as ref_likes,` : Prisma.empty}
@@ -447,7 +447,7 @@ function getRektArticlesQuery(uid?: string): Prisma.Sql {
               inner join rekt on rekt.influencer_id = tweets.author_id
               ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.influencer_id = ${uid}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.influencer_id = ${uid}` : Prisma.empty}
-              left outer join refs quotes on quotes.referencer_tweet_id = tweets.id and quotes.type = 'quoted'
+              left outer join refs quote on quote.referencer_tweet_id = tweets.id and quote.type = 'quoted'
               left outer join refs retweet on retweet.referencer_tweet_id = tweets.id and retweet.type = 'retweeted'
               left outer join refs on refs.referencer_tweet_id = tweets.id
               left outer join tweets ref_tweets on ref_tweets.id = refs.referenced_tweet_id
@@ -455,7 +455,7 @@ function getRektArticlesQuery(uid?: string): Prisma.Sql {
               ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.influencer_id = ${uid}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
             where retweet is null
-            group by tweets.id,quotes.referenced_tweet_id,rekt.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
+            group by tweets.id,quote.referenced_tweet_id,rekt.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}influencers.id
           ) as tweets on urls.tweet_id in (tweets.id, tweets.quote_id)
       ) as tweets on tweets.link_url = links.url
     where links.url !~ '^https?:\\/\\/twitter\\.com'
