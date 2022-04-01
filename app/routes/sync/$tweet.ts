@@ -4,23 +4,18 @@ import invariant from 'tiny-invariant';
 import {
   TWEET_EXPANSIONS,
   TWEET_FIELDS,
-  TwitterApi,
   USER_FIELDS,
   executeCreateQueue,
-  getTwitterClientForUser,
+  getTwitterClient,
   toCreateQueue,
 } from '~/twitter.server';
-import { commitSession, getSession } from '~/session.server';
+import { commitSession } from '~/session.server';
 import { log } from '~/utils.server';
 
 export const action: ActionFunction = async ({ request, params }) => {
   invariant(params.tweet, 'expected params.tweet');
   log.info(`Getting replies to tweet (${params.tweet})...`);
-  const session = await getSession(request.headers.get('Cookie'));
-  const uid = session.get('uid') as string | undefined;
-  const api = uid
-    ? (await getTwitterClientForUser(uid)).api
-    : new TwitterApi(process.env.TWITTER_TOKEN as string);
+  const { session, api } = await getTwitterClient(request);
   const query = `is:reply conversation_id:${params.tweet}`;
   const res = await api.v2.search(query, {
     'tweet.fields': TWEET_FIELDS,

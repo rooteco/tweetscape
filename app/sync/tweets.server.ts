@@ -21,7 +21,7 @@ import {
   handleTwitterApiError,
   toCreateQueue,
 } from '~/twitter.server';
-import { getLoggedInSession, log } from '~/utils.server';
+import { getLoggedInSession, log, warnAboutRateLimit } from '~/utils.server';
 import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
 import { invalidate } from '~/swr.server';
@@ -82,15 +82,11 @@ export const action: ActionFunction = async ({ request }) => {
           });
           toCreateQueue(res, queue, listId);
         } else {
-          const reset = new Date((listTweetsLimit?.reset ?? 0) * 1000);
-          const msg =
-            `Rate limit hit for getting ${context} tweets, skipping ` +
-            `until ${reset.toLocaleString()}...`;
-          log.warn(msg);
+          warnAboutRateLimit(listTweetsLimit, `getting ${context} tweets`);
         }
       })
     );
-    await executeCreateQueue(queue);
+    await executeCreateQueue(queue, `from user (${uid}) lists`);
     await invalidate(uid);
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Sync Success', { status: 200, headers });

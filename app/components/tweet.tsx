@@ -110,7 +110,6 @@ type TweetProps = {
 
 function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
   const navigate = useNavigate();
-  const fetcher = useFetcher();
   const { pathname } = useLocation();
   const refs = tweet?.ref_tweets
     ?.filter((t) => !!t)
@@ -137,7 +136,6 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
           if (!validTargets.includes((evt.target as Node).nodeName)) return;
         }
         if (setActiveTweet) setActiveTweet(tweet);
-        fetcher.submit(null, { action: `/sync/${tweet.id}`, method: 'patch' });
         navigate(`${pathname}/${tweet.id}`);
       }}
       onKeyPress={() => {}}

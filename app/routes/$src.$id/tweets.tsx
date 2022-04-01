@@ -1,9 +1,19 @@
+import type { ActionFunction, LoaderFunction } from 'remix';
 import { json, useLoaderData, useSearchParams } from 'remix';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 import { useRef } from 'react';
 
+import {
+  CreateQueue,
+  TWEET_EXPANSIONS,
+  TWEET_FIELDS,
+  USER_FIELDS,
+  executeCreateQueue,
+  getTwitterClient,
+  handleTwitterApiError,
+  toCreateQueue,
+} from '~/twitter.server';
 import {
   DEFAULT_TWEETS_FILTER,
   DEFAULT_TWEETS_LIMIT,
@@ -26,8 +36,12 @@ import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
+import SyncIndicator from '~/components/sync-indicator';
 import type { TweetFull } from '~/types';
 import TweetItem from '~/components/tweet';
+import { db } from '~/db.server';
+import { invalidate } from '~/swr.server';
+import { redis } from '~/redis.server';
 import { useError } from '~/error';
 
 export type LoaderData = TweetFull[];
@@ -79,6 +93,51 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   console.timeEnd(`src-id-loader-${invocationId}`);
   const headers = { 'Set-Cookie': await commitSession(session) };
   return json<LoaderData>(tweets, { headers });
+};
+
+export const action: ActionFunction = async ({ params, request }) => {
+  try {
+    invariant(params.src, 'expected params.src');
+    invariant(params.id, 'expected params.id');
+    log.info(`Syncing tweets from ${params.src} (${params.id})...`);
+    const followIds = await db.$queryRaw<{ id: string }[]>`
+      select follows.followed_influencer_id as id from follows
+      inner join influencers on influencers.id = follows.follower_influencer_id
+      where influencers.username = ${params.id};`;
+    log.info(
+      `Syncing timelines for ${followIds.length} followed influencers...`
+    );
+    const { session, uid, api } = await getTwitterClient(request);
+    let queue: CreateQueue | undefined;
+    await Promise.all(
+      followIds.map(async ({ id }) => {
+        log.debug(`Fetching tweets from followed influencer (${id})...`);
+        const key = `latest-tweet-id:influencer-tweets:${id}`;
+        const latestTweetId = await redis.get(key);
+        log.trace(
+          `Found the latest influencer tweet (${id}): ${latestTweetId}`
+        );
+        const check = await api.v2.userTimeline(id, { max_results: 5 });
+        const latestTweet = check.tweets[0];
+        if (latestTweet && latestTweet.id === latestTweetId)
+          return log.trace(`Skipping fetch for influencer (${id}) tweets...`);
+        if (latestTweet) await redis.set(key, latestTweet.id);
+        const res = await api.v2.userTimeline(id, {
+          'tweet.fields': TWEET_FIELDS,
+          'user.fields': USER_FIELDS,
+          'expansions': TWEET_EXPANSIONS,
+          'max_results': 100,
+        });
+        queue = toCreateQueue(res, queue);
+      })
+    );
+    if (queue) await executeCreateQueue(queue, `from user (${params.id}) feed`);
+    if (queue && uid) await invalidate(uid);
+    const headers = { 'Set-Cookie': await commitSession(session) };
+    return new Response('Sync Success', { status: 200, headers });
+  } catch (e) {
+    return handleTwitterApiError(e);
+  }
 };
 
 export function ErrorBoundary({ error }: { error: Error }) {
@@ -161,6 +220,7 @@ export default function TweetsPage() {
             },
           ]}
         />
+        <SyncIndicator />
       </Nav>
       {!tweets.length && (
         <Empty className='flex-1 m-5'>No tweets to show</Empty>

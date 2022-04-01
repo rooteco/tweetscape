@@ -344,5 +344,5 @@ async function importRekt() {
 }
 
 (async () => {
-  await importRektScores();
+  await importRekt();
 })();

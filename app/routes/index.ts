@@ -1,7 +1,7 @@
 import type { LoaderFunction } from 'remix';
 
 import { TwitterApi, USER_FIELDS } from '~/twitter.server';
-import { getBaseURL, log } from '~/utils.server';
+import { getBaseURL, log, redirectToLastVisited } from '~/utils.server';
 import { db } from '~/db.server';
 import { getSession } from '~/session.server';
 
@@ -69,4 +69,5 @@ export const loader: LoaderFunction = async ({ request }) => {
       session.set('uid', user.id);
     }
   }
+  return redirectToLastVisited(request, session);
 };

@@ -9,7 +9,7 @@ import {
   toInfluencer,
   toList,
 } from '~/twitter.server';
-import { getLoggedInSession, log } from '~/utils.server';
+import { getLoggedInSession, log, warnAboutRateLimit } from '~/utils.server';
 import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
 import { getListsQuery } from '~/query.server';
@@ -50,12 +50,9 @@ export const action: ActionFunction = async ({ request }) => {
       res.lists.forEach((l) =>
         create.list_followers.push({ influencer_id: uid, list_id: l.id })
       );
-    } else
-      log.warn(
-        `Rate limit hit for getting user (${uid}) followed lists, skipping until ${new Date(
-          (listFollowedLimit?.reset ?? 0) * 1000
-        ).toLocaleString()}...`
-      );
+    } else {
+      warnAboutRateLimit(listFollowedLimit, `getting (${uid}) followed lists`);
+    }
     const listsOwnedLimit = await limits.v2.getRateLimit(
       'users/:id/owned_lists'
     );
@@ -72,12 +69,9 @@ export const action: ActionFunction = async ({ request }) => {
         ],
       });
       res.lists.forEach((l) => create.lists.push(toList(l)));
-    } else
-      log.warn(
-        `Rate limit hit for getting user (${uid}) owned lists, skipping until ${new Date(
-          (listFollowedLimit?.reset ?? 0) * 1000
-        ).toLocaleString()}...`
-      );
+    } else {
+      warnAboutRateLimit(listOwnedLimit, `getting (${uid}) owned lists`);
+    }
     log.info(`Inserting ${create.influencers.length} influencers...`);
     log.info(`Inserting ${create.lists.length} lists...`);
     log.info(`Inserting ${create.list_followers.length} list followers...`);

@@ -15,6 +15,7 @@ import type {
   TweetSearchRecentV2Paginator,
   TweetV2,
   TweetV2ListTweetsPaginator,
+  TweetUserTimelineV2Paginator,
   UserV2,
 } from 'twitter-api-v2';
 import type { Decimal } from '@prisma/client/runtime';
@@ -38,6 +39,7 @@ import type {
 } from '~/types';
 import { TwitterApiRateLimitDBStore } from '~/limit.server';
 import { db } from '~/db.server';
+import { getSession } from '~/session.server';
 import { log } from '~/utils.server';
 
 export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
@@ -79,6 +81,7 @@ export function handleTwitterApiError(e: unknown): never {
     log.error(msg2);
     throw new Error(`${msg1} ${msg2}`);
   }
+  log.error(`Caught Twitter API error: ${(JSON.stringify(e), null, 2)}`);
   throw e;
 }
 
@@ -119,6 +122,21 @@ export async function getTwitterClientForUser(
     api = new TwitterApi(accessToken, { plugins: [limits] });
   }
   return { api, limits };
+}
+
+export async function getTwitterClient(req: Request) {
+  const session = await getSession(req.headers.get('Cookie'));
+  const uid = session.get('uid') as string | undefined;
+  let limits = new TwitterApiRateLimitPlugin();
+  let api = new TwitterApi(process.env.TWITTER_TOKEN as string, {
+    plugins: [limits],
+  });
+  if (uid) {
+    const userSpecificStuff = await getTwitterClientForUser(uid);
+    api = userSpecificStuff.api;
+    limits = userSpecificStuff.limits;
+  }
+  return { session, uid, api, limits };
 }
 
 export function toList(l: ListV2): List {
@@ -224,7 +242,7 @@ export function toImages(u: TweetEntityUrlV2): Image[] {
   }));
 }
 
-type CreateQueue = {
+export type CreateQueue = {
   influencers: Influencer[];
   list_members: ListMember[];
   tweets: Tweet[];
@@ -237,7 +255,10 @@ type CreateQueue = {
   urls: URL[];
 };
 export function toCreateQueue(
-  res: TweetV2ListTweetsPaginator | TweetSearchRecentV2Paginator,
+  res:
+    | TweetV2ListTweetsPaginator
+    | TweetSearchRecentV2Paginator
+    | TweetUserTimelineV2Paginator,
   queue: CreateQueue = {
     influencers: [] as Influencer[],
     list_members: [] as ListMember[],
@@ -297,16 +318,17 @@ export function toCreateQueue(
   return queue;
 }
 
-export async function executeCreateQueue(queue: CreateQueue) {
-  log.info(`Creating ${queue.influencers.length} tweet authors...`);
-  log.info(`Creating ${queue.list_members.length} list members...`);
-  log.info(`Creating ${queue.tweets.length} tweets...`);
-  log.info(`Creating ${queue.mentions.length} mentions...`);
-  log.info(`Creating ${queue.tags.length} hashtags and cashtags...`);
-  log.info(`Creating ${queue.refs.length} tweet refs...`);
-  log.info(`Creating ${queue.links.length} links...`);
-  log.info(`Creating ${queue.images.length} link images...`);
-  log.info(`Creating ${queue.urls.length} tweet urls...`);
+export async function executeCreateQueue(queue: CreateQueue, context?: string) {
+  const info = (msg: string) => log.info(`${msg} (${context})...`);
+  info(`Creating ${queue.influencers.length} tweet authors`);
+  info(`Creating ${queue.list_members.length} list members`);
+  info(`Creating ${queue.tweets.length} tweets`);
+  info(`Creating ${queue.mentions.length} mentions`);
+  info(`Creating ${queue.tags.length} hashtags and cashtags`);
+  info(`Creating ${queue.refs.length} tweet refs`);
+  info(`Creating ${queue.links.length} links`);
+  info(`Creating ${queue.images.length} link images`);
+  info(`Creating ${queue.urls.length} tweet urls`);
   const skipDuplicates = true;
   await db.$transaction([
     db.influencers.createMany({ data: queue.influencers, skipDuplicates }),
