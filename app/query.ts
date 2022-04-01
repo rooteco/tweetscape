@@ -7,7 +7,7 @@ export enum ArticlesFilter {
   HideRetweets,
   ShowRetweets,
 }
-export const DEFAULT_ARTICLES_FILTER = ArticlesFilter.ShowRetweets;
+export const DEFAULT_ARTICLES_FILTER = ArticlesFilter.HideRetweets;
 export enum ArticleTweetsSort {
   AttentionScore,
   RetweetCount,

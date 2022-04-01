@@ -128,6 +128,8 @@ export default function ArticlesPage() {
                 {
                   name: 'Tweet count',
                   to: `?s=${ArticlesSort.TweetCount}`,
+                  isActiveByDefault:
+                    DEFAULT_ARTICLES_SORT === ArticlesSort.TweetCount,
                 },
               ],
             },
@@ -144,6 +146,8 @@ export default function ArticlesPage() {
                 {
                   name: 'Hide retweets',
                   to: `?f=${ArticlesFilter.HideRetweets}`,
+                  isActiveByDefault:
+                    DEFAULT_ARTICLES_FILTER === ArticlesFilter.HideRetweets,
                 },
                 {
                   name: 'Show retweets',
