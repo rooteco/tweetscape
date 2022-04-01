@@ -12,7 +12,12 @@ import {
   TweetsSort,
 } from '~/query';
 import { commitSession, getSession } from '~/session.server';
-import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
+import {
+  getClusterTweets,
+  getFeedTweets,
+  getListTweets,
+  getRektTweets,
+} from '~/query.server';
 import { log, nanoid } from '~/utils.server';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
@@ -48,6 +53,9 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const limit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
   let tweetsPromise: Promise<TweetFull[]>;
   switch (params.src) {
+    case 'feed':
+      tweetsPromise = getFeedTweets(params.id, sort, filter, limit, uid);
+      break;
     case 'clusters':
       tweetsPromise = getClusterTweets(params.id, sort, filter, limit, uid);
       break;
