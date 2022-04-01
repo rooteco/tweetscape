@@ -22,7 +22,7 @@ drop domain if exists url cascade;
 drop table if exists clusters cascade;
 
 create table clusters (
-  "id" text unique not null primary key, 
+  "id" bigint unique not null primary key, 
   "name" text unique not null,
   "slug" text unique not null check ("slug" = lower("name")),
   "active" boolean not null default false,
@@ -32,7 +32,7 @@ create table clusters (
 );
 create domain url as text check (value ~ '^https?:\/\/.+$');
 create table influencers (
-  "id" text unique not null primary key,
+  "id" bigint unique not null primary key,
   "name" text not null,
   "username" text not null,
   "verified" boolean,
@@ -45,8 +45,8 @@ create table influencers (
   "updated_at" timestamptz
 );
 create table lists (
-  "id" text unique not null primary key,
-  "owner_id" text references influencers(id) deferrable not null,
+  "id" bigint unique not null primary key,
+  "owner_id" bigint references influencers(id) deferrable not null,
   "name" text not null,
   "description" text not null,
   "private" boolean not null,
@@ -55,17 +55,17 @@ create table lists (
   "created_at" timestamptz not null
 );
 create table list_members (
-  "influencer_id" text references influencers(id) deferrable not null,
-  "list_id" text references lists(id) deferrable not null,
+  "influencer_id" bigint references influencers(id) deferrable not null,
+  "list_id" bigint references lists(id) deferrable not null,
   primary key ("influencer_id", "list_id")
 );
 create table list_followers (
-  "influencer_id" text references influencers(id) deferrable not null,
-  "list_id" text references lists(id) deferrable not null,
+  "influencer_id" bigint references influencers(id) deferrable not null,
+  "list_id" bigint references lists(id) deferrable not null,
   primary key ("influencer_id", "list_id")
 );
 create table tokens (
-  "influencer_id" text unique references influencers(id) deferrable not null primary key,
+  "influencer_id" bigint unique references influencers(id) deferrable not null primary key,
   "token_type" text not null,
   "expires_in" integer not null,
   "access_token" text not null unique,
@@ -75,9 +75,9 @@ create table tokens (
   "updated_at" timestamptz not null
 );
 create table scores (
-  "id" text unique not null primary key,
-  "influencer_id" text references influencers(id) deferrable not null,
-  "cluster_id" text references clusters(id) deferrable not null,
+  "id" bigint unique not null primary key,
+  "influencer_id" bigint references influencers(id) deferrable not null,
+  "cluster_id" bigint references clusters(id) deferrable not null,
   "attention_score" numeric not null,
   "attention_score_change_week" numeric,
   "insider_score" numeric not null,
@@ -90,7 +90,7 @@ create table scores (
 );
 create table rekt (
   "id" bigint unique not null primary key,
-  "influencer_id" text references influencers(id) deferrable not null,
+  "influencer_id" bigint references influencers(id) deferrable not null,
   "username" text not null,
   "name" text not null,
   "profile_image_url" url not null,
@@ -100,8 +100,8 @@ create table rekt (
   "followers_in_people_count" integer not null 
 );
 create table tweets (
-  "id" text unique not null primary key,
-  "author_id" text references influencers(id) deferrable not null,
+  "id" bigint unique not null primary key,
+  "author_id" bigint references influencers(id) deferrable not null,
   "text" text not null,
   "retweet_count" integer not null,
   "reply_count" integer not null,
@@ -110,25 +110,25 @@ create table tweets (
   "created_at" timestamptz not null
 );
 create table likes (
-  "tweet_id" text references tweets(id) deferrable not null,
-  "influencer_id" text references influencers(id) deferrable not null,
+  "tweet_id" bigint references tweets(id) deferrable not null,
+  "influencer_id" bigint references influencers(id) deferrable not null,
   primary key ("tweet_id", "influencer_id")
 );
 create table retweets (
-  "tweet_id" text references tweets(id) deferrable not null,
-  "influencer_id" text references influencers(id) deferrable not null,
+  "tweet_id" bigint references tweets(id) deferrable not null,
+  "influencer_id" bigint references influencers(id) deferrable not null,
   primary key ("tweet_id", "influencer_id")
 );
 create type ref_type as enum('quoted', 'retweeted', 'replied_to');
 create table refs (
-  "referenced_tweet_id" text references tweets(id) deferrable not null,
-  "referencer_tweet_id" text references tweets(id) deferrable not null,
+  "referenced_tweet_id" bigint references tweets(id) deferrable not null,
+  "referencer_tweet_id" bigint references tweets(id) deferrable not null,
   "type" ref_type not null,
   primary key ("referenced_tweet_id", "referencer_tweet_id")
 );
 create table mentions (
-  "tweet_id" text references tweets(id) deferrable not null,
-  "influencer_id" text references influencers(id) deferrable not null,
+  "tweet_id" bigint references tweets(id) deferrable not null,
+  "influencer_id" bigint references influencers(id) deferrable not null,
   "start" integer not null,
   "end" integer not null,
   primary key ("tweet_id", "influencer_id")
@@ -141,7 +141,7 @@ create type annotation_type as enum(
   'Other'
 );
 create table annotations (
-  "tweet_id" text references tweets(id) deferrable not null,
+  "tweet_id" bigint references tweets(id) deferrable not null,
   "normalized_text" text not null,
   "probability" numeric not null,
   "type" annotation_type not null,
@@ -151,7 +151,7 @@ create table annotations (
 );
 create type tag_type as enum('cashtag', 'hashtag');
 create table tags (
-  "tweet_id" text references tweets(id) deferrable not null,
+  "tweet_id" bigint references tweets(id) deferrable not null,
   "tag" text not null,
   "type" tag_type not null,
   "start" integer not null,
@@ -174,7 +174,7 @@ create table images (
   primary key ("link_url", "url", "width", "height")
 );
 create table urls (
-  "tweet_id" text references tweets(id) deferrable not null,
+  "tweet_id" bigint references tweets(id) deferrable not null,
   "link_url" url references links(url) deferrable not null,
   "start" integer not null,
   "end" integer not null,
