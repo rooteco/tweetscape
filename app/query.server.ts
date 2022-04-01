@@ -390,9 +390,9 @@ function getClusterArticlesQuery(
               left outer join influencers ref_authors on ref_authors.id = ref_tweets.author_id
               ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.influencer_id = ${uid}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.influencer_id = ${uid}` : Prisma.empty}
-            group by tweets.id,quote.referenced_tweet_id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}scores.id,influencers.id
             ${filter === ArticlesFilter.HideRetweets ? Prisma.sql`where retweet is null` : Prisma.empty}
-          ) as tweets on tweets.id = urls.tweet_id
+            group by tweets.id,quote.referenced_tweet_id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}scores.id,influencers.id
+          ) as tweets on urls.tweet_id in (tweets.id, tweets.quote_id)
       ) as tweets on tweets.link_url = links.url
     where url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url
