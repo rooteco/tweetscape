@@ -25,7 +25,6 @@ import { commitSession, getSession } from '~/session.server';
 import { log, nanoid } from '~/utils.server';
 import { ErrorContext } from '~/error';
 import ErrorDisplay from '~/components/error';
-import Footer from '~/components/footer';
 import { Prisma } from '~/db.server';
 import { getLists } from '~/query.server';
 import styles from '~/styles/app.css';
@@ -152,7 +151,6 @@ export function ErrorBoundary({ error: e }: { error: Error }) {
             <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
               <ErrorDisplay error={e} />
             </div>
-            <Footer />
           </App>
         </ErrorContext.Provider>
       </ThemeProvider>
