@@ -24,7 +24,7 @@ drop table if exists clusters cascade;
 create table clusters (
   "id" bigint unique not null primary key, 
   "name" text unique not null,
-  "slug" text unique not null check ("slug" = lower("name")),
+  "slug" text unique not null,
   "active" boolean not null default false,
   "created_at" timestamptz not null,
   "updated_at" timestamptz not null,
