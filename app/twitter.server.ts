@@ -25,7 +25,6 @@ import type {
   Annotation,
   AnnotationType,
   Image,
-  User,
   Link,
   List,
   ListMember,
@@ -35,6 +34,7 @@ import type {
   TagType,
   Tweet,
   URL,
+  User,
 } from '~/types';
 import { TwitterApiRateLimitDBStore } from '~/limit.server';
 import { db } from '~/db.server';
@@ -86,7 +86,7 @@ export async function getTwitterClientForUser(
   uid: string
 ): Promise<{ api: TwitterApi; limits: TwitterApiRateLimitPlugin }> {
   log.info(`Fetching token for user (${uid})...`);
-  const token = await db.tokens.findUnique({ where: { user_id: uid } });
+  const token = await db.tokens.findUnique({ where: { user_id: BigInt(uid) } });
   invariant(token, `expected token for user (${uid})`);
   const expiration = token.updated_at.valueOf() + token.expires_in * 1000;
   const limits = new TwitterApiRateLimitPlugin(
@@ -114,7 +114,7 @@ export async function getTwitterClientForUser(
         scope: scope.join(' '),
         updated_at: new Date(),
       },
-      where: { user_id: uid },
+      where: { user_id: BigInt(uid) },
     });
     api = new TwitterApi(accessToken, { plugins: [limits] });
   }
@@ -123,8 +123,8 @@ export async function getTwitterClientForUser(
 
 export function toList(l: ListV2): List {
   return {
-    id: l.id,
-    owner_id: l.owner_id as string,
+    id: BigInt(l.id),
+    owner_id: BigInt(l.owner_id as string),
     name: l.name,
     description: l.description as string,
     private: l.private as boolean,
@@ -136,7 +136,7 @@ export function toList(l: ListV2): List {
 
 export function toUser(u: UserV2): User {
   return {
-    id: u.id,
+    id: BigInt(u.id),
     name: u.name,
     username: u.username,
     verified: u.verified ?? null,
@@ -155,7 +155,7 @@ export function toAnnotation(
   t: TweetV2
 ): Annotation {
   return {
-    tweet_id: t.id,
+    tweet_id: BigInt(t.id),
     normalized_text: a.normalized_text,
     probability: a.probability as unknown as Decimal,
     type: a.type as AnnotationType,
@@ -167,7 +167,7 @@ export function toAnnotation(
 export function toTag(h: TweetEntityHashtagV2, t: TweetV2, type: TagType): Tag {
   return {
     type,
-    tweet_id: t.id,
+    tweet_id: BigInt(t.id),
     tag: h.tag,
     start: h.start,
     end: h.end,
@@ -176,16 +176,16 @@ export function toTag(h: TweetEntityHashtagV2, t: TweetV2, type: TagType): Tag {
 
 export function toRef(r: ReferencedTweetV2, t: TweetV2): Ref {
   return {
-    referenced_tweet_id: r.id,
-    referencer_tweet_id: t.id,
+    referenced_tweet_id: BigInt(r.id),
+    referencer_tweet_id: BigInt(t.id),
     type: r.type,
   };
 }
 
 export function toTweet(tweet: TweetV2): Tweet {
   return {
-    id: tweet.id,
-    author_id: tweet.author_id as string,
+    id: BigInt(tweet.id),
+    author_id: BigInt(tweet.author_id as string),
     text: tweet.text,
     retweet_count: tweet.public_metrics?.retweet_count as number,
     reply_count: tweet.public_metrics?.reply_count as number,
@@ -209,7 +209,7 @@ export function toLink(u: TweetEntityUrlV2): Link {
 export function toURL(u: TweetEntityUrlV2, t: TweetV2): URL {
   return {
     link_url: u.expanded_url,
-    tweet_id: t.id,
+    tweet_id: BigInt(t.id),
     start: u.start,
     end: u.end,
   };
@@ -250,7 +250,7 @@ export function toCreateQueue(
     images: [] as Image[],
     urls: [] as URL[],
   },
-  listId?: string
+  listId?: bigint
 ) {
   const includes = new TwitterV2IncludesHelper(res);
   const authors = includes.users.map(toUser);
@@ -260,14 +260,14 @@ export function toCreateQueue(
   res.tweets.forEach((t) => {
     if (listId)
       queue.list_members.push({
-        user_id: t.author_id as string,
+        user_id: BigInt(t.author_id as string),
         list_id: listId,
       });
     t.entities?.mentions?.forEach((m) => {
       const mid = authors.find((u) => u.username === m.username)?.id;
       if (mid)
         queue.mentions.push({
-          tweet_id: t.id,
+          tweet_id: BigInt(t.id),
           user_id: mid,
           start: m.start,
           end: m.end,
@@ -285,7 +285,7 @@ export function toCreateQueue(
     t.referenced_tweets?.forEach((r) => {
       // Address edge-case where the referenced tweet may be
       // inaccessible to us (e.g. private account) or deleted.
-      if (queue.tweets.some((tw) => tw.id === r.id))
+      if (queue.tweets.some((tw) => tw.id === BigInt(r.id)))
         queue.refs.push(toRef(r, t));
     });
     t.entities?.urls?.forEach((u) => {

@@ -60,7 +60,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       break;
     case 'lists':
       articlesPromise = getListArticles(
-        params.id,
+        BigInt(params.id),
         articlesSort,
         articlesFilter,
         uid
@@ -128,8 +128,6 @@ export default function ArticlesPage() {
                 {
                   name: 'Tweet count',
                   to: `?s=${ArticlesSort.TweetCount}`,
-                  isActiveByDefault:
-                    DEFAULT_ARTICLES_SORT === ArticlesSort.TweetCount,
                 },
               ],
             },
@@ -152,8 +150,6 @@ export default function ArticlesPage() {
                 {
                   name: 'Show retweets',
                   to: `?f=${ArticlesFilter.ShowRetweets}`,
-                  isActiveByDefault:
-                    DEFAULT_ARTICLES_FILTER === ArticlesFilter.ShowRetweets,
                 },
               ],
             },

@@ -23,7 +23,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const url = new URL(request.url);
   session.set('href', `${url.pathname}${url.search}`);
   const uid = session.get('uid') as string | undefined;
-  const tweetIds = params['*'].split('/');
+  const tweetIds = params['*'].split('/').map((id) => BigInt(id));
   const [tweets, replies] = await Promise.all([
     getTweetsByIds(tweetIds, uid),
     getTweetRepliesByIds(tweetIds, uid),
@@ -97,7 +97,7 @@ function Section({ tweet, replies }: LoaderData[number]) {
       </header>
       <ol>
         {replies.map((reply) => (
-          <TweetItem tweet={reply} key={reply.id} />
+          <TweetItem tweet={reply} key={reply.id.toString()} />
         ))}
         {syncing && fallback}
       </ol>
@@ -111,6 +111,6 @@ function Section({ tweet, replies }: LoaderData[number]) {
 export default function TweetPage() {
   const data = useLoaderData<LoaderData>();
   return data.map(({ tweet, replies }) => (
-    <Section tweet={tweet} replies={replies} key={tweet.id} />
+    <Section tweet={tweet} replies={replies} key={tweet.id.toString()} />
   ));
 }

@@ -178,7 +178,7 @@ export default function TweetsPage() {
             hasMore
           >
             {tweets.map((tweet) => (
-              <TweetItem tweet={tweet} key={tweet.id} />
+              <TweetItem tweet={tweet} key={tweet.id.toString()} />
             ))}
           </InfiniteScroll>
         </ol>

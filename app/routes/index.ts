@@ -31,17 +31,17 @@ export const loader: LoaderFunction = async ({ request }) => {
         redirectUri: getBaseURL(request),
       });
       log.info('Fetching logged in user from Twitter API...');
-      const { data: user } = await api.v2.me({ 'user.fields': USER_FIELDS });
-      log.info(`Upserting user ${user.name} (@${user.username})...`);
+      const { data } = await api.v2.me({ 'user.fields': USER_FIELDS });
+      log.info(`Upserting user ${data.name} (@${data.username})...`);
       const user = {
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        profile_image_url: user.profile_image_url,
-        followers_count: user.public_metrics?.followers_count,
-        following_count: user.public_metrics?.following_count,
-        tweets_count: user.public_metrics?.tweet_count,
-        created_at: user.created_at,
+        id: BigInt(data.id),
+        name: data.name,
+        username: data.username,
+        profile_image_url: data.profile_image_url,
+        followers_count: data.public_metrics?.followers_count,
+        following_count: data.public_metrics?.following_count,
+        tweets_count: data.public_metrics?.tweet_count,
+        created_at: data.created_at,
         updated_at: new Date(),
       };
       await db.users.upsert({

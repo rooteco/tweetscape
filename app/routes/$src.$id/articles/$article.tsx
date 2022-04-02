@@ -153,7 +153,7 @@ export default function ArticlePage() {
       {!!results.length && (
         <div className='relative'>
           {results.map((tweet) => (
-            <TweetItem tweet={tweet} key={tweet.id} />
+            <TweetItem tweet={tweet} key={tweet.id.toString()} />
           ))}
         </div>
       )}

@@ -8,7 +8,7 @@ import {
 } from 'remix';
 import cn from 'classnames';
 
-import type { InfluencerFull, Ref, TweetFull } from '~/types';
+import type { Ref, TweetFull, UserFull } from '~/types';
 import LikeIcon from '~/icons/like';
 import LikedIcon from '~/icons/liked';
 import type { LoaderData } from '~/root';
@@ -120,7 +120,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
         .type,
       author: tweet.ref_authors?.find(
         (a) => a?.id === t?.author_id
-      ) as InfluencerFull,
+      ) as UserFull,
       liked: tweet.ref_likes?.some((r) => r?.tweet_id === t?.id),
       retweeted: tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
     }));
@@ -131,7 +131,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
       tabIndex={-1}
       onClick={(evt) => {
         evt.stopPropagation();
-        if (!tweet || pathname.includes(tweet.id)) return;
+        if (!tweet || pathname.includes(tweet.id.toString())) return;
         if (evt.target !== evt.currentTarget) {
           const validTargets = ['P', 'ARTICLE', 'HEADER'];
           if (!validTargets.includes((evt.target as Node).nodeName)) return;
@@ -262,7 +262,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
                 nested
                 tweet={t}
                 setActiveTweet={setActiveTweet}
-                key={t.id}
+                key={t.id.toString()}
               />
             ))}
         <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-gray-500'>
@@ -277,7 +277,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
             icon={<RetweetIcon />}
             href={`https://twitter.com/intent/retweet?tweet_id=${tweet?.id}`}
             action='retweet'
-            id={tweet?.id}
+            id={tweet?.id.toString()}
             count={tweet ? tweet.retweet_count + tweet.quote_count : undefined}
             active={tweet?.retweeted}
             activeIcon={<RetweetedIcon />}
@@ -287,7 +287,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
             icon={<LikeIcon />}
             href={`https://twitter.com/intent/like?tweet_id=${tweet?.id}`}
             action='like'
-            id={tweet?.id}
+            id={tweet?.id.toString()}
             count={tweet?.like_count}
             active={tweet?.liked}
             activeIcon={<LikedIcon />}
@@ -316,7 +316,7 @@ export default function TweetItem({
         .type,
       author: tweet.ref_authors?.find(
         (a) => a?.id === t?.author_id
-      ) as InfluencerFull,
+      ) as UserFull,
       liked: tweet.ref_likes?.some((r) => r?.tweet_id === t?.id),
       retweeted: tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
     }));
@@ -368,7 +368,7 @@ export default function TweetItem({
             <TweetInner
               tweet={t}
               setActiveTweet={setActiveTweet}
-              key={t.id}
+              key={t.id.toString()}
               nested={nested}
             />
           ))}

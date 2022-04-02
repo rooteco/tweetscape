@@ -6,8 +6,8 @@ import {
   USER_FIELDS,
   getTwitterClientForUser,
   handleTwitterApiError,
-  toUser,
   toList,
+  toUser,
 } from '~/twitter.server';
 import { getLoggedInSession, log } from '~/utils.server';
 import { commitSession } from '~/session.server';
@@ -46,10 +46,12 @@ export const action: ActionFunction = async ({ request }) => {
       });
       const includes = new TwitterV2IncludesHelper(res);
       includes.users.forEach((i) => create.users.push(toUser(i)));
-      res.lists.forEach((l) => create.lists.push(toList(l)));
-      res.lists.forEach((l) =>
-        create.list_followers.push({ user_id: uid, list_id: l.id })
-      );
+      res.lists
+        .map((l) => toList(l))
+        .forEach((l) => {
+          create.lists.push(l);
+          create.list_followers.push({ user_id: BigInt(uid), list_id: l.id });
+        });
     } else
       log.warn(
         `Rate limit hit for getting user (${uid}) followed lists, skipping until ${new Date(
