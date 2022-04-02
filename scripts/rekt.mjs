@@ -144,7 +144,7 @@ function tweetToCreateQueue(t, authors, queue) {
     if (mid)
       queue.mentions.push({
         tweet_id: t.id,
-        influencer_id: mid,
+        user_id: mid,
         start: m.start,
         end: m.end,
       });
@@ -169,7 +169,7 @@ function tweetToCreateQueue(t, authors, queue) {
 function toCreateQueue(
   res,
   queue = {
-    influencers: [],
+    users: [],
     list_members: [],
     tweets: [],
     mentions: [],
@@ -184,12 +184,12 @@ function toCreateQueue(
 ) {
   const includes = new TwitterV2IncludesHelper(res);
   const authors = includes.users.map(toInfluencer);
-  authors.forEach((i) => queue.influencers.push(i));
+  authors.forEach((i) => queue.users.push(i));
   includes.tweets.forEach((t) => tweetToCreateQueue(t, authors, queue));
   res.tweets.forEach((t) => {
     if (listId)
       queue.list_members.push({
-        influencer_id: t.author_id,
+        user_id: t.author_id,
         list_id: listId,
       });
     tweetToCreateQueue(t, authors, queue);
@@ -198,7 +198,7 @@ function toCreateQueue(
 }
 
 async function executeCreateQueue(queue) {
-  log.info(`Creating ${queue.influencers.length} tweet authors...`);
+  log.info(`Creating ${queue.users.length} tweet authors...`);
   log.info(`Creating ${queue.list_members.length} list members...`);
   log.info(`Creating ${queue.tweets.length} tweets...`);
   log.info(`Creating ${queue.mentions.length} mentions...`);
@@ -209,7 +209,7 @@ async function executeCreateQueue(queue) {
   log.info(`Creating ${queue.urls.length} tweet urls...`);
   const skipDuplicates = true;
   await db.$transaction([
-    db.influencers.createMany({ data: queue.influencers, skipDuplicates }),
+    db.users.createMany({ data: queue.users, skipDuplicates }),
     db.list_members.createMany({ data: queue.list_members, skipDuplicates }),
     db.tweets.createMany({ data: queue.tweets, skipDuplicates }),
     db.mentions.createMany({ data: queue.mentions, skipDuplicates }),
@@ -226,10 +226,10 @@ async function importRektScores(n = 1000) {
   log.info(`Fetching ${n} rekt scores...`);
   const res = await fetch(`https://feed.rekt.news/api/v1/parlor/crypto/0/${n}`);
   const json = await res.json();
-  log.info(`Fetching ${json.length} rekt influencers...`);
+  log.info(`Fetching ${json.length} rekt users...`);
   const splits = [];
   while (json.length) splits.push(json.splice(0, 100));
-  const influencersToCreate = [];
+  const usersToCreate = [];
   const scoresToCreate = [];
   await Promise.all(
     splits.map(async (scores) => {
@@ -241,9 +241,9 @@ async function importRektScores(n = 1000) {
           'expansions': ['pinned_tweet_id'],
         }
       );
-      log.trace(`Fetched influencers: ${JSON.stringify(users, null, 2)}`);
+      log.trace(`Fetched users: ${JSON.stringify(users, null, 2)}`);
       log.info(`Parsing ${users.data.length} users...`);
-      const influencers = users.data.map((u) => ({
+      const users = users.data.map((u) => ({
         id: u.id,
         name: u.name,
         username: u.username,
@@ -256,12 +256,11 @@ async function importRektScores(n = 1000) {
         created_at: u.created_at ? new Date(u.created_at) : null,
         updated_at: new Date(),
       }));
-      influencers.forEach((i) => influencersToCreate.push(i));
+      users.forEach((i) => usersToCreate.push(i));
       log.info(`Parsing ${scores.length} rekt scores...`);
       const rekt = scores.map((d) => ({
         id: d.id,
-        influencer_id: influencers.find((i) => i.username === d.screen_name)
-          ?.id,
+        user_id: users.find((i) => i.username === d.screen_name)?.id,
         username: d.screen_name,
         name: d.name,
         profile_image_url: d.profile_picture,
@@ -270,19 +269,15 @@ async function importRektScores(n = 1000) {
         followers_count: d.followers,
         followers_in_people_count: d.followers_in_people_count,
       }));
-      const missing = rekt.filter((r) => !r.influencer_id);
-      log.warn(
-        `Missing influencer data for: ${JSON.stringify(missing, null, 2)}`
-      );
-      rekt
-        .filter((r) => r.influencer_id)
-        .forEach((r) => scoresToCreate.push(r));
+      const missing = rekt.filter((r) => !r.user_id);
+      log.warn(`Missing user data for: ${JSON.stringify(missing, null, 2)}`);
+      rekt.filter((r) => r.user_id).forEach((r) => scoresToCreate.push(r));
     })
   );
-  log.info(`Inserting ${scoresToCreate.length} rekt scores and influencers...`);
+  log.info(`Inserting ${scoresToCreate.length} rekt scores and users...`);
   const skipDuplicates = true;
   await db.$transaction([
-    db.influencers.createMany({ data: influencersToCreate, skipDuplicates }),
+    db.users.createMany({ data: usersToCreate, skipDuplicates }),
     db.rekt.createMany({ data: scoresToCreate, skipDuplicates }),
   ]);
 }
@@ -290,9 +285,9 @@ async function importRektScores(n = 1000) {
 async function importRektTweets(n = 1000) {
   log.info(`Fetching ${n} rekt scores from database...`);
   const scores = await db.rekt.findMany({ take: n });
-  log.info(`Fetching recent tweets from ${scores.length} rekt influencers...`);
+  log.info(`Fetching recent tweets from ${scores.length} rekt users...`);
   const queue = {
-    influencers: [],
+    users: [],
     list_members: [],
     tweets: [],
     mentions: [],
@@ -305,11 +300,11 @@ async function importRektTweets(n = 1000) {
   };
   await Promise.all(
     scores.map(async (s) => {
-      log.debug(`Scheduling fetch for user (${s.influencer_id}) timeline...`);
-      const job = { expiration: 5000, id: s.influencer_id };
+      log.debug(`Scheduling fetch for user (${s.user_id}) timeline...`);
+      const job = { expiration: 5000, id: s.user_id };
       const res = await limiter.schedule(job, () => {
-        log.debug(`Fetching user (${s.influencer_id}) timeline...`);
-        return api.v2.userTimeline(s.influencer_id, {
+        log.debug(`Fetching user (${s.user_id}) timeline...`);
+        return api.v2.userTimeline(s.user_id, {
           'tweet.fields': TWEET_FIELDS,
           'user.fields': USER_FIELDS,
           'expansions': TWEET_EXPANSIONS,

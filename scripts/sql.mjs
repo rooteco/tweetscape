@@ -125,22 +125,22 @@ export async function insertMentions(mentions, t, db) {
     `
     WITH data (
       "tweet_id",
-      "influencer_id",
+      "user_id",
       "start",
       "end"
     ) AS (VALUES %s)
     INSERT INTO mentions (
       "tweet_id",
-      "influencer_id",
+      "user_id",
       "start",
       "end"
     ) SELECT
       data."tweet_id",
-      data."influencer_id",
+      data."user_id",
       data."start",
       data."end"
     FROM data WHERE EXISTS (
-      SELECT 1 FROM influencers WHERE influencers.id = data.influencer_id
+      SELECT 1 FROM users WHERE users.id = data.user_id
     ) ON CONFLICT ON CONSTRAINT mentions_pkey DO NOTHING;
     `,
     values
@@ -329,7 +329,7 @@ export async function insertInfluencers(influencers, c, db) {
   });
   const query = format(
     `
-    INSERT INTO influencers (
+    INSERT INTO users (
       "id",
       "name",
       "username",
@@ -345,7 +345,7 @@ export async function insertInfluencers(influencers, c, db) {
 
     INSERT INTO scores (
       "id",
-      "influencer_id",
+      "user_id",
       "cluster_id",
       "attention_score",
       "attention_score_change_week",
@@ -356,7 +356,7 @@ export async function insertInfluencers(influencers, c, db) {
       "created_at"
     ) VALUES %L ON CONFLICT (id) DO UPDATE SET (
       "id",
-      "influencer_id",
+      "user_id",
       "cluster_id",
       "attention_score",
       "attention_score_change_week",
@@ -402,7 +402,7 @@ export async function insertUsers(users, db) {
   });
   const query = format(
     `
-    INSERT INTO influencers (
+    INSERT INTO users (
       "id",
       "name",
       "username",
