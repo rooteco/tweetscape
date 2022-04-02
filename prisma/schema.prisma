@@ -30,30 +30,6 @@ model clusters {
   scores     scores[]
 }
 
-model influencers {
-  id                BigInt           @id
-  name              String
-  username          String
-  verified          Boolean?
-  description       String?
-  profile_image_url String?
-  followers_count   Int?
-  following_count   Int?
-  tweets_count      Int?
-  created_at        DateTime?        @db.Timestamptz(6)
-  updated_at        DateTime?        @db.Timestamptz(6)
-  likes             likes[]
-  list_followers    list_followers[]
-  list_members      list_members[]
-  lists             lists[]
-  mentions          mentions[]
-  rekt              rekt[]
-  retweets          retweets[]
-  scores            scores[]
-  tokens            tokens?
-  tweets            tweets[]
-}
-
 model links {
   url         String   @id
   display_url String
@@ -66,14 +42,14 @@ model links {
 }
 
 model mentions {
-  tweet_id      BigInt
-  influencer_id BigInt
-  start         Int
-  end           Int
-  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tweets        tweets      @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tweet_id BigInt
+  user_id  BigInt
+  start    Int
+  end      Int
+  tweets   tweets @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users    users  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([tweet_id, influencer_id])
+  @@id([tweet_id, user_id])
 }
 
 model refs {
@@ -87,21 +63,21 @@ model refs {
 }
 
 model scores {
-  id                          BigInt      @id
-  influencer_id               BigInt
+  id                          BigInt   @id
+  user_id                     BigInt
   cluster_id                  BigInt
-  attention_score             Decimal     @db.Decimal
-  attention_score_change_week Decimal?    @db.Decimal
-  insider_score               Decimal     @db.Decimal
+  attention_score             Decimal  @db.Decimal
+  attention_score_change_week Decimal? @db.Decimal
+  insider_score               Decimal  @db.Decimal
   organization_rank           Int?
   personal_rank               Int?
   rank                        Int
-  created_at                  DateTime    @db.Timestamptz(6)
-  clusters                    clusters    @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  influencers                 influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  created_at                  DateTime @db.Timestamptz(6)
+  clusters                    clusters @relation(fields: [cluster_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                       users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@unique([cluster_id, influencer_id])
   @@unique([cluster_id, rank])
+  @@unique([cluster_id, user_id])
 }
 
 model tags {
@@ -124,7 +100,7 @@ model tweets {
   like_count                            Int
   quote_count                           Int
   created_at                            DateTime      @db.Timestamptz(6)
-  influencers                           influencers   @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                                 users         @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   annotations                           annotations[]
   likes                                 likes[]
   mentions                              mentions[]
@@ -157,15 +133,15 @@ model images {
 }
 
 model tokens {
-  influencer_id BigInt      @id
+  user_id       BigInt   @id
   token_type    String
   expires_in    Int
-  access_token  String      @unique
+  access_token  String   @unique
   scope         String
-  refresh_token String      @unique
-  created_at    DateTime    @db.Timestamptz(6)
-  updated_at    DateTime    @db.Timestamptz(6)
-  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  refresh_token String   @unique
+  created_at    DateTime @db.Timestamptz(6)
+  updated_at    DateTime @db.Timestamptz(6)
+  users         users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model lists {
@@ -177,58 +153,82 @@ model lists {
   follower_count Int
   member_count   Int
   created_at     DateTime         @db.Timestamptz(6)
-  influencers    influencers      @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users          users            @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   list_followers list_followers[]
   list_members   list_members[]
 }
 
 model list_followers {
-  influencer_id BigInt
-  list_id       BigInt
-  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  lists         lists       @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_id BigInt
+  list_id BigInt
+  lists   lists  @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users   users  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([influencer_id, list_id])
+  @@id([user_id, list_id])
 }
 
 model list_members {
-  influencer_id BigInt
-  list_id       BigInt
-  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  lists         lists       @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_id BigInt
+  list_id BigInt
+  lists   lists  @relation(fields: [list_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users   users  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([influencer_id, list_id])
+  @@id([user_id, list_id])
 }
 
 model likes {
-  tweet_id      BigInt
-  influencer_id BigInt
-  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tweets        tweets      @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tweet_id BigInt
+  user_id  BigInt
+  tweets   tweets @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users    users  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([tweet_id, influencer_id])
+  @@id([tweet_id, user_id])
 }
 
 model retweets {
-  tweet_id      BigInt
-  influencer_id BigInt
-  influencers   influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tweets        tweets      @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tweet_id BigInt
+  user_id  BigInt
+  tweets   tweets @relation(fields: [tweet_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users    users  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([tweet_id, influencer_id])
+  @@id([tweet_id, user_id])
 }
 
 model rekt {
-  id                        BigInt      @id
-  influencer_id             BigInt
+  id                        BigInt @id
+  user_id                   BigInt
   username                  String
   name                      String
   profile_image_url         String
   points                    Int
-  rank                      Int         @unique
+  rank                      Int    @unique
   followers_count           Int?
   followers_in_people_count Int
-  influencers               influencers @relation(fields: [influencer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                     users  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id                BigInt           @id
+  name              String
+  username          String
+  verified          Boolean?
+  description       String?
+  profile_image_url String?
+  followers_count   Int?
+  following_count   Int?
+  tweets_count      Int?
+  created_at        DateTime?        @db.Timestamptz(6)
+  updated_at        DateTime?        @db.Timestamptz(6)
+  likes             likes[]
+  list_followers    list_followers[]
+  list_members      list_members[]
+  lists             lists[]
+  mentions          mentions[]
+  rekt              rekt[]
+  retweets          retweets[]
+  scores            scores[]
+  tokens            tokens?
+  tweets            tweets[]
 }
 
 enum annotation_type {
