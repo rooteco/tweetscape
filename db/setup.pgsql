@@ -17,7 +17,7 @@ drop table if exists tokens cascade;
 drop table if exists list_followers cascade;
 drop table if exists list_members cascade;
 drop table if exists lists cascade;
-drop table if exists influencers cascade;
+drop table if exists users cascade;
 drop domain if exists url cascade;
 drop table if exists clusters cascade;
 
@@ -31,7 +31,7 @@ create table clusters (
   "visible" boolean not null default false
 );
 create domain url as text check (value ~ '^https?:\/\/.+$');
-create table influencers (
+create table users (
   "id" bigint unique not null primary key,
   "name" text not null,
   "username" text not null,
@@ -46,7 +46,7 @@ create table influencers (
 );
 create table lists (
   "id" bigint unique not null primary key,
-  "owner_id" bigint references influencers(id) deferrable not null,
+  "owner_id" bigint references users(id) deferrable not null,
   "name" text not null,
   "description" text not null,
   "private" boolean not null,
@@ -55,17 +55,17 @@ create table lists (
   "created_at" timestamptz not null
 );
 create table list_members (
-  "influencer_id" bigint references influencers(id) deferrable not null,
+  "user_id" bigint references users(id) deferrable not null,
   "list_id" bigint references lists(id) deferrable not null,
-  primary key ("influencer_id", "list_id")
+  primary key ("user_id", "list_id")
 );
 create table list_followers (
-  "influencer_id" bigint references influencers(id) deferrable not null,
+  "user_id" bigint references users(id) deferrable not null,
   "list_id" bigint references lists(id) deferrable not null,
-  primary key ("influencer_id", "list_id")
+  primary key ("user_id", "list_id")
 );
 create table tokens (
-  "influencer_id" bigint unique references influencers(id) deferrable not null primary key,
+  "user_id" bigint unique references users(id) deferrable not null primary key,
   "token_type" text not null,
   "expires_in" integer not null,
   "access_token" text not null unique,
@@ -76,7 +76,7 @@ create table tokens (
 );
 create table scores (
   "id" bigint unique not null primary key,
-  "influencer_id" bigint references influencers(id) deferrable not null,
+  "user_id" bigint references users(id) deferrable not null,
   "cluster_id" bigint references clusters(id) deferrable not null,
   "attention_score" numeric not null,
   "attention_score_change_week" numeric,
@@ -85,12 +85,12 @@ create table scores (
   "personal_rank" integer,
   "rank" integer not null,
   "created_at" timestamptz not null,
-  unique ("cluster_id", "influencer_id"),
+  unique ("cluster_id", "user_id"),
   unique ("cluster_id", "rank")
 );
 create table rekt (
   "id" bigint unique not null primary key,
-  "influencer_id" bigint references influencers(id) deferrable not null,
+  "user_id" bigint references users(id) deferrable not null,
   "username" text not null,
   "name" text not null,
   "profile_image_url" url not null,
@@ -101,7 +101,7 @@ create table rekt (
 );
 create table tweets (
   "id" bigint unique not null primary key,
-  "author_id" bigint references influencers(id) deferrable not null,
+  "author_id" bigint references users(id) deferrable not null,
   "text" text not null,
   "retweet_count" integer not null,
   "reply_count" integer not null,
@@ -111,13 +111,13 @@ create table tweets (
 );
 create table likes (
   "tweet_id" bigint references tweets(id) deferrable not null,
-  "influencer_id" bigint references influencers(id) deferrable not null,
-  primary key ("tweet_id", "influencer_id")
+  "user_id" bigint references users(id) deferrable not null,
+  primary key ("tweet_id", "user_id")
 );
 create table retweets (
   "tweet_id" bigint references tweets(id) deferrable not null,
-  "influencer_id" bigint references influencers(id) deferrable not null,
-  primary key ("tweet_id", "influencer_id")
+  "user_id" bigint references users(id) deferrable not null,
+  primary key ("tweet_id", "user_id")
 );
 create type ref_type as enum('quoted', 'retweeted', 'replied_to');
 create table refs (
@@ -128,10 +128,10 @@ create table refs (
 );
 create table mentions (
   "tweet_id" bigint references tweets(id) deferrable not null,
-  "influencer_id" bigint references influencers(id) deferrable not null,
+  "user_id" bigint references users(id) deferrable not null,
   "start" integer not null,
   "end" integer not null,
-  primary key ("tweet_id", "influencer_id")
+  primary key ("tweet_id", "user_id")
 );
 create type annotation_type as enum(
   'Person',
