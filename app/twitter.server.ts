@@ -25,7 +25,7 @@ import type {
   Annotation,
   AnnotationType,
   Image,
-  Influencer,
+  User,
   Link,
   List,
   ListMember,
@@ -86,7 +86,7 @@ export async function getTwitterClientForUser(
   uid: string
 ): Promise<{ api: TwitterApi; limits: TwitterApiRateLimitPlugin }> {
   log.info(`Fetching token for user (${uid})...`);
-  const token = await db.tokens.findUnique({ where: { influencer_id: uid } });
+  const token = await db.tokens.findUnique({ where: { user_id: uid } });
   invariant(token, `expected token for user (${uid})`);
   const expiration = token.updated_at.valueOf() + token.expires_in * 1000;
   const limits = new TwitterApiRateLimitPlugin(
@@ -114,7 +114,7 @@ export async function getTwitterClientForUser(
         scope: scope.join(' '),
         updated_at: new Date(),
       },
-      where: { influencer_id: uid },
+      where: { user_id: uid },
     });
     api = new TwitterApi(accessToken, { plugins: [limits] });
   }
@@ -134,7 +134,7 @@ export function toList(l: ListV2): List {
   };
 }
 
-export function toInfluencer(u: UserV2): Influencer {
+export function toUser(u: UserV2): User {
   return {
     id: u.id,
     name: u.name,
@@ -225,7 +225,7 @@ export function toImages(u: TweetEntityUrlV2): Image[] {
 }
 
 type CreateQueue = {
-  influencers: Influencer[];
+  users: User[];
   list_members: ListMember[];
   tweets: Tweet[];
   mentions: Mention[];
@@ -239,7 +239,7 @@ type CreateQueue = {
 export function toCreateQueue(
   res: TweetV2ListTweetsPaginator | TweetSearchRecentV2Paginator,
   queue: CreateQueue = {
-    influencers: [] as Influencer[],
+    users: [] as User[],
     list_members: [] as ListMember[],
     tweets: [] as Tweet[],
     mentions: [] as Mention[],
@@ -253,14 +253,14 @@ export function toCreateQueue(
   listId?: string
 ) {
   const includes = new TwitterV2IncludesHelper(res);
-  const authors = includes.users.map(toInfluencer);
-  authors.forEach((i) => queue.influencers.push(i));
+  const authors = includes.users.map(toUser);
+  authors.forEach((i) => queue.users.push(i));
   includes.tweets.map(toTweet).forEach((r) => queue.tweets.push(r));
   res.tweets.map(toTweet).forEach((t) => queue.tweets.push(t));
   res.tweets.forEach((t) => {
     if (listId)
       queue.list_members.push({
-        influencer_id: t.author_id as string,
+        user_id: t.author_id as string,
         list_id: listId,
       });
     t.entities?.mentions?.forEach((m) => {
@@ -268,7 +268,7 @@ export function toCreateQueue(
       if (mid)
         queue.mentions.push({
           tweet_id: t.id,
-          influencer_id: mid,
+          user_id: mid,
           start: m.start,
           end: m.end,
         });
@@ -298,7 +298,7 @@ export function toCreateQueue(
 }
 
 export async function executeCreateQueue(queue: CreateQueue) {
-  log.info(`Creating ${queue.influencers.length} tweet authors...`);
+  log.info(`Creating ${queue.users.length} tweet authors...`);
   log.info(`Creating ${queue.list_members.length} list members...`);
   log.info(`Creating ${queue.tweets.length} tweets...`);
   log.info(`Creating ${queue.mentions.length} mentions...`);
@@ -309,7 +309,7 @@ export async function executeCreateQueue(queue: CreateQueue) {
   log.info(`Creating ${queue.urls.length} tweet urls...`);
   const skipDuplicates = true;
   await db.$transaction([
-    db.influencers.createMany({ data: queue.influencers, skipDuplicates }),
+    db.users.createMany({ data: queue.users, skipDuplicates }),
     db.list_members.createMany({ data: queue.list_members, skipDuplicates }),
     db.tweets.createMany({ data: queue.tweets, skipDuplicates }),
     db.mentions.createMany({ data: queue.mentions, skipDuplicates }),

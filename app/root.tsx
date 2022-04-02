@@ -12,7 +12,7 @@ import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import { StrictMode, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import type { Cluster, Influencer, List } from '~/types';
+import type { Cluster, User, List } from '~/types';
 import {
   Theme,
   ThemeBody,
@@ -34,7 +34,7 @@ import { swr } from '~/swr.server';
 export type LoaderData = {
   clusters: Cluster[];
   lists: List[];
-  user?: Influencer;
+  user?: User;
   theme: Theme | null;
 };
 
@@ -45,7 +45,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(request.headers.get('Cookie'));
   console.timeEnd(`get-session-${invocationId}`);
   const uid = session.get('uid') as string | undefined;
-  let user: Influencer | undefined;
+  let user: User | undefined;
   let lists: List[] = [];
   let clusters: Cluster[] = [];
   await Promise.all([
@@ -62,8 +62,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       if (!uid) return;
       log.info(`Fetching user (${uid})...`);
       console.time(`swr-get-user-${invocationId}`);
-      const users = await swr<Influencer>(
-        Prisma.sql`select * from influencers where id = ${uid}`
+      const users = await swr<User>(
+        Prisma.sql`select * from users where id = ${uid}`
       );
       console.timeEnd(`swr-get-user-${invocationId}`);
       if (users.length > 1) log.error(`Too many users (${uid}) found.`);

@@ -1,12 +1,12 @@
 import type { ActionFunction } from 'remix';
 
-import type { Influencer, List, ListFollower } from '~/types';
+import type { List, ListFollower, User } from '~/types';
 import {
   TwitterV2IncludesHelper,
   USER_FIELDS,
   getTwitterClientForUser,
   handleTwitterApiError,
-  toInfluencer,
+  toUser,
   toList,
 } from '~/twitter.server';
 import { getLoggedInSession, log } from '~/utils.server';
@@ -22,7 +22,7 @@ export const action: ActionFunction = async ({ request }) => {
     const { api, limits } = await getTwitterClientForUser(uid);
 
     const create = {
-      influencers: [] as Influencer[],
+      users: [] as User[],
       lists: [] as List[],
       list_followers: [] as ListFollower[],
     };
@@ -45,10 +45,10 @@ export const action: ActionFunction = async ({ request }) => {
         'user.fields': USER_FIELDS,
       });
       const includes = new TwitterV2IncludesHelper(res);
-      includes.users.forEach((i) => create.influencers.push(toInfluencer(i)));
+      includes.users.forEach((i) => create.users.push(toUser(i)));
       res.lists.forEach((l) => create.lists.push(toList(l)));
       res.lists.forEach((l) =>
-        create.list_followers.push({ influencer_id: uid, list_id: l.id })
+        create.list_followers.push({ user_id: uid, list_id: l.id })
       );
     } else
       log.warn(
@@ -78,12 +78,12 @@ export const action: ActionFunction = async ({ request }) => {
           (listFollowedLimit?.reset ?? 0) * 1000
         ).toLocaleString()}...`
       );
-    log.info(`Inserting ${create.influencers.length} influencers...`);
+    log.info(`Inserting ${create.users.length} users...`);
     log.info(`Inserting ${create.lists.length} lists...`);
     log.info(`Inserting ${create.list_followers.length} list followers...`);
     const skipDuplicates = true;
     await db.$transaction([
-      db.influencers.createMany({ data: create.influencers, skipDuplicates }),
+      db.users.createMany({ data: create.users, skipDuplicates }),
       db.lists.createMany({ data: create.lists, skipDuplicates }),
       db.list_followers.createMany({
         data: create.list_followers,

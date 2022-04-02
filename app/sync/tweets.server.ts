@@ -5,7 +5,7 @@ import type { ActionFunction } from 'remix';
 import type {
   Annotation,
   Image,
-  Influencer,
+  User,
   Link,
   ListMember,
   Mention,
@@ -34,7 +34,7 @@ export const action: ActionFunction = async ({ request }) => {
     const { api, limits } = await getTwitterClientForUser(uid);
     log.info(`Fetching followed and owned lists for user (${uid})...`);
     const [followedLists, ownedLists] = await Promise.all([
-      db.list_followers.findMany({ where: { influencer_id: uid } }),
+      db.list_followers.findMany({ where: { user_id: uid } }),
       db.lists.findMany({ where: { owner_id: uid } }),
     ]);
     const listIds = [
@@ -44,7 +44,7 @@ export const action: ActionFunction = async ({ request }) => {
     const listTweetsLimit = await limits.v2.getRateLimit('lists/:id/tweets');
 
     const queue = {
-      influencers: [] as Influencer[],
+      users: [] as User[],
       list_members: [] as ListMember[],
       tweets: [] as Tweet[],
       mentions: [] as Mention[],

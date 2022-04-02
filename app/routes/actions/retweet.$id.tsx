@@ -22,12 +22,12 @@ export const action: ActionFunction = async ({ request, params }) => {
         await api.v2.retweet(uid, params.id);
         log.info(`Inserting retweet for (${params.id}) by user (${uid})...`);
         await db.retweets.upsert({
-          create: { tweet_id: params.id, influencer_id: uid },
+          create: { tweet_id: params.id, user_id: uid },
           update: {},
           where: {
-            tweet_id_influencer_id: {
+            tweet_id_user_id: {
               tweet_id: params.id,
-              influencer_id: uid,
+              user_id: uid,
             },
           },
         });
@@ -42,7 +42,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         await db.retweets.deleteMany({
           where: {
             tweet_id: params.id,
-            influencer_id: uid,
+            user_id: uid,
           },
         });
         break;

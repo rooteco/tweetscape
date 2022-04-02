@@ -3,7 +3,6 @@ import type {
   annotations,
   clusters,
   images,
-  influencers,
   likes,
   links,
   list_followers,
@@ -19,11 +18,12 @@ import type {
   tokens,
   tweets,
   urls,
+  users,
 } from '@prisma/client';
 
 export type Annotation = annotations;
 export type Cluster = clusters;
-export type Influencer = influencers;
+export type User = users;
 export type Link = links;
 export type Like = likes;
 export type Retweet = retweets;
@@ -41,16 +41,16 @@ export type ListMember = list_members;
 export type AnnotationType = annotation_type;
 export type RefType = ref_type;
 export type TagType = tag_type;
-export type InfluencerFull = Influencer & { html?: string };
+export type UserFull = User & { html?: string };
 export type TweetFull = Tweet & {
   html?: string;
-  author?: InfluencerFull;
+  author?: UserFull;
   score?: Score;
   liked?: boolean;
   retweeted?: boolean;
   refs?: (Ref | null)[];
   ref_tweets?: (TweetFull | null)[];
-  ref_authors?: (InfluencerFull | null)[];
+  ref_authors?: (UserFull | null)[];
   ref_likes?: (Like | null)[];
   ref_retweets?: (Retweet | null)[];
 };

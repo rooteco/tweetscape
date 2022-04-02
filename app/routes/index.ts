@@ -32,8 +32,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       });
       log.info('Fetching logged in user from Twitter API...');
       const { data: user } = await api.v2.me({ 'user.fields': USER_FIELDS });
-      log.info(`Upserting influencer ${user.name} (@${user.username})...`);
-      const influencer = {
+      log.info(`Upserting user ${user.name} (@${user.username})...`);
+      const user = {
         id: user.id,
         name: user.name,
         username: user.username,
@@ -44,14 +44,14 @@ export const loader: LoaderFunction = async ({ request }) => {
         created_at: user.created_at,
         updated_at: new Date(),
       };
-      await db.influencers.upsert({
-        create: influencer,
-        update: influencer,
-        where: { id: influencer.id },
+      await db.users.upsert({
+        create: user,
+        update: user,
+        where: { id: user.id },
       });
       log.info(`Upserting token for ${user.name} (@${user.username})...`);
       const token = {
-        influencer_id: influencer.id,
+        user_id: user.id,
         token_type: 'bearer',
         expires_in: expiresIn,
         access_token: accessToken,
@@ -63,7 +63,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       await db.tokens.upsert({
         create: token,
         update: token,
-        where: { influencer_id: token.influencer_id },
+        where: { user_id: token.user_id },
       });
       log.info(`Setting session uid for ${user.name} (@${user.username})...`);
       session.set('uid', user.id);
