@@ -1,5 +1,6 @@
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { nanoid } from 'nanoid';
 
 import Bottleneck from 'bottleneck';
 import dotenv from 'dotenv';
@@ -92,7 +93,7 @@ export async function getTweets(
     `max_results=100${token ? `&pagination_token=${token}` : ''}` +
     `${lastTweetId ? `&since_id=${lastTweetId}` : ''}`;
   const headers = { authorization: `Bearer ${process.env.TWITTER_TOKEN}` };
-  const job = { expiration: 5000 };
+  const job = { expiration: 5000, id: nanoid() };
   const res = await limiter.schedule(job, fetch, url, { headers });
   const data = await res.json();
   if (data.errors && data.errors[0])
