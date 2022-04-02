@@ -121,19 +121,18 @@ export const meta: MetaFunction = () => ({
   viewport: 'width=device-width,initial-scale=1',
 });
 
-function App({ children }: { children: ReactNode }) {
-  const data = useLoaderData<LoaderData>();
+function App({ data, children }: { data?: LoaderData; children: ReactNode }) {
   const [theme] = useTheme();
   return (
     <html lang='en' className={theme ?? ''}>
       <head>
         <Meta />
         <Links />
-        <ThemeHead ssrTheme={Boolean(data.theme)} />
+        <ThemeHead ssrTheme={Boolean(data?.theme)} />
       </head>
       <body className='selection:bg-gray-200 selection:text-black dark:selection:bg-gray-700 dark:selection:text-gray-100 w-full h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100'>
         <div className='fixed inset-0 overflow-auto'>{children}</div>
-        <ThemeBody ssrTheme={Boolean(data.theme)} />
+        <ThemeBody ssrTheme={Boolean(data?.theme)} />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
@@ -169,7 +168,7 @@ export default function AppWithProviders() {
     <StrictMode>
       <ThemeProvider specifiedTheme={data.theme}>
         <ErrorContext.Provider value={context}>
-          <App>
+          <App data={data}>
             <Outlet />
           </App>
         </ErrorContext.Provider>
