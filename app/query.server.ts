@@ -302,8 +302,8 @@ function getListArticlesQuery(
               ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
               ${uid ? Prisma.sql`retweets is not null as retweeted,` : Prisma.empty}
               to_json(users.*) as author,
-              quote.referenced_tweet_id as quote_id,
               json_agg(refs.*) as refs,
+              array_agg(refs.referenced_tweet_id) as ref_ids,
               json_agg(ref_tweets.*) as ref_tweets,
               ${uid ? Prisma.sql`json_agg(ref_likes.*) as ref_likes,` : Prisma.empty}
               ${uid ? Prisma.sql`json_agg(ref_retweets.*) as ref_retweets,` : Prisma.empty}
@@ -313,16 +313,14 @@ function getListArticlesQuery(
               inner join list_members on list_members.user_id = tweets.author_id and list_members.list_id = ${Number(listId)}
               ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.user_id = ${Number(uid)}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.user_id = ${Number(uid)}` : Prisma.empty}
-              left outer join refs quote on quote.referencer_tweet_id = tweets.id and quote.type = 'quoted'
-              left outer join refs retweet on retweet.referencer_tweet_id = tweets.id and retweet.type = 'retweeted'
-              left outer join refs on refs.referencer_tweet_id = tweets.id
+              left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type != 'replied_to'
               left outer join tweets ref_tweets on ref_tweets.id = refs.referenced_tweet_id
               left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
               ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${Number(uid)}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${Number(uid)}` : Prisma.empty}
-            ${filter === ArticlesFilter.HideRetweets ? Prisma.sql`where retweet is null` : Prisma.empty}
-            group by tweets.id,quote.referenced_tweet_id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}users.id
-          ) as tweets on urls.tweet_id in (tweets.id, tweets.quote_id)
+            ${filter === ArticlesFilter.HideRetweets ? Prisma.sql`where refs is null or 'retweeted' not in (refs.type)` : Prisma.empty}
+            group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}users.id
+          ) as tweets on tweets.id = urls.tweet_id or urls.tweet_id = any (tweets.ref_ids)
       ) as tweets on tweets.link_url = links.url
     where url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url
@@ -435,8 +433,8 @@ function getRektArticlesQuery(uid?: bigint): Prisma.Sql {
               ${uid ? Prisma.sql`likes is not null as liked,` : Prisma.empty}
               ${uid ? Prisma.sql`retweets is not null as retweeted,` : Prisma.empty}
               to_json(users.*) as author,
-              quote.referenced_tweet_id as quote_id,
               json_agg(refs.*) as refs,
+              array_agg(refs.referenced_tweet_id) as ref_ids,
               json_agg(ref_tweets.*) as ref_tweets,
               ${uid ? Prisma.sql`json_agg(ref_likes.*) as ref_likes,` : Prisma.empty}
               ${uid ? Prisma.sql`json_agg(ref_retweets.*) as ref_retweets,` : Prisma.empty}
@@ -446,16 +444,14 @@ function getRektArticlesQuery(uid?: bigint): Prisma.Sql {
               inner join rekt on rekt.user_id = tweets.author_id
               ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.user_id = ${Number(uid)}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.user_id = ${Number(uid)}` : Prisma.empty}
-              left outer join refs quote on quote.referencer_tweet_id = tweets.id and quote.type = 'quoted'
-              left outer join refs retweet on retweet.referencer_tweet_id = tweets.id and retweet.type = 'retweeted'
-              left outer join refs on refs.referencer_tweet_id = tweets.id
+              left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type != 'replied_to'
               left outer join tweets ref_tweets on ref_tweets.id = refs.referenced_tweet_id
               left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
               ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${Number(uid)}` : Prisma.empty}
               ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${Number(uid)}` : Prisma.empty}
-            where retweet is null
-            group by tweets.id,quote.referenced_tweet_id,rekt.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}users.id
-          ) as tweets on urls.tweet_id in (tweets.id, tweets.quote_id)
+            where refs is null or 'retweeted' not in (refs.type)
+            group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}rekt.id,users.id
+          ) as tweets on tweets.id = urls.tweet_id or urls.tweet_id = any (tweets.ref_ids)
       ) as tweets on tweets.link_url = links.url
     where links.url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url
