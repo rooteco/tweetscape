@@ -117,7 +117,7 @@ async function data(c, start, end, db) {
     const { rows: clusters } = await db.query('SELECT * FROM clusters');
     log.info(`Fetching data for ${clusters.length} clusters...`);
     for await (const cluster of clusters) {
-      if (cluster.name === 'Tesla') {
+      if (cluster.name === 'NFT') {
         log.info(`Fetching data for "${cluster.name}" (${cluster.id})...`);
         await data(cluster, start, end, db);
       }
