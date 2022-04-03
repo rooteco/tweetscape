@@ -13,6 +13,7 @@ import { StrictMode, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import type { Cluster, List, User } from '~/types';
+import { Prisma, db } from '~/db.server';
 import {
   Theme,
   ThemeBody,
@@ -25,7 +26,6 @@ import { commitSession, getSession } from '~/session.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
 import { ErrorContext } from '~/error';
 import ErrorDisplay from '~/components/error';
-import { Prisma } from '~/db.server';
 import { getLists } from '~/query.server';
 import styles from '~/styles/app.css';
 import { swr } from '~/swr.server';
@@ -60,14 +60,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     (async () => {
       if (!uid) return;
       log.info(`Fetching user (${uid})...`);
-      console.time(`swr-get-user-${invocationId}`);
-      const users = await swr<User>(
-        Prisma.sql`select * from users where id = ${Number(uid)}`
-      );
-      console.timeEnd(`swr-get-user-${invocationId}`);
-      if (users.length > 1) log.error(`Too many users (${uid}) found.`);
-      else if (users.length === 1) [user] = users;
-      else log.warn(`User (${uid}) could not be found.`);
+      console.time(`db-get-user-${invocationId}`);
+      user = (await db.users.findUnique({ where: { id: uid } })) ?? undefined;
+      console.timeEnd(`db-get-user-${invocationId}`);
     })(),
     (async () => {
       if (!uid) return;
