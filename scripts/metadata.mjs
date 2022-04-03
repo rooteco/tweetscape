@@ -186,7 +186,6 @@ async function importRektMetadata(db) {
     select
       links.*,
       sum(tweets.points) as points,
-      count(tweets) as tweets_count,
       json_agg(tweets.*) as tweets
     from links
       inner join (
@@ -199,34 +198,32 @@ async function importRektMetadata(db) {
               tweets.*,
               rekt.points as points,
               to_json(rekt.*) as rekt,
-              to_json(influencers.*) as author,
-              quotes.referenced_tweet_id as quote_id,
+              to_json(users.*) as author,
               json_agg(refs.*) as refs,
+              array_agg(refs.referenced_tweet_id) as ref_ids,
               json_agg(ref_tweets.*) as ref_tweets,
               json_agg(ref_authors.*) as ref_authors
             from tweets
-              inner join influencers on influencers.id = tweets.author_id
-              inner join rekt on rekt.influencer_id = tweets.author_id
-              left outer join refs quotes on quotes.referencer_tweet_id = tweets.id and quotes.type = 'quoted'
-              left outer join refs retweets on retweets.referencer_tweet_id = tweets.id and retweets.type = 'retweeted'
-              left outer join refs on refs.referencer_tweet_id = tweets.id
+              inner join users on users.id = tweets.author_id
+              inner join rekt on rekt.user_id = tweets.author_id
+              left outer join refs on refs.referencer_tweet_id = tweets.id and refs.type != 'replied_to'
               left outer join tweets ref_tweets on ref_tweets.id = refs.referenced_tweet_id
-              left outer join influencers ref_authors on ref_authors.id = ref_tweets.author_id
-            where retweets is null
-            group by tweets.id,quotes.referenced_tweet_id,rekt.id,influencers.id
-          ) as tweets on urls.tweet_id in (tweets.id, tweets.quote_id)
+              left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
+            where refs is null or 'retweeted' not in (refs.type)
+            group by tweets.id,rekt.id,users.id
+          ) as tweets on tweets.id = urls.tweet_id or urls.tweet_id = any (tweets.ref_ids)
       ) as tweets on tweets.link_url = links.url
     where links.url !~ '^https?:\\/\\/twitter\\.com'
     group by links.url
     order by points desc
-    limit 100;`;
+    limit 50;`;
   await metadata(query, 'rekt', db);
 }
 
 (async () => {
   const db = await pool.connect();
   try {
-    await importClusterMetadata(db);
+    await importRektMetadata(db);
   } catch (e) {
     throw e;
   } finally {
