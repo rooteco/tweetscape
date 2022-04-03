@@ -6,8 +6,8 @@ export async function insertRefs(refs, t, db) {
   if (!refs?.length) return;
   log.trace(`Inserting ${refs.length} refs from tweet (${t.id})...`);
   const values = refs.map((r) => [
-    Number(r.id),
-    Number(t.id),
+    BigInt(r.id),
+    BigInt(t.id),
     `'${r.type}'::ref_type`,
   ]);
   // Handle edge-case where the referenced tweet has been deleted.
@@ -48,7 +48,7 @@ export async function insertTags(hashtags, t, db, type = 'hashtag') {
   if (!hashtags?.length) return;
   log.trace(`Inserting ${hashtags.length} ${type}s from tweet (${t.id})...`);
   const values = hashtags.map((h) => [
-    Number(t.id),
+    BigInt(t.id),
     h.tag,
     type,
     h.start,
@@ -81,7 +81,7 @@ export async function insertAnnotations(annotations, t, db) {
   if (!annotations?.length) return;
   log.trace(`Inserting ${annotations.length} annotations...`);
   const values = annotations.map((a) => [
-    Number(t.id),
+    BigInt(t.id),
     a.normalized_text,
     a.probability,
     a.type,
@@ -116,8 +116,8 @@ export async function insertMentions(mentions, t, db) {
   if (!mentions?.length) return;
   log.trace(`Inserting ${mentions.length} mentions from tweet (${t.id})...`);
   const values = mentions.map((m) => [
-    Number(t.id),
-    Number(m.id),
+    BigInt(t.id),
+    BigInt(m.id),
     m.start,
     m.end,
   ]);
@@ -204,7 +204,7 @@ export async function insertURLs(urls, t, db) {
       )
       .flat();
     values = deduped.map((u, idx) => [
-      Number(t.id),
+      BigInt(t.id),
       u.expanded_url,
       u.start,
       u.end,
@@ -252,8 +252,8 @@ export async function insertTweets(tweets, db) {
   const values = tweets.map((t) => {
     log.trace(`Inserting tweet (${t.id})...`);
     return [
-      Number(t.id),
-      Number(t.author_id),
+      BigInt(t.id),
+      BigInt(t.author_id),
       t.text,
       t.public_metrics.retweet_count,
       t.public_metrics.reply_count,
@@ -297,7 +297,7 @@ export async function insertInfluencers(influencers, c, db) {
     // the name and profile_image_url are null when the user has been blocked by
     // twitter for violating their terms (@see https://twitter.com/lc_hodl2)
     return [
-      Number(s.id),
+      BigInt(s.id),
       s.name ?? '',
       s.screen_name,
       s.verified ?? null,
@@ -314,9 +314,9 @@ export async function insertInfluencers(influencers, c, db) {
     const s = i.social_account.social_account;
     log.trace(`Inserting influencer (${s.id}) ${c.name} score (${i.id})...`);
     return [
-      Number(i.id),
-      Number(s.id),
-      Number(c.id),
+      BigInt(i.id),
+      BigInt(s.id),
+      BigInt(c.id),
       i.attention_score,
       i.attention_score_change_week,
       i.insider_score,
@@ -388,7 +388,7 @@ export async function insertUsers(users, db) {
   const values = users.map((u) => {
     log.trace(`Inserting user ${u.name} (${u.id})...`);
     return [
-      Number(u.id),
+      BigInt(u.id),
       u.name,
       u.username,
       u.description,

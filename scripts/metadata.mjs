@@ -223,7 +223,7 @@ async function importRektMetadata(db) {
 (async () => {
   const db = await pool.connect();
   try {
-    await importRektMetadata(db);
+    await importClusterMetadata(db);
   } catch (e) {
     throw e;
   } finally {
