@@ -1,6 +1,5 @@
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { nanoid } from 'nanoid';
 
 import Bottleneck from 'bottleneck';
 import dotenv from 'dotenv';
@@ -33,20 +32,20 @@ export const limiter = new Bottleneck({
   maxConcurrent: 10,
   minTime: 250,
 });
-limiter.on('error', (e) => {
-  log.error(`Limiter error: ${e.stack}`);
-});
-limiter.on('failed', (e, job) => {
-  log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
-  if (job.retryCount < 5) {
-    const wait = 500 * (job.retryCount + 1);
-    log.debug(`Retrying job (${job.options.id}) in ${wait}ms...`);
-    return wait;
-  }
-});
-limiter.on('retry', (e, job) => {
-  log.debug(`Now retrying job (${job.options.id})...`);
-});
+//limiter.on('error', (e) => {
+//log.error(`Limiter error: ${e.stack}`);
+//});
+//limiter.on('failed', (e, job) => {
+//log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
+//if (job.retryCount < 5) {
+//const wait = 500 * (job.retryCount + 1);
+//log.debug(`Retrying job (${job.options.id}) in ${wait}ms...`);
+//return wait;
+//}
+//});
+//limiter.on('retry', (e, job) => {
+//log.debug(`Now retrying job (${job.options.id})...`);
+//});
 
 export const USER_FIELDS = [
   'id',
@@ -93,8 +92,7 @@ export async function getTweets(
     `max_results=100${token ? `&pagination_token=${token}` : ''}` +
     `${lastTweetId ? `&since_id=${lastTweetId}` : ''}`;
   const headers = { authorization: `Bearer ${process.env.TWITTER_TOKEN}` };
-  const job = { expiration: 5000, id: nanoid() };
-  const res = await limiter.schedule(job, fetch, url, { headers });
+  const res = await limiter.schedule({ id: url }, fetch, url, { headers });
   const data = await res.json();
   if (data.errors && data.errors[0])
     log.error(
