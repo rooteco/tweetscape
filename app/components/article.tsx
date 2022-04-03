@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { animated, useSpring } from '@react-spring/web';
 import { memo, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'remix';
+import { dequal } from 'dequal/lite';
 
 import type { Article } from '~/types';
 import { TimeAgo } from '~/components/timeago';
@@ -160,4 +161,4 @@ function ArticleItem({ article, setHover, setArticle }: ArticleItemProps) {
     </animated.button>
   );
 }
-export default memo(ArticleItem);
+export default memo(ArticleItem, dequal);
