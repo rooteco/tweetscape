@@ -32,7 +32,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
     if ((listFollowedLimit?.remaining ?? 1) > 0) {
       log.info(`Fetching followed lists for ${context}...`);
-      const res = await api.v2.listFollowed(uid, {
+      const res = await api.v2.listFollowed(uid.toString(), {
         'list.fields': [
           'created_at',
           'follower_count',
@@ -50,7 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
         .map((l) => toList(l))
         .forEach((l) => {
           create.lists.push(l);
-          create.list_followers.push({ user_id: BigInt(uid), list_id: l.id });
+          create.list_followers.push({ user_id: uid, list_id: l.id });
         });
     } else
       log.warn(
@@ -63,7 +63,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
     if ((listsOwnedLimit?.remaining ?? 1) > 0) {
       log.info(`Fetching owned lists for ${context}...`);
-      const res = await api.v2.listsOwned(uid, {
+      const res = await api.v2.listsOwned(uid.toString(), {
         'list.fields': [
           'created_at',
           'follower_count',

@@ -34,8 +34,8 @@ export const action: ActionFunction = async ({ request }) => {
     const { api, limits } = await getTwitterClientForUser(uid);
     log.info(`Fetching followed and owned lists for user (${uid})...`);
     const [followedLists, ownedLists] = await Promise.all([
-      db.list_followers.findMany({ where: { user_id: BigInt(uid) } }),
-      db.lists.findMany({ where: { owner_id: BigInt(uid) } }),
+      db.list_followers.findMany({ where: { user_id: uid } }),
+      db.lists.findMany({ where: { owner_id: uid } }),
     ]);
     const listIds = [
       ...followedLists.map((l) => l.list_id),
@@ -71,7 +71,7 @@ export const action: ActionFunction = async ({ request }) => {
           log.trace(`Fetching tweets for ${context}...`);
           const hash = createHash('sha256');
           hash.update(listId);
-          hash.update(uid);
+          hash.update(uid.toString());
           const key = `latest-tweet-id:list-tweets:${hash.digest('hex')}`;
           const latestTweetId = await redis.get(key);
           log.trace(`Found the latest tweet (${listId}): ${latestTweetId}`);

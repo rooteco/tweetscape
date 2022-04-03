@@ -13,7 +13,7 @@ import {
 } from '~/query';
 import { commitSession, getSession } from '~/session.server';
 import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
-import { log, nanoid } from '~/utils.server';
+import { getUserIdFromSession, log, nanoid } from '~/utils.server';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
 import ErrorDisplay from '~/components/error';
@@ -37,7 +37,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   log.info(`Fetching tweets for ${params.src} (${params.id})...`);
   const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
-  const uid = session.get('uid') as string | undefined;
+  const uid = getUserIdFromSession(session);
   session.set('href', `${url.pathname}${url.search}`);
   const sort = Number(
     url.searchParams.get('s') ?? DEFAULT_TWEETS_SORT
@@ -52,7 +52,13 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       tweetsPromise = getClusterTweets(params.id, sort, filter, limit, uid);
       break;
     case 'lists':
-      tweetsPromise = getListTweets(params.id, sort, filter, limit, uid);
+      tweetsPromise = getListTweets(
+        BigInt(params.id),
+        sort,
+        filter,
+        limit,
+        uid
+      );
       break;
     case 'rekt':
       tweetsPromise = getRektTweets(sort, filter, limit, uid);

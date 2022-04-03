@@ -6,6 +6,7 @@ import invariant from 'tiny-invariant';
 
 import { commitSession, getSession } from '~/session.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
+import { getUserIdFromSession, log } from '~/utils.server';
 import BoltIcon from '~/icons/bolt';
 import CloseIcon from '~/icons/close';
 import Column from '~/components/column';
@@ -22,8 +23,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const session = await getSession(request.headers.get('Cookie'));
   const url = new URL(request.url);
   session.set('href', `${url.pathname}${url.search}`);
-  const uid = session.get('uid') as string | undefined;
+  const uid = getUserIdFromSession(session);
   const tweetIds = params['*'].split('/').map((id) => BigInt(id));
+  log.info(`Fetching ${tweetIds.length} tweets and their replies...`);
   const [tweets, replies] = await Promise.all([
     getTweetsByIds(tweetIds, uid),
     getTweetRepliesByIds(tweetIds, uid),

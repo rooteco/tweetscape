@@ -20,7 +20,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     switch (formData.get('action')) {
       case 'post': {
         log.info(`Retweeting tweet (${params.id}) for user (${uid})...`);
-        await api.v2.retweet(uid, params.id);
+        await api.v2.retweet(uid.toString(), params.id);
         log.info(`Inserting retweet for (${params.id}) by user (${uid})...`);
         await db.retweets.upsert({
           create: query,
@@ -31,7 +31,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       }
       case 'delete': {
         log.info(`Unretweeting tweet (${params.id}) for user (${uid})...`);
-        await api.v2.unretweet(uid, params.id);
+        await api.v2.unretweet(uid.toString(), params.id);
         log.info(`Deleting retweet for (${params.id}) by user (${uid})...`);
         // I have to use `deleteMany` to be idempotent... otherwise a successive
         // call to `delete()` may cause a `RecordNotFound` exception.

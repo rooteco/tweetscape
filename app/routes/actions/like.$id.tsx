@@ -20,7 +20,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     switch (formData.get('action')) {
       case 'post': {
         log.info(`Liking tweet (${params.id}) for user (${uid})...`);
-        await api.v2.like(uid, params.id);
+        await api.v2.like(uid.toString(), params.id);
         log.info(`Inserting like for tweet (${params.id}) by user (${uid})...`);
         await db.likes.upsert({
           create: query,
@@ -31,7 +31,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       }
       case 'delete': {
         log.info(`Unliking tweet (${params.id}) for user (${uid})...`);
-        await api.v2.unlike(uid, params.id);
+        await api.v2.unlike(uid.toString(), params.id);
         log.info(`Deleting like for tweet (${params.id}) by user (${uid})...`);
         // I have to use `deleteMany` to be idempotent... otherwise a successive
         // call to `delete()` may cause a `RecordNotFound` exception.

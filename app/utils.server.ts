@@ -9,9 +9,15 @@ export { nanoid } from 'nanoid';
 
 const DEFAULT_REDIRECT = '/rekt/crypto/articles';
 
+export function getUserIdFromSession(session: Session) {
+  const userId = session.get('uid') as string | undefined;
+  const uid = userId ? BigInt(userId) : undefined;
+  return uid;
+}
+
 export async function getLoggedInSession(req: Request) {
   const session = await getSession(req.headers.get('Cookie'));
-  const uid = session.get('uid') as string | undefined;
+  const uid = getUserIdFromSession(session);
   invariant(uid, 'expected session uid');
   return { session, uid };
 }

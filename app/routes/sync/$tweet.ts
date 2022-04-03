@@ -11,13 +11,13 @@ import {
   toCreateQueue,
 } from '~/twitter.server';
 import { commitSession, getSession } from '~/session.server';
-import { log } from '~/utils.server';
+import { getUserIdFromSession, log } from '~/utils.server';
 
 export const action: ActionFunction = async ({ request, params }) => {
   invariant(params.tweet, 'expected params.tweet');
   log.info(`Getting replies to tweet (${params.tweet})...`);
   const session = await getSession(request.headers.get('Cookie'));
-  const uid = session.get('uid') as string | undefined;
+  const uid = getUserIdFromSession(session);
   const api = uid
     ? (await getTwitterClientForUser(uid)).api
     : new TwitterApi(process.env.TWITTER_TOKEN as string);

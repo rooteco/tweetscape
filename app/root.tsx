@@ -12,7 +12,7 @@ import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import { StrictMode, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import type { Cluster, User, List } from '~/types';
+import type { Cluster, List, User } from '~/types';
 import {
   Theme,
   ThemeBody,
@@ -22,7 +22,7 @@ import {
   useTheme,
 } from '~/theme';
 import { commitSession, getSession } from '~/session.server';
-import { log, nanoid } from '~/utils.server';
+import { getUserIdFromSession, log, nanoid } from '~/utils.server';
 import { ErrorContext } from '~/error';
 import ErrorDisplay from '~/components/error';
 import { Prisma } from '~/db.server';
@@ -43,7 +43,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   console.time(`get-session-${invocationId}`);
   const session = await getSession(request.headers.get('Cookie'));
   console.timeEnd(`get-session-${invocationId}`);
-  const uid = session.get('uid') as string | undefined;
+  const uid = getUserIdFromSession(session);
   let user: User | undefined;
   let lists: List[] = [];
   let clusters: Cluster[] = [];
@@ -62,7 +62,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       log.info(`Fetching user (${uid})...`);
       console.time(`swr-get-user-${invocationId}`);
       const users = await swr<User>(
-        Prisma.sql`select * from users where id = ${uid}`
+        Prisma.sql`select * from users where id = ${Number(uid)}`
       );
       console.timeEnd(`swr-get-user-${invocationId}`);
       if (users.length > 1) log.error(`Too many users (${uid}) found.`);

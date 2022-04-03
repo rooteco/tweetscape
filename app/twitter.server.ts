@@ -83,10 +83,10 @@ export function handleTwitterApiError(e: unknown): never {
 }
 
 export async function getTwitterClientForUser(
-  uid: string
+  uid: bigint
 ): Promise<{ api: TwitterApi; limits: TwitterApiRateLimitPlugin }> {
   log.info(`Fetching token for user (${uid})...`);
-  const token = await db.tokens.findUnique({ where: { user_id: BigInt(uid) } });
+  const token = await db.tokens.findUnique({ where: { user_id: uid } });
   invariant(token, `expected token for user (${uid})`);
   const expiration = token.updated_at.valueOf() + token.expires_in * 1000;
   const limits = new TwitterApiRateLimitPlugin(

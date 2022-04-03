@@ -17,11 +17,11 @@ if (!redis.isOpen) connectionPromise = redis.connect();
 export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
   private store = new TwitterApiRateLimitMemoryStore();
 
-  public constructor(private uid: string) {}
+  public constructor(private uid: bigint) {}
 
   private key(endpoint: string, method = 'GET') {
     const hash = createHash('sha256');
-    hash.update(this.uid);
+    hash.update(this.uid.toString());
     hash.update(endpoint);
     hash.update(method);
     return `limit:${hash.digest('hex')}`;

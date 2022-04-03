@@ -20,7 +20,7 @@ if (!redis.isOpen) connectionPromise = redis.connect();
 
 function keys(
   query: Prisma.Sql,
-  uid?: string
+  uid?: bigint
 ): {
   stillGoodKey: string;
   responseKey: string;
@@ -51,11 +51,11 @@ export function cache<
     sort: S,
     filter: F,
     limit: number,
-    uid?: string
+    uid?: bigint
   ) => Prisma.Sql,
   revalidateOrInvalidate: (query: Prisma.Sql) => Promise<unknown>,
   limit: number = DEFAULT_TWEETS_LIMIT,
-  uid?: string
+  uid?: bigint
 ) {
   log.debug(`Revalidating view (${id}) tweets...`);
   /* eslint-disable consistent-return */
@@ -70,7 +70,7 @@ export function cache<
   return Promise.all(promises.flat());
 }
 
-export async function invalidate(uid: string) {
+export async function invalidate(uid: bigint) {
   log.info(`Invalidating cache keys for user (${uid})...`);
   const scan = redis.scanIterator({
     TYPE: 'string',
@@ -85,7 +85,7 @@ export async function invalidate(uid: string) {
 
 export async function revalidate<T>(
   query: Prisma.Sql,
-  uid?: string,
+  uid?: bigint,
   maxAgeSeconds = 60
 ): Promise<T[]> {
   const { stillGoodKey, responseKey } = keys(query, uid);
@@ -98,7 +98,7 @@ export async function revalidate<T>(
 
 export async function swr<T>(
   query: Prisma.Sql,
-  uid?: string,
+  uid?: bigint,
   maxAgeSeconds = 60
 ): Promise<T[]> {
   await connectionPromise;
