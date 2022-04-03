@@ -1,4 +1,4 @@
-import { Link, json, useFetchers, useLoaderData, useLocation } from 'remix';
+import { Link, useFetchers, useLocation } from 'remix';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
@@ -7,6 +7,7 @@ import invariant from 'tiny-invariant';
 import { commitSession, getSession } from '~/session.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
 import { getUserIdFromSession, log } from '~/utils.server';
+import { json, useLoaderData } from '~/json';
 import BoltIcon from '~/icons/bolt';
 import CloseIcon from '~/icons/close';
 import Column from '~/components/column';

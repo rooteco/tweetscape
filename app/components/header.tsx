@@ -4,7 +4,6 @@ import {
   NavLink,
   useFetcher,
   useLocation,
-  useMatches,
   useResolvedPath,
   useTransition,
 } from 'remix';
@@ -20,10 +19,12 @@ import OpenInNewIcon from '~/icons/open-in-new';
 import Switcher from '~/components/switcher';
 import Sync from '~/components/sync';
 import ThemeSwitcher from '~/components/theme-switcher';
+import { useMatches } from '~/json';
 
 function PageSwitcher() {
   const { pathname } = useLocation();
-  const root = useMatches()[0].data as LoaderData | undefined;
+  const matches = useMatches();
+  const root = matches[0].data as LoaderData | undefined;
   const type = pathname.split('/')[3] ?? 'articles';
   const clusters = (root?.clusters ?? []).map((c) => ({
     name: c.name,

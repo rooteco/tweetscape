@@ -1,5 +1,4 @@
 import { animated, useSpring } from '@react-spring/web';
-import { json, useLoaderData } from 'remix';
 import { useRef, useState } from 'react';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
@@ -17,6 +16,7 @@ import {
   getRektArticles,
 } from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
+import { json, useLoaderData } from '~/json';
 import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Column from '~/components/column';

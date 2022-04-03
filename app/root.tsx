@@ -5,8 +5,6 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  json,
-  useLoaderData,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import { StrictMode, useMemo, useState } from 'react';
@@ -24,6 +22,7 @@ import {
 } from '~/theme';
 import { commitSession, getSession } from '~/session.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
+import { json, useLoaderData } from '~/json';
 import { ErrorContext } from '~/error';
 import ErrorDisplay from '~/components/error';
 import { getLists } from '~/query.server';

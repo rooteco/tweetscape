@@ -1,6 +1,5 @@
-import { useLoaderData } from 'remix';
-
 import type { LoaderData } from '~/changelog.server';
+import { useLoaderData } from '~/json';
 
 export { loader } from '~/changelog.server';
 

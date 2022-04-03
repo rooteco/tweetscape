@@ -3,9 +3,9 @@ import { resolve } from 'path';
 
 import type { LoaderFunction } from 'remix';
 import fm from 'front-matter';
-import { json } from 'remix';
 import { marked } from 'marked';
 
+import { json } from '~/json';
 import { log } from '~/utils.server';
 
 const renderer = new marked.Renderer();

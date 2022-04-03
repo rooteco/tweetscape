@@ -1,8 +1,8 @@
-import { json, useLoaderData, useSearchParams } from 'remix';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 import { useRef } from 'react';
+import { useSearchParams } from 'remix';
 
 import {
   DEFAULT_TWEETS_FILTER,
@@ -14,6 +14,7 @@ import {
 import { commitSession, getSession } from '~/session.server';
 import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
+import { json, useLoaderData } from '~/json';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
 import ErrorDisplay from '~/components/error';

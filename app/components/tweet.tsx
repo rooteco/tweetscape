@@ -1,11 +1,5 @@
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import {
-  useFetcher,
-  useFetchers,
-  useLocation,
-  useMatches,
-  useNavigate,
-} from 'remix';
+import { useFetcher, useFetchers, useLocation, useNavigate } from 'remix';
 import cn from 'classnames';
 
 import type { Ref, TweetFull, UserFull } from '~/types';
@@ -20,6 +14,7 @@ import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
 import VerifiedIcon from '~/icons/verified';
 import { eq, num } from '~/utils';
+import { useMatches } from '~/json';
 
 type ActionProps = {
   active?: boolean;

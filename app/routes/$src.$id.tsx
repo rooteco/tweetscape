@@ -1,19 +1,11 @@
 import { animated, useSpring } from '@react-spring/web';
 import { useEffect, useRef } from 'react';
-import type { LoaderFunction } from 'remix';
 import { Outlet } from 'remix';
 import useMeasure from 'react-use-measure';
 
 import ErrorDisplay from '~/components/error';
 import Header from '~/components/header';
-import { lang } from '~/utils.server';
 import { useError } from '~/error';
-
-export type LoaderData = { locale: string };
-
-export const loader: LoaderFunction = ({ request }): LoaderData => ({
-  locale: lang(request),
-});
 
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
