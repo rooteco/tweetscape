@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import {
   ArticleTweetsFilter,
   ArticleTweetsSort,
+  ArticlesFilter,
   DEFAULT_ARTICLES_FILTER,
+  Param,
 } from '~/query';
 import type { Article } from '~/types';
 import BoltIcon from '~/icons/bolt';
@@ -21,26 +23,32 @@ import TweetItem from '~/components/tweet';
 export default function ArticlePage() {
   const article = useOutletContext<Article | undefined>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const searchParamsFilter = Number(
-    searchParams.get('filter') ?? DEFAULT_ARTICLES_FILTER
+  const articlesFilter = Number(
+    searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
+  ) as ArticlesFilter;
+
+  const defaultSort = ArticleTweetsSort.AttentionScore;
+  const defaultFilter = articlesFilter;
+
+  const sort = Number(
+    searchParams.get(Param.ArticleTweetsSort) ?? defaultSort
+  ) as ArticleTweetsSort;
+  const filter = Number(
+    searchParams.get(Param.ArticleTweetsFilter) ?? defaultFilter
   ) as ArticleTweetsFilter;
 
   useEffect(() => {
-    if (searchParamsFilter === ArticleTweetsFilter.HideRetweets) {
+    if (
+      articlesFilter === ArticlesFilter.HideRetweets &&
+      filter !== ArticleTweetsFilter.HideRetweets
+    ) {
       const prev = Object.fromEntries(searchParams.entries());
-      setSearchParams({ ...prev, f: `${ArticleTweetsFilter.HideRetweets}` });
+      setSearchParams({
+        ...prev,
+        [Param.ArticleTweetsFilter]: `${ArticleTweetsFilter.HideRetweets}`,
+      });
     }
-  }, [searchParamsFilter, searchParams, setSearchParams]);
-
-  const defaultSort = ArticleTweetsSort.AttentionScore;
-  const defaultFilter = searchParamsFilter;
-
-  const sort = Number(
-    searchParams.get('s') ?? defaultSort
-  ) as ArticleTweetsSort;
-  const filter = Number(
-    searchParams.get('f') ?? defaultFilter
-  ) as ArticleTweetsFilter;
+  }, [articlesFilter, searchParams, setSearchParams, filter]);
 
   const results = useMemo(
     () =>
@@ -104,21 +112,21 @@ export default function ArticlePage() {
               links: [
                 {
                   name: 'Attention score',
-                  to: `?s=${ArticleTweetsSort.AttentionScore}`,
+                  to: `?${Param.ArticleTweetsSort}=${ArticleTweetsSort.AttentionScore}`,
                   isActiveByDefault:
                     defaultSort === ArticleTweetsSort.AttentionScore,
                 },
                 {
                   name: 'Retweet count',
-                  to: `?s=${ArticleTweetsSort.RetweetCount}`,
+                  to: `?${Param.ArticleTweetsSort}=${ArticleTweetsSort.RetweetCount}`,
                 },
                 {
                   name: 'Latest first',
-                  to: `?s=${ArticleTweetsSort.Latest}`,
+                  to: `?${Param.ArticleTweetsSort}=${ArticleTweetsSort.Latest}`,
                 },
                 {
                   name: 'Earliest first',
-                  to: `?s=${ArticleTweetsSort.Earliest}`,
+                  to: `?${Param.ArticleTweetsSort}=${ArticleTweetsSort.Earliest}`,
                 },
               ],
             },
@@ -134,15 +142,15 @@ export default function ArticlePage() {
               links: [
                 {
                   name: 'Hide retweets',
-                  to: `?f=${ArticleTweetsFilter.HideRetweets}`,
+                  to: `?${Param.ArticleTweetsFilter}=${ArticleTweetsFilter.HideRetweets}`,
                   isActiveByDefault:
-                    defaultFilter === ArticleTweetsFilter.HideRetweets,
+                    defaultFilter === ArticlesFilter.HideRetweets,
                 },
                 {
                   name: 'Show retweets',
-                  to: `?f=${ArticleTweetsFilter.ShowRetweets}`,
+                  to: `?${Param.ArticleTweetsFilter}=${ArticleTweetsFilter.ShowRetweets}`,
                   isActiveByDefault:
-                    defaultFilter === ArticleTweetsFilter.ShowRetweets,
+                    defaultFilter === ArticlesFilter.ShowRetweets,
                 },
               ],
             },

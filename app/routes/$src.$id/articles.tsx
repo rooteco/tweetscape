@@ -8,6 +8,7 @@ import {
   ArticlesSort,
   DEFAULT_ARTICLES_FILTER,
   DEFAULT_ARTICLES_SORT,
+  Param,
 } from '~/query';
 import { commitSession, getSession } from '~/session.server';
 import {
@@ -43,10 +44,10 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const uid = getUserIdFromSession(session);
   session.set('href', `${url.pathname}${url.search}`);
   const articlesSort = Number(
-    url.searchParams.get('s') ?? DEFAULT_ARTICLES_SORT
+    url.searchParams.get(Param.ArticlesSort) ?? DEFAULT_ARTICLES_SORT
   ) as ArticlesSort;
   const articlesFilter = Number(
-    url.searchParams.get('f') ?? DEFAULT_ARTICLES_FILTER
+    url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
   let articlesPromise: Promise<Article[]>;
   switch (params.src) {
@@ -121,13 +122,13 @@ export default function ArticlesPage() {
               links: [
                 {
                   name: 'Attention score',
-                  to: `?s=${ArticlesSort.AttentionScore}`,
+                  to: `?${Param.ArticlesSort}=${ArticlesSort.AttentionScore}`,
                   isActiveByDefault:
                     DEFAULT_ARTICLES_SORT === ArticlesSort.AttentionScore,
                 },
                 {
                   name: 'Tweet count',
-                  to: `?s=${ArticlesSort.TweetCount}`,
+                  to: `?${Param.ArticlesSort}=${ArticlesSort.TweetCount}`,
                 },
               ],
             },
@@ -143,13 +144,13 @@ export default function ArticlesPage() {
               links: [
                 {
                   name: 'Hide retweets',
-                  to: `?f=${ArticlesFilter.HideRetweets}`,
+                  to: `?${Param.ArticlesFilter}=${ArticlesFilter.HideRetweets}`,
                   isActiveByDefault:
                     DEFAULT_ARTICLES_FILTER === ArticlesFilter.HideRetweets,
                 },
                 {
                   name: 'Show retweets',
-                  to: `?f=${ArticlesFilter.ShowRetweets}`,
+                  to: `?${Param.ArticlesFilter}=${ArticlesFilter.ShowRetweets}`,
                 },
               ],
             },

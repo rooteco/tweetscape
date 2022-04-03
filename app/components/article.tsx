@@ -128,7 +128,7 @@ function ArticleItem({ article, setHover, setArticle }: ArticleItemProps) {
     setHovering(false);
     setHover(undefined);
   };
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const isActive = pathname.includes(encodeURIComponent(article.url));
   const navigate = useNavigate();
   const content = useMemo(
@@ -154,7 +154,7 @@ function ArticleItem({ article, setHover, setArticle }: ArticleItemProps) {
       className='relative p-3 text-left my-3 first-of-type:mt-0 last-of-type:mb-0 w-full rounded-lg cursor-pointer block'
       onClick={() => {
         setArticle(article);
-        navigate(encodeURIComponent(article.url));
+        navigate(`${encodeURIComponent(article.url)}${search}`);
       }}
     >
       {content}

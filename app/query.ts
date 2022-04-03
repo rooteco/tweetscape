@@ -1,3 +1,13 @@
+export enum Param {
+  ArticlesSort = 'as',
+  ArticlesFilter = 'af',
+  ArticleTweetsSort = 'ats',
+  ArticleTweetsFilter = 'atf',
+  TweetsSort = 'ts',
+  TweetsFilter = 'tf',
+  TweetsLimit = 'tl',
+}
+
 export enum ArticlesSort {
   AttentionScore,
   TweetCount,

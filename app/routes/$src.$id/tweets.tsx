@@ -8,6 +8,7 @@ import {
   DEFAULT_TWEETS_FILTER,
   DEFAULT_TWEETS_LIMIT,
   DEFAULT_TWEETS_SORT,
+  Param,
   TweetsFilter,
   TweetsSort,
 } from '~/query';
@@ -41,12 +42,14 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const uid = getUserIdFromSession(session);
   session.set('href', `${url.pathname}${url.search}`);
   const sort = Number(
-    url.searchParams.get('s') ?? DEFAULT_TWEETS_SORT
+    url.searchParams.get(Param.TweetsSort) ?? DEFAULT_TWEETS_SORT
   ) as TweetsSort;
   const filter = Number(
-    url.searchParams.get('f') ?? DEFAULT_TWEETS_FILTER
+    url.searchParams.get(Param.TweetsFilter) ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
-  const limit = Number(url.searchParams.get('l') ?? DEFAULT_TWEETS_LIMIT);
+  const limit = Number(
+    url.searchParams.get(Param.TweetsLimit) ?? DEFAULT_TWEETS_LIMIT
+  );
   let tweetsPromise: Promise<TweetFull[]>;
   switch (params.src) {
     case 'clusters':
@@ -108,32 +111,32 @@ export default function TweetsPage() {
               links: [
                 {
                   name: 'Tweet count',
-                  to: `?s=${TweetsSort.TweetCount}`,
+                  to: `?${Param.TweetsSort}=${TweetsSort.TweetCount}`,
                 },
                 {
                   name: 'Retweet count',
-                  to: `?s=${TweetsSort.RetweetCount}`,
+                  to: `?${Param.TweetsSort}=${TweetsSort.RetweetCount}`,
                 },
                 {
                   name: 'Quote count',
-                  to: `?s=${TweetsSort.QuoteCount}`,
+                  to: `?${Param.TweetsSort}=${TweetsSort.QuoteCount}`,
                 },
                 {
                   name: 'Like count',
-                  to: `?s=${TweetsSort.LikeCount}`,
+                  to: `?${Param.TweetsSort}=${TweetsSort.LikeCount}`,
                 },
                 {
                   name: 'Follower count',
-                  to: `?s=${TweetsSort.FollowerCount}`,
+                  to: `?${Param.TweetsSort}=${TweetsSort.FollowerCount}`,
                 },
                 {
                   name: 'Latest first',
-                  to: `?s=${TweetsSort.Latest}`,
+                  to: `?${Param.TweetsSort}=${TweetsSort.Latest}`,
                   isActiveByDefault: true,
                 },
                 {
                   name: 'Earliest first',
-                  to: `?s=${TweetsSort.Earliest}`,
+                  to: `?${Param.TweetsSort}=${TweetsSort.Earliest}`,
                 },
               ],
             },
@@ -149,11 +152,11 @@ export default function TweetsPage() {
               links: [
                 {
                   name: 'Hide retweets',
-                  to: `?f=${TweetsFilter.HideRetweets}`,
+                  to: `?${Param.TweetsFilter}=${TweetsFilter.HideRetweets}`,
                 },
                 {
                   name: 'Show retweets',
-                  to: `?f=${TweetsFilter.ShowRetweets}`,
+                  to: `?${Param.TweetsFilter}=${TweetsFilter.ShowRetweets}`,
                   isActiveByDefault: true,
                 },
               ],
@@ -171,7 +174,9 @@ export default function TweetsPage() {
             next={() =>
               setSearchParams({
                 ...Object.fromEntries(searchParams.entries()),
-                l: (Number(searchParams.get('l') ?? 50) + 50).toString(),
+                [Param.TweetsLimit]: (
+                  Number(searchParams.get(Param.TweetsLimit) ?? 50) + 50
+                ).toString(),
               })
             }
             loader={Array(3)

@@ -122,7 +122,7 @@ type TweetProps = {
 function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
   const navigate = useNavigate();
   const fetcher = useFetcher();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const isQuote = tweet?.refs?.some((r) => r?.type === 'quoted');
   const refs = getRefs(tweet);
   return (
@@ -138,7 +138,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
         }
         if (setActiveTweet) setActiveTweet(tweet);
         fetcher.submit(null, { action: `/sync/${tweet.id}`, method: 'patch' });
-        navigate(`${pathname}/${tweet.id}`);
+        navigate(`${pathname}/${tweet.id}${search}`);
       }}
       onKeyPress={() => {}}
       className={cn('flex w-full pl-3 pr-3 pb-3 relative', {})}
