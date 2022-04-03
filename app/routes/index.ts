@@ -32,7 +32,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       });
       log.info('Fetching logged in user from Twitter API...');
       const { data } = await api.v2.me({ 'user.fields': USER_FIELDS });
-      log.info(`Upserting user ${data.name} (@${data.username})...`);
+      const context = `${data.name} (@${data.username})`;
+      log.info(`Upserting user for ${context}...`);
       const user = {
         id: BigInt(data.id),
         name: data.name,
@@ -49,7 +50,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         update: user,
         where: { id: user.id },
       });
-      log.info(`Upserting token for ${user.name} (@${user.username})...`);
+      log.info(`Upserting token for ${context}...`);
       const token = {
         user_id: user.id,
         token_type: 'bearer',
@@ -65,7 +66,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         update: token,
         where: { user_id: token.user_id },
       });
-      log.info(`Setting session uid for ${user.name} (@${user.username})...`);
+      log.info(`Setting session uid (${user.id}) for ${context}...`);
       session.set('uid', user.id.toString());
     }
   }
