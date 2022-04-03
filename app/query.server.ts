@@ -83,7 +83,7 @@ export async function getTweetsByIds(
       left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
       ${uid ? Prisma.sql`left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${Number(uid)}` : Prisma.empty}
       ${uid ? Prisma.sql`left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${Number(uid)}` : Prisma.empty}
-    where tweets.id in (${Prisma.join(tweetIds.map((id) => Number(id)))})
+    where tweets.id in (${Prisma.join(tweetIds.map(Number))})
     group by tweets.id,${uid ? Prisma.sql`likes.*,retweets.*,` : Prisma.empty}users.id
     order by created_at desc;`, uid);
   return getTweetsFull(tweets);
@@ -107,7 +107,7 @@ export async function getTweetRepliesByIds(
       json_agg(ref_authors.*) as ref_authors
     from tweets
       inner join users on users.id = tweets.author_id
-      inner join refs replies on replies.referencer_tweet_id = tweets.id and replies.referenced_tweet_id in (${Prisma.join(tweetIds.map((id) => Number(id)))}) and replies.type = 'replied_to'
+      inner join refs replies on replies.referencer_tweet_id = tweets.id and replies.referenced_tweet_id in (${Prisma.join(tweetIds.map(Number))}) and replies.type = 'replied_to'
       ${uid ? Prisma.sql`left outer join likes on likes.tweet_id = tweets.id and likes.user_id = ${Number(uid)}` : Prisma.empty}
       ${uid ? Prisma.sql`left outer join retweets on retweets.tweet_id = tweets.id and retweets.user_id = ${Number(uid)}` : Prisma.empty}
       left outer join refs on refs.referencer_tweet_id = tweets.id

@@ -15,6 +15,7 @@ import SyncIcon from '~/icons/sync';
 import { TimeAgo } from '~/components/timeago';
 import type { TweetFull } from '~/types';
 import TweetItem from '~/components/tweet';
+import { eq } from '~/utils';
 
 export type LoaderData = { tweet: TweetFull; replies: TweetFull[] }[];
 
@@ -30,10 +31,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     getTweetsByIds(tweetIds, uid),
     getTweetRepliesByIds(tweetIds, uid),
   ]);
+  log.info(`Fetched ${tweets.length} tweets and ${replies.length} replies.`);
   const data = tweetIds.map((tweetId) => ({
-    tweet: tweets.find((tweet) => tweet.id === tweetId) as TweetFull,
+    tweet: tweets.find((tweet) => eq(tweet.id, tweetId)) as TweetFull,
     replies: replies.filter((reply) =>
-      reply.refs?.some((r) => r?.referenced_tweet_id === tweetId)
+      reply.refs?.some((r) => eq(r?.referenced_tweet_id, tweetId))
     ),
   }));
   const headers = { 'Set-Cookie': await commitSession(session) };

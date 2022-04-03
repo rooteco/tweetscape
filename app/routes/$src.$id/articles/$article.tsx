@@ -19,7 +19,7 @@ import { TimeAgo } from '~/components/timeago';
 import TweetItem from '~/components/tweet';
 
 export default function ArticlePage() {
-  const article = useOutletContext<Article>();
+  const article = useOutletContext<Article | undefined>();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParamsFilter = Number(
     searchParams.get('filter') ?? DEFAULT_ARTICLES_FILTER
@@ -44,7 +44,7 @@ export default function ArticlePage() {
 
   const results = useMemo(
     () =>
-      Array.from(article.tweets)
+      Array.from(article?.tweets ?? [])
         .filter(
           (t) =>
             filter === ArticleTweetsFilter.ShowRetweets ||
@@ -73,7 +73,7 @@ export default function ArticlePage() {
             );
           return 0;
         }),
-    [sort, filter, article.tweets]
+    [sort, filter, article]
   );
   const { pathname } = useLocation();
   const scrollerRef = useRef<HTMLElement>(null);

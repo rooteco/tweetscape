@@ -19,7 +19,7 @@ import RetweetedIcon from '~/icons/retweeted';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
 import VerifiedIcon from '~/icons/verified';
-import { num } from '~/utils';
+import { eq, num } from '~/utils';
 
 type ActionProps = {
   active?: boolean;
@@ -102,6 +102,22 @@ function Action({
   );
 }
 
+function getRefs(tweet?: TweetFull) {
+  const refs = tweet?.ref_tweets
+    ?.filter((t) => !!t)
+    .map((t) => ({
+      ...(t as TweetFull),
+      type: (tweet.refs?.find((r) => eq(r?.referenced_tweet_id, t?.id)) as Ref)
+        .type,
+      author: tweet.ref_authors?.find((a) =>
+        eq(a?.id, t?.author_id)
+      ) as UserFull,
+      liked: tweet.ref_likes?.some((r) => eq(r?.tweet_id, t?.id)),
+      retweeted: tweet.ref_retweets?.some((r) => eq(r?.tweet_id, t?.id)),
+    }));
+  return refs;
+}
+
 type TweetProps = {
   tweet?: TweetFull;
   nested?: boolean;
@@ -112,19 +128,8 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const { pathname } = useLocation();
-  const refs = tweet?.ref_tweets
-    ?.filter((t) => !!t)
-    .map((t) => ({
-      ...(t as TweetFull),
-      type: (tweet.refs?.find((r) => r?.referenced_tweet_id === t?.id) as Ref)
-        .type,
-      author: tweet.ref_authors?.find(
-        (a) => a?.id === t?.author_id
-      ) as UserFull,
-      liked: tweet.ref_likes?.some((r) => r?.tweet_id === t?.id),
-      retweeted: tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
-    }));
   const isQuote = tweet?.refs?.some((r) => r?.type === 'quoted');
+  const refs = getRefs(tweet);
   return (
     <div
       role='button'
@@ -308,18 +313,7 @@ export default function TweetItem({
   nested,
   setActiveTweet,
 }: TweetProps) {
-  const refs = tweet?.ref_tweets
-    ?.filter((t) => !!t)
-    .map((t) => ({
-      ...(t as TweetFull),
-      type: (tweet.refs?.find((r) => r?.referenced_tweet_id === t?.id) as Ref)
-        .type,
-      author: tweet.ref_authors?.find(
-        (a) => a?.id === t?.author_id
-      ) as UserFull,
-      liked: tweet.ref_likes?.some((r) => r?.tweet_id === t?.id),
-      retweeted: tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
-    }));
+  const refs = getRefs(tweet);
   const isRetweet = tweet?.refs?.some((r) => r?.type === 'retweeted');
   return (
     <li

@@ -26,6 +26,7 @@ import {
 import { getLoggedInSession, log } from '~/utils.server';
 import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
+import { eq } from '~/utils';
 import { invalidate } from '~/swr.server';
 
 export const action: ActionFunction = async ({ request }) => {
@@ -77,7 +78,7 @@ export const action: ActionFunction = async ({ request }) => {
           log.trace(`Found the latest tweet (${listId}): ${latestTweetId}`);
           const check = await api.v2.listTweets(listId, { max_results: 1 });
           const latestTweet = check.tweets[0];
-          if (latestTweet && latestTweet.id === latestTweetId)
+          if (latestTweet && eq(latestTweet.id, latestTweetId))
             return log.trace(`Skipping fetch for ${context}...`);
           if (latestTweet) await redis.set(key, check.tweets[0].id);
           const res = await api.v2.listTweets(listId, {
