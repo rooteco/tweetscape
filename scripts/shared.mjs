@@ -32,20 +32,20 @@ export const limiter = new Bottleneck({
   maxConcurrent: 10,
   minTime: 250,
 });
-//limiter.on('error', (e) => {
-//log.error(`Limiter error: ${e.stack}`);
-//});
-//limiter.on('failed', (e, job) => {
-//log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
-//if (job.retryCount < 5) {
-//const wait = 500 * (job.retryCount + 1);
-//log.debug(`Retrying job (${job.options.id}) in ${wait}ms...`);
-//return wait;
-//}
-//});
-//limiter.on('retry', (e, job) => {
-//log.debug(`Now retrying job (${job.options.id})...`);
-//});
+limiter.on('error', (e) => {
+  log.error(`Limiter error: ${e.stack}`);
+});
+limiter.on('failed', (e, job) => {
+  log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
+  if (job.retryCount < 5) {
+    const wait = 500 * (job.retryCount + 1);
+    log.debug(`Retrying job (${job.options.id}) in ${wait}ms...`);
+    return wait;
+  }
+});
+limiter.on('retry', (e, job) => {
+  log.debug(`Now retrying job (${job.options.id})...`);
+});
 
 export const USER_FIELDS = [
   'id',

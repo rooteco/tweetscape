@@ -101,8 +101,8 @@ async function data(c, start, end, db) {
   // hive - 11 clusters, each with ~10-15K influencers.
   // thus, i only fetch the last day's worth of tweets from each influencer.
   const n = new Date();
-  const start = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 1);
-  const end = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+  const start = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 7);
+  const end = new Date(n.getFullYear(), n.getMonth(), n.getDate() - 2);
   // note: we don't try/catch this because if connecting throws an exception
   // we don't need to dispose of the client (it will be undefined)
   const db = await pool.connect();
@@ -117,7 +117,7 @@ async function data(c, start, end, db) {
     const { rows: clusters } = await db.query('SELECT * FROM clusters');
     log.info(`Fetching data for ${clusters.length} clusters...`);
     for await (const cluster of clusters) {
-      if (cluster.name === 'NFT') {
+      if (cluster.name === 'Climate') {
         log.info(`Fetching data for "${cluster.name}" (${cluster.id})...`);
         await data(cluster, start, end, db);
       }
