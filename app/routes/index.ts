@@ -66,7 +66,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         where: { user_id: token.user_id },
       });
       log.info(`Setting session uid for ${user.name} (@${user.username})...`);
-      session.set('uid', user.id);
+      session.set('uid', user.id.toString());
     }
   }
   return redirectToLastVisited(request, session);
