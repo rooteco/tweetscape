@@ -8,6 +8,9 @@ import Bottleneck from 'bottleneck';
 import { TWEET_EXPANSIONS, TWEET_FIELDS, USER_FIELDS } from './shared.mjs';
 import { log } from './utils.mjs';
 
+const parse = (_, value) =>
+  typeof value === 'bigint' ? value.toString() + 'n' : value;
+
 const now = new Date();
 const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
 const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
@@ -22,24 +25,24 @@ const limiter = new Bottleneck({
   maxConcurrent: 10,
   minTime: 250,
 });
-limiter.on('error', (e) => {
-  log.error(`Limiter error: ${e.stack}`);
-});
-limiter.on('failed', (e, job) => {
-  log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
-  if (job.retryCount < 5) {
-    const wait = 500 * (job.retryCount + 1);
-    log.debug(`Retrying job (${job.options.id}) in ${wait}ms...`);
-    return wait;
-  }
-});
-limiter.on('retry', (e, job) => {
-  log.debug(`Now retrying job (${job.options.id})...`);
-});
+//limiter.on('error', (e) => {
+//log.error(`Limiter error: ${e.stack}`);
+//});
+//limiter.on('failed', (e, job) => {
+//log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
+//if (job.retryCount < 5) {
+//const wait = 500 * (job.retryCount + 1);
+//log.debug(`Retrying job (${job.options.id}) in ${wait}ms...`);
+//return wait;
+//}
+//});
+//limiter.on('retry', (e, job) => {
+//log.debug(`Now retrying job (${job.options.id})...`);
+//});
 
 function toList(l) {
   return {
-    id: l.id,
+    id: BigInt(l.id),
     owner_id: l.owner_id,
     name: l.name,
     description: l.description,
@@ -52,7 +55,7 @@ function toList(l) {
 
 function toInfluencer(u) {
   return {
-    id: u.id,
+    id: BigInt(u.id),
     name: u.name,
     username: u.username,
     verified: u.verified ?? null,
@@ -68,7 +71,7 @@ function toInfluencer(u) {
 
 function toAnnotation(a, t) {
   return {
-    tweet_id: t.id,
+    tweet_id: BigInt(t.id),
     normalized_text: a.normalized_text,
     probability: a.probability,
     type: a.type,
@@ -80,7 +83,7 @@ function toAnnotation(a, t) {
 function toTag(h, t, type) {
   return {
     type,
-    tweet_id: t.id,
+    tweet_id: BigInt(t.id),
     tag: h.tag,
     start: h.start,
     end: h.end,
@@ -89,16 +92,16 @@ function toTag(h, t, type) {
 
 function toRef(r, t) {
   return {
-    referenced_tweet_id: r.id,
-    referencer_tweet_id: t.id,
+    referenced_tweet_id: BigInt(r.id),
+    referencer_tweet_id: BigInt(t.id),
     type: r.type,
   };
 }
 
 function toTweet(tweet) {
   return {
-    id: tweet.id,
-    author_id: tweet.author_id,
+    id: BigInt(tweet.id),
+    author_id: BigInt(tweet.author_id),
     text: tweet.text,
     retweet_count: tweet.public_metrics?.retweet_count,
     reply_count: tweet.public_metrics?.reply_count,
@@ -122,7 +125,7 @@ function toLink(u) {
 function toURL(u, t) {
   return {
     link_url: u.expanded_url,
-    tweet_id: t.id,
+    tweet_id: BigInt(t.id),
     start: u.start,
     end: u.end,
   };
@@ -143,7 +146,7 @@ function tweetToCreateQueue(t, authors, queue) {
     const mid = authors.find((u) => u.username === m.username)?.id;
     if (mid)
       queue.mentions.push({
-        tweet_id: t.id,
+        tweet_id: BigInt(t.id),
         user_id: mid,
         start: m.start,
         end: m.end,
@@ -157,7 +160,8 @@ function tweetToCreateQueue(t, authors, queue) {
   t.referenced_tweets?.forEach((r) => {
     // Address edge-case where the referenced tweet may be
     // inaccessible to us (e.g. private account) or deleted.
-    if (queue.tweets.some((tw) => tw.id === r.id)) queue.refs.push(toRef(r, t));
+    if (queue.tweets.some((tw) => tw.id.toString() === r.id.toString()))
+      queue.refs.push(toRef(r, t));
   });
   t.entities?.urls?.forEach((u) => {
     queue.links.push(toLink(u));
@@ -189,8 +193,8 @@ function toCreateQueue(
   res.tweets.forEach((t) => {
     if (listId)
       queue.list_members.push({
-        user_id: t.author_id,
-        list_id: listId,
+        user_id: BigInt(t.author_id),
+        list_id: BigInt(listId),
       });
     tweetToCreateQueue(t, authors, queue);
   });
@@ -232,8 +236,8 @@ async function importRektScores(n = 1000) {
   const usersToCreate = [];
   const scoresToCreate = [];
   await Promise.all(
-    splits.map(async (scores) => {
-      const users = await api.v2.usersByUsernames(
+    splits.map(async (scores, idx) => {
+      const data = await api.v2.usersByUsernames(
         scores.map((r) => r.screen_name),
         {
           'user.fields': USER_FIELDS,
@@ -241,10 +245,10 @@ async function importRektScores(n = 1000) {
           'expansions': ['pinned_tweet_id'],
         }
       );
-      log.trace(`Fetched users: ${JSON.stringify(users, null, 2)}`);
-      log.info(`Parsing ${users.data.length} users...`);
-      const users = users.data.map((u) => ({
-        id: u.id,
+      log.trace(`Fetched users: ${JSON.stringify(data, parse, 2)}`);
+      log.info(`Parsing ${data.data.length} users...`);
+      const users = data.data.map((u) => ({
+        id: BigInt(u.id),
         name: u.name,
         username: u.username,
         verified: u.verified ?? null,
@@ -259,7 +263,7 @@ async function importRektScores(n = 1000) {
       users.forEach((i) => usersToCreate.push(i));
       log.info(`Parsing ${scores.length} rekt scores...`);
       const rekt = scores.map((d) => ({
-        id: d.id,
+        id: BigInt(d.id),
         user_id: users.find((i) => i.username === d.screen_name)?.id,
         username: d.screen_name,
         name: d.name,
@@ -270,7 +274,7 @@ async function importRektScores(n = 1000) {
         followers_in_people_count: d.followers_in_people_count,
       }));
       const missing = rekt.filter((r) => !r.user_id);
-      log.warn(`Missing user data for: ${JSON.stringify(missing, null, 2)}`);
+      log.warn(`Missing user data for: ${JSON.stringify(missing, parse, 2)}`);
       rekt.filter((r) => r.user_id).forEach((r) => scoresToCreate.push(r));
     })
   );
@@ -299,10 +303,9 @@ async function importRektTweets(n = 1000) {
     urls: [],
   };
   await Promise.all(
-    scores.map(async (s) => {
+    scores.map(async (s, idx) => {
       log.debug(`Scheduling fetch for user (${s.user_id}) timeline...`);
-      const job = { expiration: 5000, id: s.user_id };
-      const res = await limiter.schedule(job, () => {
+      const res = await limiter.schedule({ id: s.user_id }, () => {
         log.debug(`Fetching user (${s.user_id}) timeline...`);
         return api.v2.userTimeline(s.user_id, {
           'tweet.fields': TWEET_FIELDS,
@@ -316,7 +319,7 @@ async function importRektTweets(n = 1000) {
       toCreateQueue(res, queue);
     })
   );
-  await fs.writeFile('rekt.json', JSON.stringify(queue, null, 2));
+  await fs.writeFile('rekt.json', JSON.stringify(queue, parse, 2));
   await executeCreateQueue(queue);
 }
 
@@ -339,5 +342,5 @@ async function importRekt() {
 }
 
 (async () => {
-  await importRektScores();
+  await importRekt();
 })();
