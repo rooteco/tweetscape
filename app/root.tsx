@@ -12,7 +12,7 @@ import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import { StrictMode, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import type { Cluster, Influencer, List } from '~/types';
+import type { Cluster, List, User } from '~/types';
 import {
   Theme,
   ThemeBody,
@@ -22,10 +22,9 @@ import {
   useTheme,
 } from '~/theme';
 import { commitSession, getSession } from '~/session.server';
-import { log, nanoid } from '~/utils.server';
+import { getUserIdFromSession, log, nanoid } from '~/utils.server';
 import { ErrorContext } from '~/error';
 import ErrorDisplay from '~/components/error';
-import Footer from '~/components/footer';
 import { Prisma } from '~/db.server';
 import { getLists } from '~/query.server';
 import styles from '~/styles/app.css';
@@ -34,7 +33,7 @@ import { swr } from '~/swr.server';
 export type LoaderData = {
   clusters: Cluster[];
   lists: List[];
-  user?: Influencer;
+  user?: User;
   theme: Theme | null;
 };
 
@@ -44,8 +43,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   console.time(`get-session-${invocationId}`);
   const session = await getSession(request.headers.get('Cookie'));
   console.timeEnd(`get-session-${invocationId}`);
-  const uid = session.get('uid') as string | undefined;
-  let user: Influencer | undefined;
+  const uid = getUserIdFromSession(session);
+  let user: User | undefined;
   let lists: List[] = [];
   let clusters: Cluster[] = [];
   await Promise.all([
@@ -62,8 +61,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       if (!uid) return;
       log.info(`Fetching user (${uid})...`);
       console.time(`swr-get-user-${invocationId}`);
-      const users = await swr<Influencer>(
-        Prisma.sql`select * from influencers where id = ${uid}`
+      const users = await swr<User>(
+        Prisma.sql`select * from users where id = ${Number(uid)}`
       );
       console.timeEnd(`swr-get-user-${invocationId}`);
       if (users.length > 1) log.error(`Too many users (${uid}) found.`);
@@ -121,19 +120,18 @@ export const meta: MetaFunction = () => ({
   viewport: 'width=device-width,initial-scale=1',
 });
 
-function App({ children }: { children: ReactNode }) {
-  const data = useLoaderData<LoaderData>();
+function App({ data, children }: { data?: LoaderData; children: ReactNode }) {
   const [theme] = useTheme();
   return (
     <html lang='en' className={theme ?? ''}>
       <head>
         <Meta />
         <Links />
-        <ThemeHead ssrTheme={Boolean(data.theme)} />
+        <ThemeHead ssrTheme={Boolean(data?.theme)} />
       </head>
       <body className='selection:bg-gray-200 selection:text-black dark:selection:bg-gray-700 dark:selection:text-gray-100 w-full h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100'>
         <div className='fixed inset-0 overflow-auto'>{children}</div>
-        <ThemeBody ssrTheme={Boolean(data.theme)} />
+        <ThemeBody ssrTheme={Boolean(data?.theme)} />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
@@ -153,7 +151,6 @@ export function ErrorBoundary({ error: e }: { error: Error }) {
             <div className='w-full h-full min-h-full overflow-hidden flex items-stretch'>
               <ErrorDisplay error={e} />
             </div>
-            <Footer />
           </App>
         </ErrorContext.Provider>
       </ThemeProvider>
@@ -169,7 +166,7 @@ export default function AppWithProviders() {
     <StrictMode>
       <ThemeProvider specifiedTheme={data.theme}>
         <ErrorContext.Provider value={context}>
-          <App>
+          <App data={data}>
             <Outlet />
           </App>
         </ErrorContext.Provider>

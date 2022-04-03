@@ -6,8 +6,8 @@ export async function insertRefs(refs, t, db) {
   if (!refs?.length) return;
   log.trace(`Inserting ${refs.length} refs from tweet (${t.id})...`);
   const values = refs.map((r) => [
-    `'${r.id}'`,
-    `'${t.id}'`,
+    Number(r.id),
+    Number(t.id),
     `'${r.type}'::ref_type`,
   ]);
   // Handle edge-case where the referenced tweet has been deleted.
@@ -47,7 +47,13 @@ export async function insertRefs(refs, t, db) {
 export async function insertTags(hashtags, t, db, type = 'hashtag') {
   if (!hashtags?.length) return;
   log.trace(`Inserting ${hashtags.length} ${type}s from tweet (${t.id})...`);
-  const values = hashtags.map((h) => [t.id, h.tag, type, h.start, h.end]);
+  const values = hashtags.map((h) => [
+    Number(t.id),
+    h.tag,
+    type,
+    h.start,
+    h.end,
+  ]);
   const query = format(
     `
     INSERT INTO tags (
@@ -75,7 +81,7 @@ export async function insertAnnotations(annotations, t, db) {
   if (!annotations?.length) return;
   log.trace(`Inserting ${annotations.length} annotations...`);
   const values = annotations.map((a) => [
-    t.id,
+    Number(t.id),
     a.normalized_text,
     a.probability,
     a.type,
@@ -110,8 +116,8 @@ export async function insertMentions(mentions, t, db) {
   if (!mentions?.length) return;
   log.trace(`Inserting ${mentions.length} mentions from tweet (${t.id})...`);
   const values = mentions.map((m) => [
-    `'${t.id}'`,
-    `'${m.id}'`,
+    Number(t.id),
+    Number(m.id),
     m.start,
     m.end,
   ]);
@@ -119,22 +125,22 @@ export async function insertMentions(mentions, t, db) {
     `
     WITH data (
       "tweet_id",
-      "influencer_id",
+      "user_id",
       "start",
       "end"
     ) AS (VALUES %s)
     INSERT INTO mentions (
       "tweet_id",
-      "influencer_id",
+      "user_id",
       "start",
       "end"
     ) SELECT
       data."tweet_id",
-      data."influencer_id",
+      data."user_id",
       data."start",
       data."end"
     FROM data WHERE EXISTS (
-      SELECT 1 FROM influencers WHERE influencers.id = data.influencer_id
+      SELECT 1 FROM users WHERE users.id = data.user_id
     ) ON CONFLICT ON CONSTRAINT mentions_pkey DO NOTHING;
     `,
     values
@@ -197,7 +203,12 @@ export async function insertURLs(urls, t, db) {
         (u.images ?? []).map((i) => [u.expanded_url, i.url, i.width, i.height])
       )
       .flat();
-    values = deduped.map((u, idx) => [t.id, u.expanded_url, u.start, u.end]);
+    values = deduped.map((u, idx) => [
+      Number(t.id),
+      u.expanded_url,
+      u.start,
+      u.end,
+    ]);
     query = format(
       `
       INSERT INTO urls (
@@ -241,8 +252,8 @@ export async function insertTweets(tweets, db) {
   const values = tweets.map((t) => {
     log.trace(`Inserting tweet (${t.id})...`);
     return [
-      t.id,
-      t.author_id,
+      Number(t.id),
+      Number(t.author_id),
       t.text,
       t.public_metrics.retweet_count,
       t.public_metrics.reply_count,
@@ -286,7 +297,7 @@ export async function insertInfluencers(influencers, c, db) {
     // the name and profile_image_url are null when the user has been blocked by
     // twitter for violating their terms (@see https://twitter.com/lc_hodl2)
     return [
-      s.id,
+      Number(s.id),
       s.name ?? '',
       s.screen_name,
       s.verified ?? null,
@@ -303,9 +314,9 @@ export async function insertInfluencers(influencers, c, db) {
     const s = i.social_account.social_account;
     log.trace(`Inserting influencer (${s.id}) ${c.name} score (${i.id})...`);
     return [
-      i.id,
-      s.id,
-      c.id,
+      Number(i.id),
+      Number(s.id),
+      Number(c.id),
       i.attention_score,
       i.attention_score_change_week,
       i.insider_score,
@@ -318,7 +329,7 @@ export async function insertInfluencers(influencers, c, db) {
   });
   const query = format(
     `
-    INSERT INTO influencers (
+    INSERT INTO users (
       "id",
       "name",
       "username",
@@ -334,7 +345,7 @@ export async function insertInfluencers(influencers, c, db) {
 
     INSERT INTO scores (
       "id",
-      "influencer_id",
+      "user_id",
       "cluster_id",
       "attention_score",
       "attention_score_change_week",
@@ -345,7 +356,7 @@ export async function insertInfluencers(influencers, c, db) {
       "created_at"
     ) VALUES %L ON CONFLICT (id) DO UPDATE SET (
       "id",
-      "influencer_id",
+      "user_id",
       "cluster_id",
       "attention_score",
       "attention_score_change_week",
@@ -377,7 +388,7 @@ export async function insertUsers(users, db) {
   const values = users.map((u) => {
     log.trace(`Inserting user ${u.name} (${u.id})...`);
     return [
-      u.id,
+      Number(u.id),
       u.name,
       u.username,
       u.description,
@@ -391,7 +402,7 @@ export async function insertUsers(users, db) {
   });
   const query = format(
     `
-    INSERT INTO influencers (
+    INSERT INTO users (
       "id",
       "name",
       "username",

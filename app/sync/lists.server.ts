@@ -1,13 +1,13 @@
 import type { ActionFunction } from 'remix';
 
-import type { Influencer, List, ListFollower } from '~/types';
+import type { List, ListFollower, User } from '~/types';
 import {
   TwitterV2IncludesHelper,
   USER_FIELDS,
   getTwitterClientForUser,
   handleTwitterApiError,
-  toInfluencer,
   toList,
+  toUser,
 } from '~/twitter.server';
 import { getLoggedInSession, log } from '~/utils.server';
 import { commitSession } from '~/session.server';
@@ -22,7 +22,7 @@ export const action: ActionFunction = async ({ request }) => {
     const { api, limits } = await getTwitterClientForUser(uid);
 
     const create = {
-      influencers: [] as Influencer[],
+      users: [] as User[],
       lists: [] as List[],
       list_followers: [] as ListFollower[],
     };
@@ -32,7 +32,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
     if ((listFollowedLimit?.remaining ?? 1) > 0) {
       log.info(`Fetching followed lists for ${context}...`);
-      const res = await api.v2.listFollowed(uid, {
+      const res = await api.v2.listFollowed(uid.toString(), {
         'list.fields': [
           'created_at',
           'follower_count',
@@ -45,11 +45,13 @@ export const action: ActionFunction = async ({ request }) => {
         'user.fields': USER_FIELDS,
       });
       const includes = new TwitterV2IncludesHelper(res);
-      includes.users.forEach((i) => create.influencers.push(toInfluencer(i)));
-      res.lists.forEach((l) => create.lists.push(toList(l)));
-      res.lists.forEach((l) =>
-        create.list_followers.push({ influencer_id: uid, list_id: l.id })
-      );
+      includes.users.forEach((i) => create.users.push(toUser(i)));
+      res.lists
+        .map((l) => toList(l))
+        .forEach((l) => {
+          create.lists.push(l);
+          create.list_followers.push({ user_id: uid, list_id: l.id });
+        });
     } else
       log.warn(
         `Rate limit hit for getting user (${uid}) followed lists, skipping until ${new Date(
@@ -61,7 +63,7 @@ export const action: ActionFunction = async ({ request }) => {
     );
     if ((listsOwnedLimit?.remaining ?? 1) > 0) {
       log.info(`Fetching owned lists for ${context}...`);
-      const res = await api.v2.listsOwned(uid, {
+      const res = await api.v2.listsOwned(uid.toString(), {
         'list.fields': [
           'created_at',
           'follower_count',
@@ -78,12 +80,12 @@ export const action: ActionFunction = async ({ request }) => {
           (listFollowedLimit?.reset ?? 0) * 1000
         ).toLocaleString()}...`
       );
-    log.info(`Inserting ${create.influencers.length} influencers...`);
+    log.info(`Inserting ${create.users.length} users...`);
     log.info(`Inserting ${create.lists.length} lists...`);
     log.info(`Inserting ${create.list_followers.length} list followers...`);
     const skipDuplicates = true;
     await db.$transaction([
-      db.influencers.createMany({ data: create.influencers, skipDuplicates }),
+      db.users.createMany({ data: create.users, skipDuplicates }),
       db.lists.createMany({ data: create.lists, skipDuplicates }),
       db.list_followers.createMany({
         data: create.list_followers,

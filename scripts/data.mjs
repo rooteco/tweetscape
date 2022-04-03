@@ -114,15 +114,14 @@ async function data(c, start, end, db) {
     log.debug(msg);
   }, 2500);
   try {
-    await data({ id: '2300535630', name: 'Tesla' }, start, end, db);
-    await data({ id: '2209261', name: 'Ethereum' }, start, end, db);
-    await data({ id: '2300535799', name: 'Python' }, start, end, db);
-    await data({ id: '7799179292', name: 'NFT' }, start, end, db);
-    await data({ id: '2209259', name: 'Bitcoin' }, start, end, db);
-    await data({ id: '2300535731', name: 'Polkadot' }, start, end, db);
-    await data({ id: '7568081743', name: 'Solana' }, start, end, db);
-    await data({ id: '62', name: 'Dogecoin' }, start, end, db);
-    await data({ id: '66', name: 'Crypto' }, start, end, db);
+    const { rows: clusters } = await db.query('SELECT * FROM clusters');
+    log.info(`Fetching data for ${clusters.length} clusters...`);
+    for await (const cluster of clusters) {
+      if (cluster.name === 'NFT') {
+        log.info(`Fetching data for "${cluster.name}" (${cluster.id})...`);
+        await data(cluster, start, end, db);
+      }
+    }
   } catch (e) {
     log.error(`Caught error: ${e.stack}`);
     throw e;

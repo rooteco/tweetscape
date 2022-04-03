@@ -70,7 +70,7 @@ export function ArticleContent({ article }: { article: Article }) {
             .map(({ id, author }) => (
               <img
                 className='inline-block h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 border-2 border-white dark:border-gray-900 -mr-2 first:mr-0 overflow-hidden'
-                key={id}
+                key={id.toString()}
                 width={25}
                 height={25}
                 src={author?.profile_image_url ?? '/pics/placeholder.png'}

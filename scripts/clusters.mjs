@@ -17,7 +17,7 @@ import { pool } from './shared.mjs';
     data.clusters.map((c) => [
       c.id,
       c.name,
-      c.name.toLowerCase(),
+      c.name.toLowerCase().split(' ').shift(),
       c.active,
       new Date(c.created_at),
       new Date(c.updated_at),

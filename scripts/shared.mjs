@@ -32,20 +32,20 @@ export const limiter = new Bottleneck({
   maxConcurrent: 10,
   minTime: 250,
 });
-limiter.on('error', (e) => {
-  log.error(`Limiter error: ${e.stack}`);
-});
-limiter.on('failed', (e, job) => {
-  log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
-  if (job.retryCount < 5) {
-    const wait = 500 * (job.retryCount + 1);
-    log.debug(`Retrying job (${job.options.id}) in ${wait}ms...`);
-    return wait;
-  }
-});
-limiter.on('retry', (e, job) => {
-  log.debug(`Now retrying job (${job.options.id})...`);
-});
+//limiter.on('error', (e) => {
+//log.error(`Limiter error: ${e.stack}`);
+//});
+//limiter.on('failed', (e, job) => {
+//log.warn(`Job (${job.options.id}) failed: ${e.stack}`);
+//if (job.retryCount < 5) {
+//const wait = 500 * (job.retryCount + 1);
+//log.debug(`Retrying job (${job.options.id}) in ${wait}ms...`);
+//return wait;
+//}
+//});
+//limiter.on('retry', (e, job) => {
+//log.debug(`Now retrying job (${job.options.id})...`);
+//});
 
 export const USER_FIELDS = [
   'id',
@@ -86,13 +86,13 @@ export async function getTweets(
   log.debug(msg);
   const url =
     `https://api.twitter.com/2/users/${id}/tweets?` +
-    `tweet.fields=${TWEET_FIELDS.join()}&``expansions=${TWEET_EXPANSIONS.join()}&user.fields=${USER_FIELDS.join()}&` +
+    `tweet.fields=${TWEET_FIELDS.join()}&` +
+    `expansions=${TWEET_EXPANSIONS.join()}&user.fields=${USER_FIELDS.join()}&` +
     `start_time=${start.toISOString()}&end_time=${end.toISOString()}&` +
     `max_results=100${token ? `&pagination_token=${token}` : ''}` +
     `${lastTweetId ? `&since_id=${lastTweetId}` : ''}`;
   const headers = { authorization: `Bearer ${process.env.TWITTER_TOKEN}` };
-  const job = { expiration: 5000, id: url };
-  const res = await limiter.schedule(job, fetch, url, { headers });
+  const res = await limiter.schedule({ id: url }, fetch, url, { headers });
   const data = await res.json();
   if (data.errors && data.errors[0])
     log.error(
@@ -120,5 +120,8 @@ export async function getInfluencers(c, pg = 0) {
     `https://api.borg.id/influence/clusters/${c.name}/influencers?` +
     `page=${pg}&sort_by=score&sort_direction=desc&influence_type=all`;
   const headers = { authorization: `Token ${process.env.HIVE_TOKEN}` };
-  return (await fetch(url, { headers })).json();
+  const data = await (await fetch(url, { headers })).json();
+  if (data.influencers && data.total) return data;
+  log.warn(`Fetched influencers: ${JSON.stringify(data, null, 2)}`);
+  return { influencers: [], total: 0 };
 }

@@ -16,7 +16,7 @@ import {
   getListArticles,
   getRektArticles,
 } from '~/query.server';
-import { log, nanoid } from '~/utils.server';
+import { getUserIdFromSession, log, nanoid } from '~/utils.server';
 import type { Article } from '~/types';
 import ArticleItem from '~/components/article';
 import Column from '~/components/column';
@@ -40,7 +40,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   log.info(`Fetching articles for ${params.src} (${params.id})...`);
   const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
-  const uid = session.get('uid') as string | undefined;
+  const uid = getUserIdFromSession(session);
   session.set('href', `${url.pathname}${url.search}`);
   const articlesSort = Number(
     url.searchParams.get('s') ?? DEFAULT_ARTICLES_SORT
@@ -60,7 +60,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       break;
     case 'lists':
       articlesPromise = getListArticles(
-        params.id,
+        BigInt(params.id),
         articlesSort,
         articlesFilter,
         uid
@@ -128,8 +128,6 @@ export default function ArticlesPage() {
                 {
                   name: 'Tweet count',
                   to: `?s=${ArticlesSort.TweetCount}`,
-                  isActiveByDefault:
-                    DEFAULT_ARTICLES_SORT === ArticlesSort.TweetCount,
                 },
               ],
             },
@@ -152,8 +150,6 @@ export default function ArticlesPage() {
                 {
                   name: 'Show retweets',
                   to: `?f=${ArticlesFilter.ShowRetweets}`,
-                  isActiveByDefault:
-                    DEFAULT_ARTICLES_FILTER === ArticlesFilter.ShowRetweets,
                 },
               ],
             },

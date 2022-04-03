@@ -8,7 +8,7 @@ import {
 } from 'remix';
 import cn from 'classnames';
 
-import type { InfluencerFull, Ref, TweetFull } from '~/types';
+import type { Ref, TweetFull, UserFull } from '~/types';
 import LikeIcon from '~/icons/like';
 import LikedIcon from '~/icons/liked';
 import type { LoaderData } from '~/root';
@@ -19,7 +19,7 @@ import RetweetedIcon from '~/icons/retweeted';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
 import VerifiedIcon from '~/icons/verified';
-import { num } from '~/utils';
+import { eq, num } from '~/utils';
 
 type ActionProps = {
   active?: boolean;
@@ -102,6 +102,22 @@ function Action({
   );
 }
 
+function getRefs(tweet?: TweetFull) {
+  const refs = tweet?.ref_tweets
+    ?.filter((t) => !!t)
+    .map((t) => ({
+      ...(t as TweetFull),
+      type: (tweet.refs?.find((r) => eq(r?.referenced_tweet_id, t?.id)) as Ref)
+        .type,
+      author: tweet.ref_authors?.find((a) =>
+        eq(a?.id, t?.author_id)
+      ) as UserFull,
+      liked: tweet.ref_likes?.some((r) => eq(r?.tweet_id, t?.id)),
+      retweeted: tweet.ref_retweets?.some((r) => eq(r?.tweet_id, t?.id)),
+    }));
+  return refs;
+}
+
 type TweetProps = {
   tweet?: TweetFull;
   nested?: boolean;
@@ -112,26 +128,15 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const { pathname } = useLocation();
-  const refs = tweet?.ref_tweets
-    ?.filter((t) => !!t)
-    .map((t) => ({
-      ...(t as TweetFull),
-      type: (tweet.refs?.find((r) => r?.referenced_tweet_id === t?.id) as Ref)
-        .type,
-      author: tweet.ref_authors?.find(
-        (a) => a?.id === t?.author_id
-      ) as InfluencerFull,
-      liked: tweet.ref_likes?.some((r) => r?.tweet_id === t?.id),
-      retweeted: tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
-    }));
   const isQuote = tweet?.refs?.some((r) => r?.type === 'quoted');
+  const refs = getRefs(tweet);
   return (
     <div
       role='button'
       tabIndex={-1}
       onClick={(evt) => {
         evt.stopPropagation();
-        if (!tweet || pathname.includes(tweet.id)) return;
+        if (!tweet || pathname.includes(tweet.id.toString())) return;
         if (evt.target !== evt.currentTarget) {
           const validTargets = ['P', 'ARTICLE', 'HEADER'];
           if (!validTargets.includes((evt.target as Node).nodeName)) return;
@@ -262,7 +267,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
                 nested
                 tweet={t}
                 setActiveTweet={setActiveTweet}
-                key={t.id}
+                key={t.id.toString()}
               />
             ))}
         <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-gray-500'>
@@ -277,7 +282,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
             icon={<RetweetIcon />}
             href={`https://twitter.com/intent/retweet?tweet_id=${tweet?.id}`}
             action='retweet'
-            id={tweet?.id}
+            id={tweet?.id.toString()}
             count={tweet ? tweet.retweet_count + tweet.quote_count : undefined}
             active={tweet?.retweeted}
             activeIcon={<RetweetedIcon />}
@@ -287,7 +292,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
             icon={<LikeIcon />}
             href={`https://twitter.com/intent/like?tweet_id=${tweet?.id}`}
             action='like'
-            id={tweet?.id}
+            id={tweet?.id.toString()}
             count={tweet?.like_count}
             active={tweet?.liked}
             activeIcon={<LikedIcon />}
@@ -308,18 +313,7 @@ export default function TweetItem({
   nested,
   setActiveTweet,
 }: TweetProps) {
-  const refs = tweet?.ref_tweets
-    ?.filter((t) => !!t)
-    .map((t) => ({
-      ...(t as TweetFull),
-      type: (tweet.refs?.find((r) => r?.referenced_tweet_id === t?.id) as Ref)
-        .type,
-      author: tweet.ref_authors?.find(
-        (a) => a?.id === t?.author_id
-      ) as InfluencerFull,
-      liked: tweet.ref_likes?.some((r) => r?.tweet_id === t?.id),
-      retweeted: tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
-    }));
+  const refs = getRefs(tweet);
   const isRetweet = tweet?.refs?.some((r) => r?.type === 'retweeted');
   return (
     <li
@@ -368,7 +362,7 @@ export default function TweetItem({
             <TweetInner
               tweet={t}
               setActiveTweet={setActiveTweet}
-              key={t.id}
+              key={t.id.toString()}
               nested={nested}
             />
           ))}

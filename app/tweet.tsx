@@ -6,6 +6,7 @@ import invariant from 'tiny-invariant';
 
 import { commitSession, getSession } from '~/session.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
+import { getUserIdFromSession, log } from '~/utils.server';
 import BoltIcon from '~/icons/bolt';
 import CloseIcon from '~/icons/close';
 import Column from '~/components/column';
@@ -14,6 +15,7 @@ import SyncIcon from '~/icons/sync';
 import { TimeAgo } from '~/components/timeago';
 import type { TweetFull } from '~/types';
 import TweetItem from '~/components/tweet';
+import { eq } from '~/utils';
 
 export type LoaderData = { tweet: TweetFull; replies: TweetFull[] }[];
 
@@ -22,16 +24,18 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const session = await getSession(request.headers.get('Cookie'));
   const url = new URL(request.url);
   session.set('href', `${url.pathname}${url.search}`);
-  const uid = session.get('uid') as string | undefined;
-  const tweetIds = params['*'].split('/');
+  const uid = getUserIdFromSession(session);
+  const tweetIds = params['*'].split('/').map((id) => BigInt(id));
+  log.info(`Fetching ${tweetIds.length} tweets and their replies...`);
   const [tweets, replies] = await Promise.all([
     getTweetsByIds(tweetIds, uid),
     getTweetRepliesByIds(tweetIds, uid),
   ]);
+  log.info(`Fetched ${tweets.length} tweets and ${replies.length} replies.`);
   const data = tweetIds.map((tweetId) => ({
-    tweet: tweets.find((tweet) => tweet.id === tweetId) as TweetFull,
+    tweet: tweets.find((tweet) => eq(tweet.id, tweetId)) as TweetFull,
     replies: replies.filter((reply) =>
-      reply.refs?.some((r) => r?.referenced_tweet_id === tweetId)
+      reply.refs?.some((r) => eq(r?.referenced_tweet_id, tweetId))
     ),
   }));
   const headers = { 'Set-Cookie': await commitSession(session) };
@@ -97,7 +101,7 @@ function Section({ tweet, replies }: LoaderData[number]) {
       </header>
       <ol>
         {replies.map((reply) => (
-          <TweetItem tweet={reply} key={reply.id} />
+          <TweetItem tweet={reply} key={reply.id.toString()} />
         ))}
         {syncing && fallback}
       </ol>
@@ -111,6 +115,6 @@ function Section({ tweet, replies }: LoaderData[number]) {
 export default function TweetPage() {
   const data = useLoaderData<LoaderData>();
   return data.map(({ tweet, replies }) => (
-    <Section tweet={tweet} replies={replies} key={tweet.id} />
+    <Section tweet={tweet} replies={replies} key={tweet.id.toString()} />
   ));
 }

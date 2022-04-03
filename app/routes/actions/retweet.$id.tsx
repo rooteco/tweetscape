@@ -16,35 +16,26 @@ export const action: ActionFunction = async ({ request, params }) => {
     const { session, uid } = await getLoggedInSession(request);
     const { api } = await getTwitterClientForUser(uid);
     const formData = await request.formData();
+    const query = { tweet_id: BigInt(params.id), user_id: BigInt(uid) };
     switch (formData.get('action')) {
       case 'post': {
         log.info(`Retweeting tweet (${params.id}) for user (${uid})...`);
-        await api.v2.retweet(uid, params.id);
+        await api.v2.retweet(uid.toString(), params.id);
         log.info(`Inserting retweet for (${params.id}) by user (${uid})...`);
         await db.retweets.upsert({
-          create: { tweet_id: params.id, influencer_id: uid },
+          create: query,
           update: {},
-          where: {
-            tweet_id_influencer_id: {
-              tweet_id: params.id,
-              influencer_id: uid,
-            },
-          },
+          where: { tweet_id_user_id: query },
         });
         break;
       }
       case 'delete': {
         log.info(`Unretweeting tweet (${params.id}) for user (${uid})...`);
-        await api.v2.unretweet(uid, params.id);
+        await api.v2.unretweet(uid.toString(), params.id);
         log.info(`Deleting retweet for (${params.id}) by user (${uid})...`);
         // I have to use `deleteMany` to be idempotent... otherwise a successive
         // call to `delete()` may cause a `RecordNotFound` exception.
-        await db.retweets.deleteMany({
-          where: {
-            tweet_id: params.id,
-            influencer_id: uid,
-          },
-        });
+        await db.retweets.deleteMany({ where: query });
         break;
       }
       default:
