@@ -25,6 +25,6 @@ export function num(n: number): string {
 // false
 // > tweets[0].id.toString() == tweetIds[0].toString()
 // true
-export function eq(n1?: bigint | string, n2?: bigint | string) {
+export function eq(n1?: bigint | string | null, n2?: bigint | string | null) {
   return n1?.toString() === n2?.toString();
 }
