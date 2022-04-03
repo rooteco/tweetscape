@@ -157,7 +157,9 @@ export default function ArticlePage() {
           ]}
         />
       </Nav>
-      {!results.length && <Empty className='m-3 h-48'>No tweets to show</Empty>}
+      {!results.length && (
+        <Empty className='m-3 h-48 flex-1'>No tweets to show</Empty>
+      )}
       {!!results.length && (
         <div className='relative'>
           {results.map((tweet) => (
