@@ -1,7 +1,9 @@
 import { animated, useSpring } from '@react-spring/web';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { LoaderFunction } from 'remix';
+import { dequal } from 'dequal/lite';
 import invariant from 'tiny-invariant';
+import { useLocation } from 'remix';
 
 import {
   ArticlesFilter,
@@ -105,7 +107,19 @@ export default function ArticlesPage() {
     opacity: hover ? 1 : 0,
   });
 
-  const [article, setArticle] = useState<Article>(articles[0]);
+  const { pathname } = useLocation();
+  const [article, setArticle] = useState<Article>(() => {
+    const url = decodeURIComponent(pathname.split('/')[4]);
+    return articles.find((a) => a.url === url) ?? articles[0];
+  });
+  useEffect(() => {
+    setArticle((prev) => {
+      const url = decodeURIComponent(pathname.split('/')[4]);
+      const found = articles.find((a) => a.url === url);
+      if (dequal(found, prev) || !found) return prev;
+      return found;
+    });
+  }, [articles, pathname]);
 
   return (
     <Column
@@ -167,12 +181,7 @@ export default function ArticlesPage() {
             className='absolute rounded-lg bg-gray-100 dark:bg-gray-800 w-full -z-[1]'
           />
           {articles.map((a) => (
-            <ArticleItem
-              article={a}
-              key={a.url}
-              setHover={setHover}
-              setArticle={setArticle}
-            />
+            <ArticleItem article={a} key={a.url} setHover={setHover} />
           ))}
         </div>
       )}

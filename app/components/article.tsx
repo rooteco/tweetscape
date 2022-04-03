@@ -111,9 +111,8 @@ export function ArticleContent({ article }: { article: Article }) {
 export type ArticleItemProps = {
   article: Article;
   setHover: Dispatch<SetStateAction<{ y: number; height: number } | undefined>>;
-  setArticle: Dispatch<SetStateAction<Article>>;
 };
-function ArticleItem({ article, setHover, setArticle }: ArticleItemProps) {
+function ArticleItem({ article, setHover }: ArticleItemProps) {
   const [hovering, setHovering] = useState(false);
   const ref = useRef<HTMLButtonElement>(null);
   const onHoverIn = () => {
@@ -152,10 +151,7 @@ function ArticleItem({ article, setHover, setArticle }: ArticleItemProps) {
       onMouseOver={onHoverIn}
       onMouseOut={onHoverOut}
       className='relative p-3 text-left my-3 first-of-type:mt-0 last-of-type:mb-0 w-full rounded-lg cursor-pointer block'
-      onClick={() => {
-        setArticle(article);
-        navigate(`${encodeURIComponent(article.url)}${search}`);
-      }}
+      onClick={() => navigate(`${encodeURIComponent(article.url)}${search}`)}
     >
       {content}
     </animated.button>
