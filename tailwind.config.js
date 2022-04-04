@@ -30,7 +30,20 @@ module.exports = {
     },
     extend: {
       animation: {
-        rotate: 'spin 2s linear infinite',
+        'rotate': 'spin 2s linear infinite',
+        'sparkle-spin': 'sparkle-spin 1s linear',
+        'sparkle-ping': 'sparkle-ping 700ms forwards',
+      },
+      keyframes: {
+        'sparkle-spin': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(180deg)' },
+        },
+        'sparkle-ping': {
+          '0%': { transform: 'scale(0)' },
+          '50%': { transform: 'scale(1)' },
+          '100%': { transform: 'scale(0)' },
+        },
       },
       colors: {
         red: {
