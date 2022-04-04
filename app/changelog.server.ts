@@ -1,10 +1,10 @@
 import fs from 'fs/promises';
 import { resolve } from 'path';
-import superjson from 'superjson';
 
 import type { LoaderFunction } from 'remix';
 import fm from 'front-matter';
 import { marked } from 'marked';
+import superjson from 'superjson';
 
 import { json } from '~/json';
 import { log } from '~/utils.server';
