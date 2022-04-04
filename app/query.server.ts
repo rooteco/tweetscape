@@ -1,6 +1,14 @@
 import { autoLink } from 'twitter-text';
 
-import type { Article, List, TweetFull, UserFull } from '~/types';
+import type {
+  Article,
+  Like,
+  List,
+  Ref,
+  Retweet,
+  TweetFull,
+  UserFull,
+} from '~/types';
 import {
   ArticlesFilter,
   ArticlesSort,
@@ -35,25 +43,51 @@ function html(text: string): string {
     },
   });
 }
-function getUserFull(user: UserFull): UserFull {
-  return { ...user, html: html(user.description ?? '') };
+function wrapRef(ref: Ref): Ref {
+  return {
+    ...ref,
+    referencer_tweet_id: BigInt(ref.referencer_tweet_id),
+    referenced_tweet_id: BigInt(ref.referenced_tweet_id),
+  };
 }
-function getTweetFull(tweet: TweetFull): TweetFull {
+function wrapRelation(relation: Like | Retweet): Like | Retweet {
+  return {
+    user_id: BigInt(relation.user_id),
+    tweet_id: BigInt(relation.tweet_id),
+  };
+}
+function wrapUser(user: UserFull): UserFull {
+  return { ...user, html: html(user.description ?? ''), id: BigInt(user.id) };
+}
+function wrapTweet(tweet: TweetFull): TweetFull {
   return {
     ...tweet,
     html: html(tweet.text),
-    author: tweet.author ? getUserFull(tweet.author) : undefined,
-    ref_tweets: tweet.ref_tweets?.map((t) => (t ? getTweetFull(t) : t)),
-    ref_authors: tweet.ref_authors?.map((a) => (a ? getUserFull(a) : a)),
+    author: tweet.author ? wrapUser(tweet.author) : undefined,
+    refs: tweet.refs?.map((r) => (r ? wrapRef(r) : r)),
+    ref_tweets: tweet.ref_tweets?.map((t) => (t ? wrapTweet(t) : t)),
+    ref_authors: tweet.ref_authors?.map((a) => (a ? wrapUser(a) : a)),
+    ref_likes: tweet.ref_likes?.map((l) => (l ? wrapRelation(l) : l)),
+    ref_retweets: tweet.ref_retweets?.map((r) => (r ? wrapRelation(r) : r)),
+    id: BigInt(tweet.id),
+    author_id: BigInt(tweet.author_id),
   };
 }
-function getTweetsFull(tweets: TweetFull[]): TweetFull[] {
-  return tweets.map(getTweetFull);
+function wrapTweets(tweets: TweetFull[]): TweetFull[] {
+  return tweets.map(wrapTweet);
 }
-function getArticlesFull(articles: Article[]): Article[] {
+function wrapArticles(articles: Article[]): Article[] {
   return articles.map((article) => ({
     ...article,
-    tweets: getTweetsFull(article.tweets),
+    tweets: wrapTweets(article.tweets),
+    cluster_id: article.cluster_id ? BigInt(article.cluster_id) : undefined,
+  }));
+}
+function wrapLists(lists: List[]): List[] {
+  return lists.map((list) => ({
+    ...list,
+    id: BigInt(list.id),
+    owner_id: BigInt(list.owner_id),
   }));
 }
 
@@ -85,7 +119,7 @@ export async function getTweetsByIds(
     where tweets.id in (${tweetIds.join()})
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by created_at desc;`, uid);
-  return getTweetsFull(tweets);
+  return wrapTweets(tweets);
 }
 
 export async function getTweetRepliesByIds(
@@ -116,7 +150,7 @@ export async function getTweetRepliesByIds(
       ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by created_at desc;`, uid);
-  return getTweetsFull(tweets);
+  return wrapTweets(tweets);
 }
 
 function getListTweetsQuery(
@@ -166,7 +200,7 @@ export async function getListTweets(
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for list (${listId}).`);
-  return getTweetsFull(tweets);
+  return wrapTweets(tweets);
 }
 
 function getClusterTweetsQuery(
@@ -217,7 +251,7 @@ export async function getClusterTweets(
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
-  return getTweetsFull(tweets);
+  return wrapTweets(tweets);
 }
 
 function getRektTweetsQuery(
@@ -265,7 +299,7 @@ export async function getRektTweets(
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for Rekt.`);
-  return getTweetsFull(tweets);
+  return wrapTweets(tweets);
 }
 
 export function getListsQuery(uid: bigint): string {
@@ -276,7 +310,10 @@ export function getListsQuery(uid: bigint): string {
     or list_followers.user_id = ${uid}
     `;
 }
-export const getLists = (uid: bigint) => swr<List>(getListsQuery(uid), uid);
+export async function getLists(uid: bigint): Promise<List[]> {
+  const lists = await swr<List>(getListsQuery(uid), uid);
+  return wrapLists(lists);
+}
 
 function getListArticlesQuery(
   listId: bigint,
@@ -337,7 +374,7 @@ export async function getListArticles(
     uid
   );
   log.trace(`Fetched ${articles.length} articles for list (${listId}).`);
-  return getArticlesFull(articles);
+  return wrapArticles(articles);
 }
 
 function getClusterArticlesQuery(
@@ -408,7 +445,7 @@ export async function getClusterArticles(
   log.trace(
     `Fetched ${articles.length} articles for cluster (${clusterSlug}).`
   );
-  return getArticlesFull(articles);
+  return wrapArticles(articles);
 }
 
 function getRektArticlesQuery(uid?: bigint): string {
@@ -460,5 +497,5 @@ function getRektArticlesQuery(uid?: bigint): string {
 export async function getRektArticles(uid?: bigint): Promise<Article[]> {
   const articles = await swr<Article>(getRektArticlesQuery(uid), uid);
   log.trace(`Fetched ${articles.length} articles for Rekt.`);
-  return getArticlesFull(articles);
+  return wrapArticles(articles);
 }
