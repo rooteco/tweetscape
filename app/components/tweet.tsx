@@ -103,7 +103,7 @@ function getRefs(tweet?: TweetFull) {
     .map((t) => ({
       ...(t as TweetFull),
       type: (tweet.refs?.find((r) => eq(r?.referenced_tweet_id, t?.id)) as Ref)
-        .type,
+        ?.type,
       author: tweet.ref_authors?.find((a) =>
         eq(a?.id, t?.author_id)
       ) as UserFull,
