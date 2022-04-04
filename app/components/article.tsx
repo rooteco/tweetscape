@@ -96,13 +96,7 @@ export function ArticleContent({ article }: { article: Article }) {
             <span className='mx-1'>·</span>
           </>
         )}
-        <a
-          href={`https://twitter.com/${earliestTweet.author?.username}/status/${earliestTweet.id}`}
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          <TimeAgo datetime={earliestTweet.created_at} locale='en_short' />
-        </a>
+        <TimeAgo datetime={earliestTweet.created_at} locale='en_short' />
       </div>
     </>
   );
