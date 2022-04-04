@@ -1,0 +1,67 @@
+---
+date: April 3, 2022
+author: niicholaschiang
+---
+
+![Redesign](/ss/redesign.png)
+
+## We just Rekt everything
+
+import Sparkles from '~/components/sparkles';
+
+This week, I established our first <Sparkles>magical moment</Sparkles>:
+
+Simply open our site to see **the top articles** shared by **the top experts** in a given field—with live updates from Twitter.
+
+To do this, I first investigated the differences between our "algorithm" (i.e. [this massive PostgreSQL query](https://github.com/rooteco/tweetscape/blob/develop/app/query.server.ts#L454-L495) that I shared earlier in [**#tweetscape**](https://discord.gg/3KYQBJwRSS)) for ranking top articles and the one used by [Rekt](https://feed.rekt.news) (which is a reliable OG for crypto news from Twitter).
+Turns out, the only major difference in our approaches were:
+
+1. Rekt has their own proprietary influencer ranking algorithm (similar to [the Borg Collective](https://borgcollective.notion.site/About-15b9db2c1f414cf998c5abc58b715176)'s [algorithm for trust](https://borgcollective.notion.site/About-the-Algorithm-5434e4695d60456cb481acb98bb88b18) but more effective for the Crypto niche Rekt resides in) and, more importantly;
+2. Rekt includes quoting tweets in their article aggregations.
+
+Thus, I integrated those adjustments into our existing queries so **you can now view Rekt-quality rankings for any Twitter list or Hive cluster**.
+And the Borg Collective just released some [pretty cool new clusters](https://twitter.com/niicholaschiang/status/1510038559046078464): you can now explore top articles for [climate change](/clusters/climate/articles) and (as soon as Hive indexes them) [cannabis](/clusters/cannabis/articles) or even [yoga](/clusters/yoga/articles).
+
+## Clutter free redesign
+
+I've redesigned TS to feel more app-like and am using `react-spring` to add fluidity to every user interaction.
+
+Some of the feedback **@Shingai** shared earlier emphasized how Tweetscape's columns felt overwhelming: there was just so much content on the screen at once to be explored.
+Recently, I've also been feeling pretty overwhelmed as I start to use Twitter more; there's just so much good information being shared and so much going on that it's hard to figure out what to focus on.
+Tools like TweetDeck, although useful, can sometimes even amplify this overwhelming feeling (e.g. by showing you way too much all at once).
+
+I'm thinking that Tweetscape can work to reduce that clutter (and that "a little bit of everything" feeling that pervades Twitter) by having a minimalist design similar to Notion—the interface disappears when you don't need it—so you can focus on your reading—and appears just as you reach for it.
+
+It's still very much a work-in-progress, but I think this initial redesign gets us a tad bit closer to the point where opening Tweetscape becomes a relaxing experience where you're able to be intentional about what you learn about (and go deep into a few topics everyday instead of simply skimming over the shallow surface-level "what's happening" that Twitter's existing feed design encourages).
+
+See [#72](https://github.com/rooteco/tweetscape/pulls/72) for technical details.
+
+## [Teaser] Explore anyone's feed
+
+Because of the way TS (Tweetscape) is architected (and, for that matter, Twitter itself), it's a trivial task for me to let you view another person's Twitter feed.
+You'll be able to explore what **@elonmusk** or **@POTUS** sees in their feeds.
+
+Eventually, you'll be able to compare, side-by-side, what **@POTUS** v.s. **@RealDonaldTrump** see in their feeds and get a better understanding of how someone else may see the web and therefore the world.
+
+This is just a small example of the experiments that can be run on an open Postgres-based Twitter.
+We can't wait to see what you'll build once given the tools (e.g. an unencumbered PostgreSQL clone of Twitter) that we now have.
+
+## Fixes & Improvements
+
+- You can now use [Rekt scores](https://feed.rekt.news/parlor) to rank and explore [the top crypto articles](/rekt/crypto/articles) from Twitter (introduced by [#71](https://github.com/rooteco/tweetscape/pulls/71)).
+- SWR database queries are now performed concurrently;
+  I abuse `Promise.all` everywhere possible to reduce initial `loader` execution times and thus reduce perceived load times.
+- Links now prefetch page content (HTML + CSS + JS) and `loader` data on hover to reduce load times.
+- Fixed an issue where likes and retweets would disappear after being acknowledged server-side.
+  Now, I invalidate SWR caches on a per-user basis after each like or retweet action (which invalidates stale like and retweet data).
+- Fixed an issue where clusters would not load for anonymous users.
+- Fixed an issue where tweet replies would not load for anonymous users.
+- Decreased the intensity of the on-hover tweet color change to be more consistent with Twitter's design language.
+- TS now hides retweets by default when viewing top articles for a cluster or list.
+- Moved identifiers from `text` columns to `int8` (i.e. `bigint`) columns to increase DBMS performance.
+- Memoized render-intensive components (like the `<Article>`) with `dequal/lite` to improve performance.
+- Addressed the URL search parameter conflicts between, for example, the articles list sort (now `?as=`) and the article's tweets list sort (now `?ats=`).
+  Each filter and sort now has a unique field in a shared `Param` enum.
+- Removed the unnecessary external links from the `<Article>` list item component.
+- Moved our changelog from using `marked` with generic `.md` assets to using **@KentCDodds**'s `mdx-bundler` with dynamic `.mdx` files.
+  This enabled the unnecessarily fancy <Sparkles>sparkles</Sparkles> animation you witnessed earlier—and here. 🙃
