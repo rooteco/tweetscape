@@ -55,10 +55,10 @@ export type TweetFull = Tweet & {
   ref_retweets?: (Retweet | null)[];
 };
 export type Article = Link & {
-  cluster_id: string;
-  cluster_name: string;
-  cluster_slug: string;
-  insider_score: number;
-  attention_score: number;
+  cluster_id?: bigint;
+  cluster_name?: string;
+  cluster_slug?: string;
+  insider_score?: number;
+  attention_score?: number;
   tweets: TweetFull[];
 };

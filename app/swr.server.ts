@@ -1,5 +1,7 @@
 import { createHash } from 'crypto';
 
+import superjson from 'superjson';
+
 import {
   ArticlesFilter,
   ArticlesSort,
@@ -7,8 +9,8 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
-import { db } from '~/db.server';
 import { log } from '~/utils.server';
+import { pool } from '~/db.server';
 import { redis } from '~/redis.server';
 
 const STILL_GOOD_PREFIX = 'swr:stillgood';
@@ -88,8 +90,8 @@ export async function revalidate<T>(
 ): Promise<T[]> {
   const { stillGoodKey, responseKey } = keys(query, uid);
   logQueryExecute(query);
-  const toCache = await db.$queryRawUnsafe<T[]>(query);
-  await redis.set(responseKey, JSON.stringify(toCache));
+  const toCache = await pool.any<T>(query);
+  await redis.set(responseKey, superjson.stringify(toCache));
   await redis.setEx(stillGoodKey, maxAgeSeconds, 'true');
   return toCache;
 }
@@ -112,7 +114,7 @@ export async function swr<T>(
     .then(async (cachedResponseString) => {
       if (!cachedResponseString) return null;
 
-      const cachedResponse = JSON.parse(cachedResponseString) as T[];
+      const cachedResponse = superjson.parse<T[]>(cachedResponseString);
 
       if (!cachedResponse.length) return null;
 
@@ -136,10 +138,10 @@ export async function swr<T>(
   if (!response) {
     log.debug(`Redis cache miss for (${responseKey}), querying...`);
     logQueryExecute(query);
-    response = await db.$queryRawUnsafe<T[]>(query);
+    response = await pool.any<T>(query);
 
     (async () => {
-      await redis.set(responseKey, JSON.stringify(response));
+      await redis.set(responseKey, superjson.stringify(response));
       await redis.setEx(stillGoodKey, maxAgeSeconds, 'true');
     })().catch((e) => {
       log.error(`Failed to seed cache: ${(e as Error).message}`);
