@@ -3,8 +3,6 @@ import invariant from 'tiny-invariant';
 
 import { log } from '~/utils.server';
 
-export { Prisma } from '@prisma/client';
-
 let db: PrismaClient;
 
 declare global {

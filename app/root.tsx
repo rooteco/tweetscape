@@ -11,7 +11,6 @@ import { StrictMode, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import type { Cluster, List, User } from '~/types';
-import { Prisma, db } from '~/db.server';
 import {
   Theme,
   ThemeBody,
@@ -25,6 +24,7 @@ import { getUserIdFromSession, log, nanoid } from '~/utils.server';
 import { json, useLoaderData } from '~/json';
 import { ErrorContext } from '~/error';
 import ErrorDisplay from '~/components/error';
+import { db } from '~/db.server';
 import { getLists } from '~/query.server';
 import styles from '~/styles/app.css';
 import { swr } from '~/swr.server';
@@ -51,7 +51,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       log.info('Fetching visible clusters...');
       console.time(`swr-get-clusters-${invocationId}`);
       clusters = await swr<Cluster>(
-        Prisma.sql`select * from clusters where visible = true`
+        `select * from clusters where visible = true`
       );
       console.timeEnd(`swr-get-clusters-${invocationId}`);
       log.info(`Fetched ${clusters.length} visible clusters.`);

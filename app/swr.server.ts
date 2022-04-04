@@ -7,7 +7,6 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
-import type { Prisma } from '~/db.server';
 import { db } from '~/db.server';
 import { log } from '~/utils.server';
 import { redis } from '~/redis.server';
@@ -19,23 +18,22 @@ let connectionPromise: Promise<void>;
 if (!redis.isOpen) connectionPromise = redis.connect();
 
 function keys(
-  query: Prisma.Sql,
+  query: string,
   uid?: bigint
 ): {
   stillGoodKey: string;
   responseKey: string;
 } {
   const hash = createHash('sha256');
-  hash.update(query.sql);
-  hash.update(JSON.stringify(query.values));
+  hash.update(query);
   const key = hash.digest('hex');
   const stillGoodKey = `${STILL_GOOD_PREFIX}:${uid ? `${uid}:` : ''}${key}`;
   const responseKey = `${RESPONSE_PREFIX}:${uid ? `${uid}:` : ''}${key}`;
   return { stillGoodKey, responseKey };
 }
 
-function logQueryExecute(query: Prisma.Sql) {
-  const msg = query.sql.replace(/\n/g, '').replace(/\s\s+/g, ' ').substr(0, 50);
+function logQueryExecute(query: string) {
+  const msg = query.replace(/\n/g, '').replace(/\s\s+/g, ' ').substring(0, 50);
   log.trace(`Executing PostgreSQL query ( ${msg.trim()} )...`);
 }
 
@@ -52,8 +50,8 @@ export function cache<
     filter: F,
     limit: number,
     uid?: bigint
-  ) => Prisma.Sql,
-  revalidateOrInvalidate: (query: Prisma.Sql) => Promise<unknown>,
+  ) => string,
+  revalidateOrInvalidate: (query: string) => Promise<unknown>,
   limit: number = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ) {
@@ -84,20 +82,20 @@ export async function invalidate(uid: bigint) {
 }
 
 export async function revalidate<T>(
-  query: Prisma.Sql,
+  query: string,
   uid?: bigint,
   maxAgeSeconds = 60
 ): Promise<T[]> {
   const { stillGoodKey, responseKey } = keys(query, uid);
   logQueryExecute(query);
-  const toCache = await db.$queryRaw<T[]>(query);
+  const toCache = await db.$queryRawUnsafe<T[]>(query);
   await redis.set(responseKey, JSON.stringify(toCache));
   await redis.setEx(stillGoodKey, maxAgeSeconds, 'true');
   return toCache;
 }
 
 export async function swr<T>(
-  query: Prisma.Sql,
+  query: string,
   uid?: bigint,
   maxAgeSeconds = 60
 ): Promise<T[]> {
@@ -138,7 +136,7 @@ export async function swr<T>(
   if (!response) {
     log.debug(`Redis cache miss for (${responseKey}), querying...`);
     logQueryExecute(query);
-    response = await db.$queryRaw<T[]>(query);
+    response = await db.$queryRawUnsafe<T[]>(query);
 
     (async () => {
       await redis.set(responseKey, JSON.stringify(response));
