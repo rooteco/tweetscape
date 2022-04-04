@@ -1,7 +1,51 @@
+import type { ReactNode } from 'react';
+import { getMDXComponent } from 'mdx-bundler/client';
+import { useMemo } from 'react';
+
 import type { LoaderData } from '~/changelog.server';
 import { useLoaderData } from '~/json';
 
 export { loader } from '~/changelog.server';
+
+type PostLinkProps = { children?: ReactNode; href?: string };
+function PostLink({ children, href }: PostLinkProps) {
+  return (
+    <a href={href} target='_blank' rel='noopener noreferrer'>
+      {children}
+    </a>
+  );
+}
+
+function Post({ code, frontmatter }: LoaderData[0]) {
+  const Component = useMemo(() => getMDXComponent(code), [code]);
+  return (
+    <section>
+      <hr className='border-t border-gray-200 dark:border-gray-700' />
+      <div className='my-20 flex items-start'>
+        <header className='w-1/4 sticky top-6 mr-6 shrink-0'>
+          <h4 className='text-gray-600 dark:text-gray-400 font-medium'>
+            {new Date(frontmatter.date).toLocaleString(undefined, {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </h4>
+          <a
+            className='block text-gray-500'
+            href={`https://twitter.com/${frontmatter.author}`}
+            target='_blank'
+            rel='noopener noreferrer'
+          >
+            @{frontmatter.author}
+          </a>
+        </header>
+        <article className='-mt-8 prose prose-gray dark:prose-invert max-w-none prose-img:rounded-xl prose-headings:font-semibold prose-blockquote:font-normal prose-p:before:hidden prose-p:after:hidden prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400 prose-a:text-inherit prose-a:font-normal'>
+          <Component components={{ a: PostLink }} />
+        </article>
+      </div>
+    </section>
+  );
+}
 
 export default function Changelog() {
   const posts = useLoaderData<LoaderData>();
@@ -37,23 +81,11 @@ export default function Changelog() {
       </header>
       <main className='my-8 relative'>
         {posts.map((post) => (
-          <section key={post.id}>
-            <hr className='border-t border-gray-200 dark:border-gray-700' />
-            <div className='my-20 flex items-start'>
-              <h4 className='w-1/4 sticky top-6 mr-6 shrink-0 text-gray-600 dark:text-gray-400 font-medium'>
-                {new Date(post.date).toLocaleString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </h4>
-              <article
-                className='-mt-8 prose prose-gray dark:prose-invert max-w-none prose-img:rounded-xl prose-headings:font-semibold prose-blockquote:font-normal prose-p:before:hidden prose-p:after:hidden prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400 prose-a:text-inherit prose-a:font-normal'
-                key={post.id}
-                dangerouslySetInnerHTML={{ __html: post.html }}
-              />
-            </div>
-          </section>
+          <Post
+            code={post.code}
+            frontmatter={post.frontmatter}
+            key={post.frontmatter.date}
+          />
         ))}
       </main>
     </div>

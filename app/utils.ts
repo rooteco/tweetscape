@@ -28,3 +28,20 @@ export function num(n: number): string {
 export function eq(n1?: bigint | string | null, n2?: bigint | string | null) {
   return n1?.toString() === n2?.toString();
 }
+
+// TODO: Replace `Array(5).fill(null)` with `range(0, 5)` or similar.
+// @see https://www.joshwcomeau.com/snippets/javascript/range/
+export function range(start: number, end?: number, step = 1) {
+  const output: number[] = [];
+  if (typeof end === 'undefined') {
+    end = start;
+    start = 0;
+  }
+  for (let i = start; i < end; i += step) output.push(i);
+  return output;
+}
+
+// @see https://www.joshwcomeau.com/snippets/javascript/random/
+export function random(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
