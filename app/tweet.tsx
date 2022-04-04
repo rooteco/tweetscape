@@ -27,7 +27,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   session.set('href', `${url.pathname}${url.search}`);
   const uid = getUserIdFromSession(session);
   const tweetIds = params['*'].split('/').map((id) => BigInt(id));
-  log.info(`Fetching ${tweetIds.length} tweets and their replies...`);
+  log.info(
+    `Fetching ${
+      tweetIds.length
+    } tweets (${tweetIds.join()}) and their replies...`
+  );
   const [tweets, replies] = await Promise.all([
     getTweetsByIds(tweetIds, uid),
     getTweetRepliesByIds(tweetIds, uid),
