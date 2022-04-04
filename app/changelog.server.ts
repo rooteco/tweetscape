@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import { resolve } from 'path';
+import superjson from 'superjson';
 
 import type { LoaderFunction } from 'remix';
 import fm from 'front-matter';
@@ -20,7 +21,7 @@ export type LoaderData = { date: Date; id: string; html: string }[];
 export const loader: LoaderFunction = async () => {
   const filenames = await fs.readdir('changelog');
   const resolved = filenames.map((f) => resolve('changelog', f));
-  log.info(`Reading files... ${JSON.stringify(resolved)}`);
+  log.info(`Reading files... ${superjson.stringify(resolved)}`);
   const files = await Promise.all(resolved.map((f) => fs.readFile(f)));
   log.info(`Parsing markdown for ${files.length} files...`);
   const posts = files
