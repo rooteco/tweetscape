@@ -1360,13 +1360,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:^4.0.3":
-  version: 4.0.3
-  resolution: "@types/marked@npm:4.0.3"
-  checksum: 2fc409a6291cb770688731a444f54e7eab6257c9b565dea4e9d2f3b6654b606e9dd8ea4a924e306b2d2f581dedcb7a27f10f2ca7aed828b11642ab85955341f1
-  languageName: node
-  linkType: hard
-
 "@types/mdast@npm:^3.0.0":
   version: 3.0.10
   resolution: "@types/mdast@npm:3.0.10"
@@ -5255,15 +5248,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"front-matter@npm:^4.0.2":
-  version: 4.0.2
-  resolution: "front-matter@npm:4.0.2"
-  dependencies:
-    js-yaml: ^3.13.1
-  checksum: a5b4c36d75a820301ebf31db0f677332d189c4561903ab6853eaa0504b43634f98557dbf87752e09043dbd2c9dcc14b4bcf9151cb319c8ad7e26edb203c0cd23
-  languageName: node
-  linkType: hard
-
 "fs-constants@npm:^1.0.0":
   version: 1.0.0
   resolution: "fs-constants@npm:1.0.0"
@@ -7212,15 +7196,6 @@ __metadata:
   version: 1.1.1
   resolution: "markdown-extensions@npm:1.1.1"
   checksum: 8a6dd128be1c524049ea6a41a9193715c2835d3d706af4b8b714ff2043a82786dbcd4a8f1fa9ddd28facbc444426c97515aef2d1f3dd11d5e2d63749ba577b1e
-  languageName: node
-  linkType: hard
-
-"marked@npm:^4.0.12":
-  version: 4.0.12
-  resolution: "marked@npm:4.0.12"
-  bin:
-    marked: bin/marked.js
-  checksum: 7575117f85a8986652f3ac8b8a7b95056c4c5fce01a1fc76dc4c7960412cb4c9bd9da8133487159b6b3ff84f52b543dfe9a36f826a5f358892b5ec4b6824f192
   languageName: node
   linkType: hard
 
@@ -11161,7 +11136,6 @@ __metadata:
     "@twitter-api-v2/plugin-rate-limit": ^1.1.0
     "@types/accept-language-parser": ^1.5.3
     "@types/json-bigint": ^1.0.1
-    "@types/marked": ^4.0.3
     "@types/pg": ^8.6.5
     "@types/pg-format": ^1.0.2
     "@types/react": ^17.0.43
@@ -11192,12 +11166,10 @@ __metadata:
     eslint-plugin-promise: ^6.0.0
     eslint-plugin-react: ^7.29.4
     eslint-plugin-react-hooks: ^4.4.0
-    front-matter: ^4.0.2
     html-entities: ^2.3.3
     html5parser: ^2.0.2
     husky: ^7.0.4
     json-bigint: ^1.0.0
-    marked: ^4.0.12
     mdx-bundler: ^9.0.0
     nanoid: ^3.3.2
     node-fetch: ^3.2.3
