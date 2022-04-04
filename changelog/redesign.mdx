@@ -34,7 +34,7 @@ I'm thinking that Tweetscape can work to reduce that clutter (and that "a little
 
 It's still very much a work-in-progress, but I think this initial redesign gets us a tad bit closer to the point where opening Tweetscape becomes a relaxing experience where you're able to be intentional about what you learn about (and go deep into a few topics everyday instead of simply skimming over the shallow surface-level "what's happening" that Twitter's existing feed design encourages).
 
-See [#72](https://github.com/rooteco/tweetscape/pulls/72) for technical details.
+See [#72](https://github.com/rooteco/tweetscape/pull/72) for technical details.
 
 ## [Teaser] Explore anyone's feed
 
@@ -48,7 +48,7 @@ We can't wait to see what you'll build once given the tools (e.g. an unencumbere
 
 ## Fixes & Improvements
 
-- You can now use [Rekt scores](https://feed.rekt.news/parlor) to rank and explore [the top crypto articles](/rekt/crypto/articles) from Twitter (introduced by [#71](https://github.com/rooteco/tweetscape/pulls/71)).
+- You can now use [Rekt scores](https://feed.rekt.news/parlor) to rank and explore [the top crypto articles](/rekt/crypto/articles) from Twitter (introduced by [#71](https://github.com/rooteco/tweetscape/pull/71)).
 - SWR database queries are now performed concurrently;
   I abuse `Promise.all` everywhere possible to reduce initial `loader` execution times and thus reduce perceived load times.
 - Links now prefetch page content (HTML + CSS + JS) and `loader` data on hover to reduce load times.
