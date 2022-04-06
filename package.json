@@ -58,7 +58,6 @@
     "redis": "^4.0.6",
     "remix": "^1.3.4",
     "sharp": "^0.30.3",
-    "superjson": "^1.8.1",
     "timeago-react": "^3.0.4",
     "timeago.js": "^4.0.2",
     "tiny-invariant": "^1.2.0",
