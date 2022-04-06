@@ -116,10 +116,9 @@ function getRefs(tweet?: TweetFull) {
 type TweetProps = {
   tweet?: TweetFull;
   nested?: boolean;
-  setActiveTweet?: Dispatch<SetStateAction<TweetFull | undefined>>;
 };
 
-function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
+function TweetInner({ tweet, nested }: TweetProps) {
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const { pathname, search } = useLocation();
@@ -136,7 +135,6 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
           const validTargets = ['P', 'ARTICLE', 'HEADER'];
           if (!validTargets.includes((evt.target as Node).nodeName)) return;
         }
-        if (setActiveTweet) setActiveTweet(tweet);
         fetcher.submit(null, { action: `/sync/${tweet.id}`, method: 'patch' });
         navigate(`${pathname}/${tweet.id}${search}`);
       }}
@@ -257,14 +255,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
         {isQuote &&
           refs
             ?.filter((r) => r.type === 'quoted')
-            .map((t) => (
-              <TweetItem
-                nested
-                tweet={t}
-                setActiveTweet={setActiveTweet}
-                key={t.id.toString()}
-              />
-            ))}
+            .map((t) => <TweetItem nested tweet={t} key={t.id.toString()} />)}
         <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-gray-500'>
           <Action
             color='blue'
@@ -303,11 +294,7 @@ function TweetInner({ tweet, nested, setActiveTweet }: TweetProps) {
   );
 }
 
-export default function TweetItem({
-  tweet,
-  nested,
-  setActiveTweet,
-}: TweetProps) {
+export default function TweetItem({ tweet, nested }: TweetProps) {
   const refs = getRefs(tweet);
   const isRetweet = tweet?.refs?.some((r) => r?.type === 'retweeted');
   return (
@@ -354,20 +341,9 @@ export default function TweetItem({
         refs
           ?.filter((r) => r.type === 'retweeted')
           .map((t) => (
-            <TweetInner
-              tweet={t}
-              setActiveTweet={setActiveTweet}
-              key={t.id.toString()}
-              nested={nested}
-            />
+            <TweetInner tweet={t} key={t.id.toString()} nested={nested} />
           ))}
-      {!isRetweet && (
-        <TweetInner
-          tweet={tweet}
-          setActiveTweet={setActiveTweet}
-          nested={nested}
-        />
-      )}
+      {!isRetweet && <TweetInner tweet={tweet} nested={nested} />}
     </li>
   );
 }
