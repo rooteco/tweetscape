@@ -59,11 +59,16 @@ function parseJsonArray(value: string) {
   return array.parse(value, parseJson);
 }
 
+/**
+ * Not only do I have to update the type parsers for `int8` but I also have to
+ * ensure that JSON `int8` values don't lose precision.
+ * @see {@link https://github.com/brianc/node-pg-types/blob/master/lib/textParsers.js#L177-L180}
+ * @see {@link https://github.com/vitaly-t/pg-promise/issues/754#issuecomment-1087125815}
+ * @see {@link https://stackoverflow.com/a/18755261}
+ * @see {@link https://github.com/tc39/proposal-json-parse-with-source}
+ */
 function getPool(): Pool {
   const pgp = pgPromise();
-  // Not only do I have to update the type parsers for `int8` but I also have to
-  // ensure that JSON `int8` values don't lose precision.
-  // @see https://github.com/brianc/node-pg-types/blob/master/lib/textParsers.js#L177-L180
   pgp.pg.types.setTypeParser(20, parseBigInteger);
   pgp.pg.types.setTypeParser(1016, parseBigIntegerArray);
   pgp.pg.types.setTypeParser(114, parseJson);
