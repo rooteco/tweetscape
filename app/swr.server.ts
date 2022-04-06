@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 
-import superjson from 'superjson';
+import { parse, stringify } from 'json-bigint';
 
 import {
   ArticlesFilter,
@@ -91,7 +91,7 @@ export async function revalidate<T>(
   const { stillGoodKey, responseKey } = keys(query, uid);
   logQueryExecute(query);
   const toCache = await pool.any<T>(query);
-  await redis.set(responseKey, superjson.stringify(toCache));
+  await redis.set(responseKey, stringify(toCache));
   await redis.setEx(stillGoodKey, maxAgeSeconds, 'true');
   return toCache;
 }
@@ -114,7 +114,7 @@ export async function swr<T>(
     .then(async (cachedResponseString) => {
       if (!cachedResponseString) return null;
 
-      const cachedResponse = superjson.parse<T[]>(cachedResponseString);
+      const cachedResponse = parse(cachedResponseString) as T[];
 
       if (!cachedResponse.length) return null;
 
@@ -141,7 +141,7 @@ export async function swr<T>(
     response = await pool.any<T>(query);
 
     (async () => {
-      await redis.set(responseKey, superjson.stringify(response));
+      await redis.set(responseKey, stringify(response));
       await redis.setEx(stillGoodKey, maxAgeSeconds, 'true');
     })().catch((e) => {
       log.error(`Failed to seed cache: ${(e as Error).message}`);

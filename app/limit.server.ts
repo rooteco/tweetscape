@@ -1,12 +1,11 @@
 import { createHash } from 'crypto';
 
-import superjson from 'superjson';
-
 import type {
   ITwitterApiRateLimitGetArgs,
   ITwitterApiRateLimitSetArgs,
   ITwitterApiRateLimitStore,
 } from '@twitter-api-v2/plugin-rate-limit';
+import { parse, stringify } from 'json-bigint';
 import { TwitterApiRateLimitMemoryStore } from '@twitter-api-v2/plugin-rate-limit';
 import type { TwitterRateLimit } from 'twitter-api-v2';
 
@@ -42,7 +41,7 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
     const cache = await redis.get(key);
     if (cache) {
       log.trace(`Got rate limit from redis key: ${key}`);
-      return superjson.parse<TwitterRateLimit>(cache);
+      return parse(cache) as TwitterRateLimit;
     }
     return undefined;
   }
@@ -54,7 +53,7 @@ export class TwitterApiRateLimitDBStore implements ITwitterApiRateLimitStore {
     await redis.setEx(
       this.key(args.endpoint, args.method),
       Math.ceil(args.rateLimit.reset - new Date().valueOf() / 1000),
-      superjson.stringify(args.rateLimit)
+      stringify(args.rateLimit)
     );
   }
 }
