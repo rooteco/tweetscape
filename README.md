@@ -177,7 +177,7 @@ $ cp tweetscape-env/.env* tweetscape/
 10. [Install the `flyctl` CLI](https://fly.io/docs/getting-started/installing-flyctl), login to the CLI, and setup port forwarding so you can access the PostgreSQL database and Redis instance from your machine:
 
 ```
-$ fly proxy 5432 -a tweetscape-pgbouncer
+$ fly proxy 5432 -a tweetscape-pg
 $ fly proxy 6379 -a tweetscape-redis
 ```
 
