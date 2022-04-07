@@ -1,3 +1,4 @@
+import type { CSSProperties, ReactNode } from 'react';
 import {
   useFetcher,
   useFetchers,
@@ -5,9 +6,9 @@ import {
   useMatches,
   useNavigate,
 } from 'remix';
-import type { ReactNode } from 'react';
 import cn from 'classnames';
 
+import { canUseDOM, num } from '~/utils';
 import LikeIcon from '~/icons/like';
 import LikedIcon from '~/icons/liked';
 import type { LoaderData } from '~/root';
@@ -19,7 +20,74 @@ import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
 import type { TweetJS } from '~/types';
 import VerifiedIcon from '~/icons/verified';
-import { num } from '~/utils';
+
+export const ITEM_WIDTH = 574;
+export const FALLBACK_ITEM_HEIGHT = 132;
+
+const BORDER = 1;
+const AVATAR_WIDTH = 48;
+const AVATAR_MARGIN_RIGHT = 12;
+const ITEM_PADDING = 12;
+const TEXT_WIDTH =
+  ITEM_WIDTH - 2 * ITEM_PADDING - AVATAR_WIDTH - AVATAR_MARGIN_RIGHT;
+const QUOTE_TEXT_WIDTH = TEXT_WIDTH - 2 * ITEM_PADDING - 2 * BORDER;
+const TEXT_LINE_HEIGHT = 20;
+const TEXT_FONT_SIZE = 14;
+const TEXT_MARGIN_BOTTOM = 12;
+const ACTIONS_HEIGHT = 32;
+const ACTIONS_MARGIN = -6;
+const HEADER_HEIGHT = 20;
+const HEADER_MARGIN_BOTTOM = 2;
+const RETWEET_HEADER_HEIGHT = 16;
+const RETWEET_HEADER_MARGIN_BOTTOM = 2;
+const RETWEET_PADDING_TOP = 8;
+
+/**
+ * Uses canvas.measureText to compute and return the width of the given text of given font in pixels.
+ *
+ * @param {String} text The text to be rendered.
+ * @param {String} font The css font descriptor that text is to be rendered with (e.g. 'bold 14px verdana').
+ *
+ * @see https://stackoverflow.com/questions/118241/calculate-text-width-with-javascript/21015393#21015393
+ */
+function getTextHeight(text: string, contentWidth = TEXT_WIDTH): number {
+  if (!canUseDOM) return 0;
+  let div = document.getElementById('measure');
+  if (!div) {
+    div = document.createElement('div');
+    div.id = 'measure';
+    div.style.visibility = 'hidden';
+    div.style.display = 'inline-block';
+    div.style.fontSize = `${TEXT_FONT_SIZE}px`;
+    div.style.lineHeight = `${TEXT_LINE_HEIGHT}px`;
+    div.style.fontFamily = 'Inter';
+    document.body.appendChild(div);
+  }
+  div.style.width = `${contentWidth}px`;
+  div.textContent = text;
+  return div.clientHeight;
+}
+
+export function getTweetItemHeight(
+  tweet?: TweetJS,
+  contentWidth = TEXT_WIDTH
+): number {
+  if (!tweet) return FALLBACK_ITEM_HEIGHT;
+  const text = tweet.retweets.length ? tweet.retweets[0].text : tweet.text;
+  let height = getTextHeight(text, contentWidth) + TEXT_MARGIN_BOTTOM;
+  height += ACTIONS_HEIGHT + 2 * ACTIONS_MARGIN;
+  height += HEADER_HEIGHT + HEADER_MARGIN_BOTTOM;
+  height += ITEM_PADDING;
+  height += tweet.retweets.length ? RETWEET_PADDING_TOP : ITEM_PADDING;
+  tweet.retweets.forEach(() => {
+    height += RETWEET_HEADER_HEIGHT + RETWEET_HEADER_MARGIN_BOTTOM;
+  });
+  tweet.quotes.forEach((quote) => {
+    height += getTweetItemHeight(quote, QUOTE_TEXT_WIDTH);
+    height += BORDER + TEXT_MARGIN_BOTTOM;
+  });
+  return height + BORDER;
+}
 
 type ActionProps = {
   active?: boolean;
@@ -276,9 +344,14 @@ function TweetInner({ tweet, nested }: TweetProps) {
   );
 }
 
-export default function TweetItem({ tweet, nested }: TweetProps) {
+export default function TweetItem({
+  tweet,
+  nested,
+  style,
+}: TweetProps & { style?: CSSProperties }) {
   return (
     <li
+      style={style}
       className={cn(
         'w-full list-none text-sm border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-100/50 dark:hover:bg-gray-800/10 transition-colors',
         {

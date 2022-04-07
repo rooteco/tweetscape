@@ -1,8 +1,16 @@
-import { json, useLoaderData, useSearchParams } from 'remix';
-import InfiniteScroll from 'react-infinite-scroll-component';
+import {
+  json,
+  useLoaderData,
+  useOutletContext,
+  useSearchParams,
+  useTransition,
+} from 'remix';
+import { useEffect, useRef } from 'react';
+import InfiniteLoader from 'react-window-infinite-loader';
 import type { LoaderFunction } from 'remix';
+import { VariableSizeList } from 'react-window';
 import invariant from 'tiny-invariant';
-import { useRef } from 'react';
+import mergeRefs from 'react-merge-refs';
 
 import {
   DEFAULT_TWEETS_FILTER,
@@ -12,6 +20,12 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
+import type { TweetFull, TweetJS } from '~/types';
+import TweetItem, {
+  FALLBACK_ITEM_HEIGHT,
+  ITEM_WIDTH,
+  getTweetItemHeight,
+} from '~/components/tweet';
 import { commitSession, getSession } from '~/session.server';
 import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
@@ -22,10 +36,8 @@ import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
-import type { TweetFull, TweetJS } from '~/types';
-import { wrapTweet } from '~/types';
-import TweetItem from '~/components/tweet';
 import { useError } from '~/error';
+import { wrapTweet } from '~/types';
 
 export type LoaderData = TweetJS[];
 
@@ -93,9 +105,24 @@ export function ErrorBoundary({ error }: { error: Error }) {
 }
 
 export default function TweetsPage() {
+  const height = useOutletContext<number>();
   const tweets = useLoaderData<LoaderData>();
   const scrollerRef = useRef<HTMLElement>(null);
+  const variableSizeListRef = useRef<VariableSizeList>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const prevLength = useRef(tweets.length);
+  const transition = useTransition();
+  useEffect(() => {
+    if (transition.state === 'idle' && prevLength.current < tweets.length) {
+      // Recalculate the size of the now-loaded tweet item (which replaced the
+      // previously fallback state, fixed height tweet item). If we don't do
+      // this, `react-window` will wrongly use the height of the fallback item.
+      variableSizeListRef.current?.resetAfterIndex(prevLength.current);
+      prevLength.current = tweets.length;
+    }
+  }, [transition.state, tweets.length]);
+
   return (
     <Column
       ref={scrollerRef}
@@ -169,30 +196,39 @@ export default function TweetsPage() {
       )}
       {!!tweets.length && (
         <ol>
-          <InfiniteScroll
-            dataLength={tweets.length}
-            next={() =>
+          <InfiniteLoader
+            isItemLoaded={(idx) => idx < tweets.length}
+            itemCount={tweets.length + 1}
+            threshold={30}
+            loadMoreItems={() => {
               setSearchParams({
                 ...Object.fromEntries(searchParams.entries()),
                 [Param.TweetsLimit]: (
                   Number(searchParams.get(Param.TweetsLimit) ?? 50) + 50
                 ).toString(),
-              })
-            }
-            loader={Array(3)
-              .fill(null)
-              .map((_, idx) => (
-                <TweetItem key={idx} />
-              ))}
-            scrollThreshold={0.65}
-            scrollableTarget='tweets'
-            style={{ overflow: 'hidden' }}
-            hasMore
+              });
+            }}
           >
-            {tweets.map((tweet) => (
-              <TweetItem tweet={tweet} key={tweet.id.toString()} />
-            ))}
-          </InfiniteScroll>
+            {({ onItemsRendered, ref }) => (
+              <VariableSizeList
+                itemCount={tweets.length + 1}
+                onItemsRendered={onItemsRendered}
+                estimatedItemSize={FALLBACK_ITEM_HEIGHT}
+                itemSize={(idx) => getTweetItemHeight(tweets[idx])}
+                height={height}
+                width={ITEM_WIDTH}
+                ref={mergeRefs([ref, variableSizeListRef])}
+              >
+                {({ index, style }) => (
+                  <TweetItem
+                    tweet={tweets[index]}
+                    key={tweets[index]?.id ?? 'fallback'}
+                    style={style}
+                  />
+                )}
+              </VariableSizeList>
+            )}
+          </InfiniteLoader>
         </ol>
       )}
     </Column>
