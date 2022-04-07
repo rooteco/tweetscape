@@ -1,8 +1,15 @@
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import { useFetcher, useFetchers, useLocation, useNavigate } from 'remix';
+import {
+  useFetcher,
+  useFetchers,
+  useLocation,
+  useMatches,
+  useNavigate,
+} from 'remix';
 import cn from 'classnames';
 
-import type { Ref, TweetFull, UserFull } from '~/types';
+import type { Ref, TweetJS, UserJS } from '~/types';
+import { eq, num } from '~/utils';
 import LikeIcon from '~/icons/like';
 import LikedIcon from '~/icons/liked';
 import type { LoaderData } from '~/root';
@@ -13,8 +20,6 @@ import RetweetedIcon from '~/icons/retweeted';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
 import VerifiedIcon from '~/icons/verified';
-import { eq, num } from '~/utils';
-import { useMatches } from '~/json';
 
 type ActionProps = {
   active?: boolean;
@@ -97,33 +102,12 @@ function Action({
   );
 }
 
-function getRefs(tweet?: TweetFull) {
-  const refs = tweet?.ref_tweets
-    ?.filter((t) => !!t)
-    .map((t) => ({
-      ...(t as TweetFull),
-      type: (tweet.refs?.find((r) => eq(r?.referenced_tweet_id, t?.id)) as Ref)
-        ?.type,
-      author: tweet.ref_authors?.find((a) =>
-        eq(a?.id, t?.author_id)
-      ) as UserFull,
-      liked: tweet.ref_likes?.some((r) => eq(r?.tweet_id, t?.id)),
-      retweeted: tweet.ref_retweets?.some((r) => eq(r?.tweet_id, t?.id)),
-    }));
-  return refs;
-}
-
-type TweetProps = {
-  tweet?: TweetFull;
-  nested?: boolean;
-};
+type TweetProps = { tweet?: TweetJS; nested?: boolean };
 
 function TweetInner({ tweet, nested }: TweetProps) {
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const { pathname, search } = useLocation();
-  const isQuote = tweet?.refs?.some((r) => r?.type === 'quoted');
-  const refs = getRefs(tweet);
   return (
     <div
       role='button'
@@ -250,12 +234,10 @@ function TweetInner({ tweet, nested }: TweetProps) {
             'h-12 w-full bg-gray-200/50 dark:bg-gray-700/50 animate-pulse rounded':
               !tweet,
           })}
-          dangerouslySetInnerHTML={{ __html: tweet?.html ?? tweet?.text ?? '' }}
+          dangerouslySetInnerHTML={{ __html: tweet?.html ?? '' }}
         />
-        {isQuote &&
-          refs
-            ?.filter((r) => r.type === 'quoted')
-            .map((t) => <TweetItem nested tweet={t} key={t.id.toString()} />)}
+        {tweet.quotes?.length &&
+          tweet.quotes.map((t) => <TweetItem nested tweet={t} key={t.id} />)}
         <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-gray-500'>
           <Action
             color='blue'
@@ -268,7 +250,7 @@ function TweetInner({ tweet, nested }: TweetProps) {
             icon={<RetweetIcon />}
             href={`https://twitter.com/intent/retweet?tweet_id=${tweet?.id}`}
             action='retweet'
-            id={tweet?.id.toString()}
+            id={tweet?.id}
             count={tweet ? tweet.retweet_count + tweet.quote_count : undefined}
             active={tweet?.retweeted}
             activeIcon={<RetweetedIcon />}
@@ -295,8 +277,6 @@ function TweetInner({ tweet, nested }: TweetProps) {
 }
 
 export default function TweetItem({ tweet, nested }: TweetProps) {
-  const refs = getRefs(tweet);
-  const isRetweet = tweet?.refs?.some((r) => r?.type === 'retweeted');
   return (
     <li
       className={cn(
@@ -304,12 +284,12 @@ export default function TweetItem({ tweet, nested }: TweetProps) {
         {
           'mb-3 border rounded-lg': nested,
           'border-b last-of-type:border-0': !nested,
-          'pt-3': !isRetweet || nested,
-          'pt-2': isRetweet,
+          'pt-3': !tweet?.retweets.length || nested,
+          'pt-2': !!tweet?.retweets.length,
         }
       )}
     >
-      {isRetweet && (
+      {!!tweet?.retweets.length && (
         <header className='text-gray-500 text-xs px-3 mb-0.5'>
           <svg viewBox='0 0 24 24' className='ml-8 w-4 h-4 fill-current inline'>
             <g>
@@ -337,13 +317,11 @@ export default function TweetItem({ tweet, nested }: TweetProps) {
           </a>
         </header>
       )}
-      {isRetweet &&
-        refs
-          ?.filter((r) => r.type === 'retweeted')
-          .map((t) => (
-            <TweetInner tweet={t} key={t.id.toString()} nested={nested} />
-          ))}
-      {!isRetweet && <TweetInner tweet={tweet} nested={nested} />}
+      {!!tweet?.retweets.length &&
+        tweet.retweets.map((t) => (
+          <TweetInner tweet={t} key={t.id} nested={nested} />
+        ))}
+      {!tweet?.retweets.length && <TweetInner tweet={tweet} nested={nested} />}
     </li>
   );
 }

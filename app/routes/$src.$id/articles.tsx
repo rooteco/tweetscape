@@ -1,9 +1,9 @@
 import { animated, useSpring } from '@react-spring/web';
+import { json, useLoaderData, useLocation } from 'remix';
 import { useEffect, useRef, useState } from 'react';
 import type { LoaderFunction } from 'remix';
 import { dequal } from 'dequal/lite';
 import invariant from 'tiny-invariant';
-import { useLocation } from 'remix';
 
 import {
   ArticlesFilter,
@@ -19,8 +19,8 @@ import {
   getRektArticles,
 } from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
-import { json, useLoaderData } from '~/json';
-import type { Article } from '~/types';
+import type { ArticleFull, ArticleJS } from '~/types';
+import { wrapArticle } from '~/types';
 import ArticleItem from '~/components/article';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
@@ -31,7 +31,7 @@ import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
 import { useError } from '~/error';
 
-export type LoaderData = Article[];
+export type LoaderData = ArticleJS[];
 
 // $src - the type of source (e.g. clusters or lists).
 // $id - the id of a specific source (e.g. a cluster slug or user list id).
@@ -51,7 +51,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const articlesFilter = Number(
     url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
-  let articlesPromise: Promise<Article[]>;
+  let articlesPromise: Promise<ArticleFull[]>;
   switch (params.src) {
     case 'clusters':
       articlesPromise = getClusterArticles(
@@ -75,7 +75,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     default:
       throw new Response('Not Found', { status: 404 });
   }
-  let articles: Article[] = [];
+  let articles: ArticleJS[] = [];
   await Promise.all([
     (async () => {
       console.time(`swr-get-articles-${invocationId}`);
@@ -84,7 +84,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     })(),
   ]);
   const headers = { 'Set-Cookie': await commitSession(session) };
-  return json<LoaderData>(articles, { headers });
+  return json<LoaderData>(articles.map(wrapArticle), { headers });
 };
 
 export function ErrorBoundary({ error }: { error: Error }) {

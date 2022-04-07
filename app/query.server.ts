@@ -1,14 +1,4 @@
-import { autoLink } from 'twitter-text';
-
-import type {
-  Article,
-  Like,
-  List,
-  Ref,
-  Retweet,
-  TweetFull,
-  UserFull,
-} from '~/types';
+import type { ArticleFull, List, TweetFull } from '~/types';
 import {
   ArticlesFilter,
   ArticlesSort,
@@ -33,70 +23,12 @@ const ARTICLES_ORDER_BY: Record<ArticlesSort, string> = {
   [ArticlesSort.AttentionScore]: `attention_score`,
 };
 
-function html(text: string): string {
-  return autoLink(text, {
-    usernameIncludeSymbol: true,
-    linkAttributeBlock(entity, attrs) {
-      attrs.target = '_blank';
-      attrs.rel = 'noopener noreferrer';
-      attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
-    },
-  });
-}
-function wrapRef(ref: Ref): Ref {
-  return {
-    ...ref,
-    referencer_tweet_id: BigInt(ref.referencer_tweet_id),
-    referenced_tweet_id: BigInt(ref.referenced_tweet_id),
-  };
-}
-function wrapRelation(relation: Like | Retweet): Like | Retweet {
-  return {
-    user_id: BigInt(relation.user_id),
-    tweet_id: BigInt(relation.tweet_id),
-  };
-}
-function wrapUser(user: UserFull): UserFull {
-  return { ...user, html: html(user.description ?? ''), id: BigInt(user.id) };
-}
-function wrapTweet(tweet: TweetFull): TweetFull {
-  return {
-    ...tweet,
-    html: html(tweet.text),
-    author: tweet.author ? wrapUser(tweet.author) : undefined,
-    refs: tweet.refs?.map((r) => (r ? wrapRef(r) : r)),
-    ref_tweets: tweet.ref_tweets?.map((t) => (t ? wrapTweet(t) : t)),
-    ref_authors: tweet.ref_authors?.map((a) => (a ? wrapUser(a) : a)),
-    ref_likes: tweet.ref_likes?.map((l) => (l ? wrapRelation(l) : l)),
-    ref_retweets: tweet.ref_retweets?.map((r) => (r ? wrapRelation(r) : r)),
-    id: BigInt(tweet.id),
-    author_id: BigInt(tweet.author_id),
-  };
-}
-function wrapTweets(tweets: TweetFull[]): TweetFull[] {
-  return tweets.map(wrapTweet);
-}
-function wrapArticles(articles: Article[]): Article[] {
-  return articles.map((article) => ({
-    ...article,
-    tweets: wrapTweets(article.tweets),
-    cluster_id: article.cluster_id ? BigInt(article.cluster_id) : undefined,
-  }));
-}
-function wrapLists(lists: List[]): List[] {
-  return lists.map((list) => ({
-    ...list,
-    id: BigInt(list.id),
-    owner_id: BigInt(list.owner_id),
-  }));
-}
-
 export async function getTweetsByIds(
   tweetIds: bigint[],
   uid?: bigint
 ): Promise<TweetFull[]> {
   /* prettier-ignore */
-  const tweets = await swr<TweetFull>(`
+  return swr<TweetFull>(`
     select
       tweets.*,
       ${uid ? `likes is not null as liked,` : ''}
@@ -119,7 +51,6 @@ export async function getTweetsByIds(
     where tweets.id in (${tweetIds.join()})
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by created_at desc;`, uid);
-  return wrapTweets(tweets);
 }
 
 export async function getTweetRepliesByIds(
@@ -127,7 +58,7 @@ export async function getTweetRepliesByIds(
   uid?: bigint
 ): Promise<TweetFull[]> {
   /* prettier-ignore */
-  const tweets = await swr<TweetFull>(`
+  return swr<TweetFull>(`
     select
       tweets.*,
       ${uid ? `likes is not null as liked,` : ''}
@@ -150,7 +81,6 @@ export async function getTweetRepliesByIds(
       ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by created_at desc;`, uid);
-  return wrapTweets(tweets);
 }
 
 function getListTweetsQuery(
@@ -200,7 +130,7 @@ export async function getListTweets(
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for list (${listId}).`);
-  return wrapTweets(tweets);
+  return tweets;
 }
 
 function getClusterTweetsQuery(
@@ -251,7 +181,7 @@ export async function getClusterTweets(
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
-  return wrapTweets(tweets);
+  return tweets;
 }
 
 function getRektTweetsQuery(
@@ -299,7 +229,7 @@ export async function getRektTweets(
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for Rekt.`);
-  return wrapTweets(tweets);
+  return tweets;
 }
 
 export function getListsQuery(uid: bigint): string {
@@ -311,8 +241,7 @@ export function getListsQuery(uid: bigint): string {
     `;
 }
 export async function getLists(uid: bigint): Promise<List[]> {
-  const lists = await swr<List>(getListsQuery(uid), uid);
-  return wrapLists(lists);
+  return swr<List>(getListsQuery(uid), uid);
 }
 
 function getListArticlesQuery(
@@ -368,13 +297,13 @@ export async function getListArticles(
   sort: ArticlesSort,
   filter: ArticlesFilter,
   uid?: bigint
-): Promise<Article[]> {
-  const articles = await swr<Article>(
+): Promise<ArticleFull[]> {
+  const articles = await swr<ArticleFull>(
     getListArticlesQuery(listId, sort, filter, uid),
     uid
   );
   log.trace(`Fetched ${articles.length} articles for list (${listId}).`);
-  return wrapArticles(articles);
+  return articles;
 }
 
 function getClusterArticlesQuery(
@@ -437,15 +366,15 @@ export async function getClusterArticles(
   sort: ArticlesSort,
   filter: ArticlesFilter,
   uid?: bigint
-): Promise<Article[]> {
-  const articles = await swr<Article>(
+): Promise<ArticleFull[]> {
+  const articles = await swr<ArticleFull>(
     getClusterArticlesQuery(clusterSlug, sort, filter, uid),
     uid
   );
   log.trace(
     `Fetched ${articles.length} articles for cluster (${clusterSlug}).`
   );
-  return wrapArticles(articles);
+  return articles;
 }
 
 function getRektArticlesQuery(uid?: bigint): string {
@@ -494,8 +423,8 @@ function getRektArticlesQuery(uid?: bigint): string {
     order by points desc
     limit 50;`
 }
-export async function getRektArticles(uid?: bigint): Promise<Article[]> {
-  const articles = await swr<Article>(getRektArticlesQuery(uid), uid);
+export async function getRektArticles(uid?: bigint): Promise<ArticleFull[]> {
+  const articles = await swr<ArticleFull>(getRektArticlesQuery(uid), uid);
   log.trace(`Fetched ${articles.length} articles for Rekt.`);
-  return wrapArticles(articles);
+  return articles;
 }

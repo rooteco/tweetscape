@@ -4,6 +4,7 @@ import {
   NavLink,
   useFetcher,
   useLocation,
+  useMatches,
   useResolvedPath,
   useTransition,
 } from 'remix';
@@ -19,7 +20,6 @@ import OpenInNewIcon from '~/icons/open-in-new';
 import Switcher from '~/components/switcher';
 import Sync from '~/components/sync';
 import ThemeSwitcher from '~/components/theme-switcher';
-import { useMatches } from '~/json';
 
 function PageSwitcher() {
   const { pathname } = useLocation();

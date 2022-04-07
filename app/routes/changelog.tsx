@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import { getMDXComponent } from 'mdx-bundler/client';
+import { useLoaderData } from 'remix';
 import { useMemo } from 'react';
 
 import type { LoaderData } from '~/changelog.server';
-import { useLoaderData } from '~/json';
 
 export { loader } from '~/changelog.server';
 

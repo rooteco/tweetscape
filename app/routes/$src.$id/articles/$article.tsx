@@ -8,7 +8,7 @@ import {
   DEFAULT_ARTICLES_FILTER,
   Param,
 } from '~/query';
-import type { Article } from '~/types';
+import type { ArticleJS } from '~/types';
 import BoltIcon from '~/icons/bolt';
 import CloseIcon from '~/icons/close';
 import Column from '~/components/column';
@@ -21,7 +21,7 @@ import { TimeAgo } from '~/components/timeago';
 import TweetItem from '~/components/tweet';
 
 export default function ArticlePage() {
-  const article = useOutletContext<Article | undefined>();
+  const article = useOutletContext<ArticleJS | undefined>();
   const [searchParams, setSearchParams] = useSearchParams();
   const articlesFilter = Number(
     searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
@@ -55,8 +55,7 @@ export default function ArticlePage() {
       Array.from(article?.tweets ?? [])
         .filter(
           (t) =>
-            filter === ArticleTweetsFilter.ShowRetweets ||
-            !/^RT @\w+\b:/.test(t.text)
+            filter === ArticleTweetsFilter.ShowRetweets || !t.retweets.length
         )
         .sort((a, b) => {
           if (sort === ArticleTweetsSort.RetweetCount)
@@ -75,10 +74,8 @@ export default function ArticlePage() {
               new Date(a.created_at).valueOf() -
               new Date(b.created_at).valueOf()
             );
-          if (b.score && a.score)
-            return (
-              Number(b.score.attention_score) - Number(a.score.attention_score)
-            );
+          if (b.attention_score && a.attention_score)
+            return Number(b.attention_score) - Number(a.attention_score);
           return 0;
         }),
     [sort, filter, article]
@@ -163,7 +160,7 @@ export default function ArticlePage() {
       {!!results.length && (
         <div className='relative'>
           {results.map((tweet) => (
-            <TweetItem tweet={tweet} key={tweet.id.toString()} />
+            <TweetItem tweet={tweet} key={tweet.id} />
           ))}
         </div>
       )}

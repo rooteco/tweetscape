@@ -3,8 +3,8 @@ import { resolve } from 'path';
 
 import type { LoaderFunction } from 'remix';
 import { bundleMDX } from 'mdx-bundler';
+import { json } from 'remix';
 
-import { json } from '~/json';
 import { log } from '~/utils.server';
 
 type Meta = { date: string; author: string };

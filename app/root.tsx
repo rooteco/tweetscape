@@ -5,12 +5,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  json,
+  useLoaderData,
 } from 'remix';
 import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
 import { StrictMode, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import type { Cluster, List, User } from '~/types';
+import type { Cluster, ClusterJS, List, ListJS, User, UserJS } from '~/types';
 import {
   Theme,
   ThemeBody,
@@ -21,7 +23,7 @@ import {
 } from '~/theme';
 import { commitSession, getSession } from '~/session.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
-import { json, useLoaderData } from '~/json';
+import { wrapCluster, wrapList, wrapUser } from '~/types';
 import { ErrorContext } from '~/error';
 import ErrorDisplay from '~/components/error';
 import { db } from '~/db.server';
@@ -30,9 +32,9 @@ import styles from '~/styles/app.css';
 import { swr } from '~/swr.server';
 
 export type LoaderData = {
-  clusters: Cluster[];
-  lists: List[];
-  user?: User;
+  clusters: ClusterJS[];
+  lists: ListJS[];
+  user?: UserJS;
   theme: Theme | null;
 };
 
@@ -76,7 +78,15 @@ export const loader: LoaderFunction = async ({ request }) => {
   log.info(`Found theme cookie (${theme}).`);
   const headers = { 'Set-Cookie': await commitSession(session) };
   console.timeEnd(`root-loader-${invocationId}`);
-  return json<LoaderData>({ theme, clusters, user, lists }, { headers });
+  return json<LoaderData>(
+    {
+      theme,
+      user: user ? wrapUser(user) : user,
+      clusters: clusters.map(wrapCluster),
+      lists: lists.map(wrapList),
+    },
+    { headers }
+  );
 };
 
 export const links: LinksFunction = () => [

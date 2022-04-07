@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { useFetcher, useLocation } from 'remix';
+import { useFetcher, useLocation, useMatches } from 'remix';
 
 import BoltIcon from '~/icons/bolt';
 import { ErrorContext } from '~/error';
@@ -7,7 +7,6 @@ import ErrorIcon from '~/icons/error';
 import type { LoaderData } from '~/root';
 import SyncIcon from '~/icons/sync';
 import { TimeAgo } from '~/components/timeago';
-import { useMatches } from '~/json';
 
 export default function Sync() {
   const user = (useMatches()[0].data as LoaderData | undefined)?.user;

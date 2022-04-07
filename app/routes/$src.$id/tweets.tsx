@@ -1,8 +1,8 @@
+import { json, useLoaderData, useSearchParams } from 'remix';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import type { LoaderFunction } from 'remix';
 import invariant from 'tiny-invariant';
 import { useRef } from 'react';
-import { useSearchParams } from 'remix';
 
 import {
   DEFAULT_TWEETS_FILTER,
@@ -15,7 +15,6 @@ import {
 import { commitSession, getSession } from '~/session.server';
 import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
-import { json, useLoaderData } from '~/json';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
 import ErrorDisplay from '~/components/error';
@@ -23,11 +22,12 @@ import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
-import type { TweetFull } from '~/types';
+import type { TweetFull, TweetJS } from '~/types';
+import { wrapTweet } from '~/types';
 import TweetItem from '~/components/tweet';
 import { useError } from '~/error';
 
-export type LoaderData = TweetFull[];
+export type LoaderData = TweetJS[];
 
 // $src - the type of source (e.g. clusters or lists).
 // $id - the id of a specific source (e.g. a cluster slug or user list id).
@@ -80,7 +80,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   ]);
   console.timeEnd(`src-id-loader-${invocationId}`);
   const headers = { 'Set-Cookie': await commitSession(session) };
-  return json<LoaderData>(tweets, { headers });
+  return json<LoaderData>(tweets.map(wrapTweet), { headers });
 };
 
 export function ErrorBoundary({ error }: { error: Error }) {

@@ -1,4 +1,5 @@
 import type { Session } from 'remix';
+import { autoLink } from 'twitter-text';
 import invariant from 'tiny-invariant';
 import { parse } from 'accept-language-parser';
 import { redirect } from 'remix';
@@ -8,6 +9,17 @@ import { commitSession, getSession } from '~/session.server';
 export { nanoid } from 'nanoid';
 
 const DEFAULT_REDIRECT = '/rekt/crypto/articles';
+
+export function html(text: string): string {
+  return autoLink(text, {
+    usernameIncludeSymbol: true,
+    linkAttributeBlock(entity, attrs) {
+      attrs.target = '_blank';
+      attrs.rel = 'noopener noreferrer';
+      attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
+    },
+  });
+}
 
 export function getUserIdFromSession(session: Session) {
   const userId = session.get('uid') as string | undefined;
