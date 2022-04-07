@@ -20,7 +20,7 @@ export function ErrorBoundary({ error }: { error: Error }) {
 export default function Page() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [mainRef, { width: vw }] = useMeasure();
-  const [measureRef, { width }] = useMeasure();
+  const [measureRef, { width, height }] = useMeasure();
   const centered = vw / 2 + (width - 2 * vw) / 2;
   const righted = width - 2 * vw;
   const mountRun = useRef(true);
@@ -43,7 +43,7 @@ export default function Page() {
       >
         <div ref={measureRef} className='inline-flex h-full'>
           <div className='flex-none w-screen' />
-          <Outlet />
+          <Outlet context={height} />
           <div className='flex-none w-screen' />
         </div>
       </animated.div>

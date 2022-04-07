@@ -77,7 +77,12 @@ export type UserJS = Pick<
 > & { html: string };
 export type TweetJS = Pick<
   Tweet,
-  'like_count' | 'reply_count' | 'retweet_count' | 'quote_count' | 'created_at'
+  | 'text'
+  | 'like_count'
+  | 'reply_count'
+  | 'retweet_count'
+  | 'quote_count'
+  | 'created_at'
 > & {
   id: string;
   html: string;
@@ -118,6 +123,7 @@ export function wrapRefs(tweet: TweetFull, type: RefType): TweetFull[] {
 }
 export function wrapTweet(tweet: TweetFull): TweetJS {
   return {
+    text: tweet.text,
     like_count: tweet.like_count,
     reply_count: tweet.reply_count,
     retweet_count: tweet.retweet_count,

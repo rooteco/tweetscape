@@ -1,3 +1,9 @@
+export const canUseDOM = !!(
+  typeof window !== 'undefined' &&
+  window.document &&
+  window.document.createElement
+);
+
 export function substr(str: string, len: number): string {
   return `${str.substring(0, len).trim()}${str.length > len ? '…' : ''}`;
 }
