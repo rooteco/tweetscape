@@ -1,4 +1,4 @@
-import JSONBig from 'json-bigint';
+import 'json-bigint-patch';
 import type { Session } from 'remix';
 import { autoLink } from 'twitter-text';
 import invariant from 'tiny-invariant';
@@ -9,9 +9,12 @@ import { commitSession, getSession } from '~/session.server';
 
 export { nanoid } from 'nanoid';
 
-const DEFAULT_REDIRECT = '/rekt/crypto/articles';
+// Provided by `json-bigint-patch` which augments the global `JSON` methods.
+// @see {@link https://github.com/ardatan/json-bigint-patch/blob/master/src/index.js}
+// @see {@link https://github.com/sidorares/json-bigint/issues/74}
+export const { parse, stringify } = JSON;
 
-export const { parse, stringify } = JSONBig({ useNativeBigInt: true });
+const DEFAULT_REDIRECT = '/rekt/crypto/articles';
 
 export function html(text: string): string {
   return autoLink(text, {
