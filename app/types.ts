@@ -112,8 +112,8 @@ export function wrapRefs(tweet: TweetFull, type: RefType): TweetFull[] {
     .map((t) => ({
       ...(t as TweetFull),
       author: tweet.ref_authors?.find((u) => u?.id === t?.author_id) as User,
-      liked: tweet.ref_likes?.some((l) => l?.tweet_id === t?.id),
-      retweeted: tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
+      liked: !!tweet.ref_likes?.some((l) => l?.tweet_id === t?.id),
+      retweeted: !!tweet.ref_retweets?.some((r) => r?.tweet_id === t?.id),
     }));
 }
 export function wrapTweet(tweet: TweetFull): TweetJS {
