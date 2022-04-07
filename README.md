@@ -123,10 +123,10 @@ To setup the development environment for and to contribute to Tweetscape:
 $ command -v nvm
 ```
 
-2. Run the following command to install Node.js v16.14.0 (the [current LTS](https://nodejs.org/en/about/releases)):
+2. Run the following command to install Node.js v16.14.0 (the [current LTS](https://nodejs.org/en/about/releases) that's specified in our [`.nvmrc`](https://github.com/rooteco/tweetscape/blob/develop/.nvmrc)):
 
 ```
-$ nvm i 16.14.0
+$ nvm use
 ```
 
 3. (Optional) Run the following command to set Node.js v16.14.0 as your default Node.js version (useful if you have multiple Node.js versions installed and don't want to have to remember to switch to v16.14.0):
