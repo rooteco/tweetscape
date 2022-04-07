@@ -12,6 +12,7 @@ import {
 } from '~/twitter.server';
 import { commitSession, getSession } from '~/session.server';
 import { getUserIdFromSession, log } from '~/utils.server';
+import { invalidate } from '~/swr.server';
 
 export const action: ActionFunction = async ({ request, params }) => {
   invariant(params.tweet, 'expected params.tweet');
@@ -29,6 +30,8 @@ export const action: ActionFunction = async ({ request, params }) => {
     'max_results': 100,
   });
   await executeCreateQueue(toCreateQueue(res));
+  // TODO: Invalidate cached responses for this tweet's replies.
+  if (uid) await invalidate(uid);
   const headers = { 'Set-Cookie': await commitSession(session) };
   return new Response('Sync Success', { status: 200, headers });
 };
