@@ -5,6 +5,7 @@ import type { LoaderFunction } from 'remix';
 import { dequal } from 'dequal/lite';
 import invariant from 'tiny-invariant';
 
+import type { ArticleFull, ArticleJS } from '~/types';
 import {
   ArticlesFilter,
   ArticlesSort,
@@ -19,8 +20,6 @@ import {
   getRektArticles,
 } from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
-import type { ArticleFull, ArticleJS } from '~/types';
-import { wrapArticle } from '~/types';
 import ArticleItem from '~/components/article';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
@@ -29,6 +28,7 @@ import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
+import { wrapArticle } from '~/types';
 import { useError } from '~/error';
 
 export type LoaderData = ArticleJS[];
@@ -75,7 +75,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     default:
       throw new Response('Not Found', { status: 404 });
   }
-  let articles: ArticleJS[] = [];
+  let articles: ArticleFull[] = [];
   await Promise.all([
     (async () => {
       console.time(`swr-get-articles-${invocationId}`);
@@ -108,7 +108,7 @@ export default function ArticlesPage() {
   });
 
   const { pathname } = useLocation();
-  const [article, setArticle] = useState<Article>(() => {
+  const [article, setArticle] = useState<ArticleJS>(() => {
     const url = decodeURIComponent(pathname.split('/')[4]);
     return articles.find((a) => a.url === url) ?? articles[0];
   });
