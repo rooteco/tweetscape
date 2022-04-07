@@ -1,24 +1,23 @@
-import { Link, useFetchers, useLocation } from 'remix';
+import { Link, json, useFetchers, useLoaderData, useLocation } from 'remix';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
 
+import type { TweetFull, TweetJS } from '~/types';
 import { commitSession, getSession } from '~/session.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
 import { getUserIdFromSession, log } from '~/utils.server';
-import { json, useLoaderData } from '~/json';
 import BoltIcon from '~/icons/bolt';
 import CloseIcon from '~/icons/close';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
 import SyncIcon from '~/icons/sync';
 import { TimeAgo } from '~/components/timeago';
-import type { TweetFull } from '~/types';
 import TweetItem from '~/components/tweet';
-import { eq } from '~/utils';
+import { wrapTweet } from '~/types';
 
-export type LoaderData = { tweet: TweetFull; replies: TweetFull[] }[];
+export type LoaderData = { tweet: TweetJS; replies: TweetJS[] }[];
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   invariant(params['*'], 'expected params.*');
@@ -38,10 +37,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   ]);
   log.info(`Fetched ${tweets.length} tweets and ${replies.length} replies.`);
   const data = tweetIds.map((tweetId) => ({
-    tweet: tweets.find((tweet) => eq(tweet.id, tweetId)) as TweetFull,
-    replies: replies.filter((reply) =>
-      reply.refs?.some((r) => eq(r?.referenced_tweet_id, tweetId))
-    ),
+    tweet: wrapTweet(tweets.find((t) => t.id === tweetId) as TweetFull),
+    replies: replies
+      .filter((r) => r.refs?.some((f) => f?.referenced_tweet_id === tweetId))
+      .map(wrapTweet),
   }));
   const headers = { 'Set-Cookie': await commitSession(session) };
   return json<LoaderData>(data, { headers });

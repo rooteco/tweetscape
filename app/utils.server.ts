@@ -1,13 +1,31 @@
+import 'json-bigint-patch';
 import type { Session } from 'remix';
+import { autoLink } from 'twitter-text';
 import invariant from 'tiny-invariant';
-import { parse } from 'accept-language-parser';
+import { parse as parseLangHeader } from 'accept-language-parser';
 import { redirect } from 'remix';
 
 import { commitSession, getSession } from '~/session.server';
 
 export { nanoid } from 'nanoid';
 
+// Provided by `json-bigint-patch` which augments the global `JSON` methods.
+// @see {@link https://github.com/ardatan/json-bigint-patch/blob/master/src/index.js}
+// @see {@link https://github.com/sidorares/json-bigint/issues/74}
+export const { parse, stringify } = JSON;
+
 const DEFAULT_REDIRECT = '/rekt/crypto/articles';
+
+export function html(text: string): string {
+  return autoLink(text, {
+    usernameIncludeSymbol: true,
+    linkAttributeBlock(entity, attrs) {
+      attrs.target = '_blank';
+      attrs.rel = 'noopener noreferrer';
+      attrs.class = 'hover:underline dark:text-sky-400 text-sky-500';
+    },
+  });
+}
 
 export function getUserIdFromSession(session: Session) {
   const userId = session.get('uid') as string | undefined;
@@ -44,7 +62,7 @@ export async function redirectToLastVisited(
 }
 
 export function lang(request: Request): string {
-  const langs = parse(request.headers.get('Accept-Language') ?? '');
+  const langs = parseLangHeader(request.headers.get('Accept-Language') ?? '');
   return langs.length
     ? `${langs[0].code}${langs[0].region ? `-${langs[0].region}` : ''}`
     : 'en-US';

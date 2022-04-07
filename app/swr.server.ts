@@ -1,7 +1,5 @@
 import { createHash } from 'crypto';
 
-import { parse, stringify } from 'json-bigint';
-
 import {
   ArticlesFilter,
   ArticlesSort,
@@ -9,7 +7,7 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
-import { log } from '~/utils.server';
+import { log, parse, stringify } from '~/utils.server';
 import { pool } from '~/db.server';
 import { redis } from '~/redis.server';
 
@@ -119,7 +117,7 @@ export async function swr<T>(
       if (!cachedResponse.length) return null;
 
       if (await cachedStillGoodPromise) {
-        log.trace(`Redis cache hit for (${responseKey}), returning...`);
+        log.debug(`Redis cache hit for (${responseKey}), returning...`);
       } else {
         log.debug(`Redis cache stale for (${responseKey}), revalidating...`);
 

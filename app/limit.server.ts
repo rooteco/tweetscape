@@ -5,11 +5,10 @@ import type {
   ITwitterApiRateLimitSetArgs,
   ITwitterApiRateLimitStore,
 } from '@twitter-api-v2/plugin-rate-limit';
-import { parse, stringify } from 'json-bigint';
 import { TwitterApiRateLimitMemoryStore } from '@twitter-api-v2/plugin-rate-limit';
 import type { TwitterRateLimit } from 'twitter-api-v2';
 
-import { log } from '~/utils.server';
+import { log, parse, stringify } from '~/utils.server';
 import { redis } from '~/redis.server';
 
 let connectionPromise: Promise<void>;

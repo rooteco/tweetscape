@@ -4,11 +4,11 @@ import { memo, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'remix';
 import { dequal } from 'dequal/lite';
 
-import type { Article } from '~/types';
+import type { ArticleJS } from '~/types';
 import { TimeAgo } from '~/components/timeago';
 import { substr } from '~/utils';
 
-export function ArticleContent({ article }: { article: Article }) {
+export function ArticleContent({ article }: { article: ArticleJS }) {
   const earliestTweet = useMemo(
     () =>
       Array.from(article.tweets).sort(
@@ -61,9 +61,8 @@ export function ArticleContent({ article }: { article: Article }) {
         <span className='flex flex-row-reverse justify-end -ml-[2px] mr-0.5'>
           {Array.from(article.tweets)
             .sort((a, b) =>
-              b.score && a.score
-                ? Number(b.score.attention_score) -
-                  Number(a.score.attention_score)
+              b.attention_score && a.attention_score
+                ? b.attention_score - a.attention_score
                 : 0
             )
             .slice(0, 10)
@@ -103,7 +102,7 @@ export function ArticleContent({ article }: { article: Article }) {
 }
 
 export type ArticleItemProps = {
-  article: Article;
+  article: ArticleJS;
   setHover: Dispatch<SetStateAction<{ y: number; height: number } | undefined>>;
 };
 function ArticleItem({ article, setHover }: ArticleItemProps) {

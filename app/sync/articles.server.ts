@@ -4,7 +4,7 @@ import Bottleneck from 'bottleneck';
 import type { IText } from 'html5parser';
 import { decode } from 'html-entities';
 
-import type { Article, Link } from '~/types';
+import type { ArticleFull, Link } from '~/types';
 import { ArticlesFilter, ArticlesSort } from '~/query';
 import { getListArticles, getLists } from '~/query.server';
 import { getLoggedInSession, log } from '~/utils.server';
@@ -29,7 +29,7 @@ export const action: ActionFunction = async ({ request }) => {
   log.info(`Fetching owned and followed lists for user (${uid})...`);
   const listIds = (await getLists(uid)).map((l) => l.id);
   log.info(`Fetching articles for ${listIds.length} user (${uid}) lists...`);
-  const articlesToFetch: Article[] = [];
+  const articlesToFetch: ArticleFull[] = [];
   /* eslint-disable consistent-return */
   await Promise.all(
     listIds

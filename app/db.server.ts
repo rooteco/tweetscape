@@ -1,11 +1,10 @@
 import type { IDatabase } from 'pg-promise';
 import { PrismaClient } from '@prisma/client';
 import array from 'postgres-array';
-import bigjson from 'json-bigint';
 import invariant from 'tiny-invariant';
 import pgPromise from 'pg-promise';
 
-import { log } from '~/utils.server';
+import { log, parse } from '~/utils.server';
 
 type Pool = IDatabase<Record<string, never>>;
 
@@ -51,7 +50,7 @@ function parseBigIntegerArray(value: string) {
 
 function parseJson(value: string) {
   /* eslint-disable-next-line @typescript-eslint/no-unsafe-return */
-  return bigjson.parse(value);
+  return parse(value);
 }
 
 function parseJsonArray(value: string) {
