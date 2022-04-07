@@ -90,10 +90,8 @@ export type TweetJS = Pick<
 };
 export type ArticleJS = Pick<
   Link,
-  'url' | 'unwound_url' | 'title' | 'description' | 'attention_score'
-> & {
-  tweets: TweetJS[];
-};
+  'url' | 'unwound_url' | 'title' | 'description'
+> & { tweets: TweetJS[]; attention_score?: number };
 
 export function wrapUser(user: User): UserJS {
   return {

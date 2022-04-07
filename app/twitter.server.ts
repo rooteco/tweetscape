@@ -38,7 +38,6 @@ import type {
 } from '~/types';
 import { TwitterApiRateLimitDBStore } from '~/limit.server';
 import { db } from '~/db.server';
-import { eq } from '~/utils';
 import { log } from '~/utils.server';
 
 export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
@@ -286,7 +285,7 @@ export function toCreateQueue(
     t.referenced_tweets?.forEach((r) => {
       // Address edge-case where the referenced tweet may be
       // inaccessible to us (e.g. private account) or deleted.
-      if (queue.tweets.some((tw) => eq(tw.id, r.id)))
+      if (queue.tweets.some((tw) => tw.id === BigInt(r.id)))
         queue.refs.push(toRef(r, t));
     });
     t.entities?.urls?.forEach((u) => {

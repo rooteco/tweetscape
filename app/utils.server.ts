@@ -1,7 +1,8 @@
+import JSONBig from 'json-bigint';
 import type { Session } from 'remix';
 import { autoLink } from 'twitter-text';
 import invariant from 'tiny-invariant';
-import { parse } from 'accept-language-parser';
+import { parse as parseLangHeader } from 'accept-language-parser';
 import { redirect } from 'remix';
 
 import { commitSession, getSession } from '~/session.server';
@@ -9,6 +10,8 @@ import { commitSession, getSession } from '~/session.server';
 export { nanoid } from 'nanoid';
 
 const DEFAULT_REDIRECT = '/rekt/crypto/articles';
+
+export const { parse, stringify } = JSONBig({ useNativeBigInt: true });
 
 export function html(text: string): string {
   return autoLink(text, {
@@ -56,7 +59,7 @@ export async function redirectToLastVisited(
 }
 
 export function lang(request: Request): string {
-  const langs = parse(request.headers.get('Accept-Language') ?? '');
+  const langs = parseLangHeader(request.headers.get('Accept-Language') ?? '');
   return langs.length
     ? `${langs[0].code}${langs[0].region ? `-${langs[0].region}` : ''}`
     : 'en-US';

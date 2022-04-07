@@ -4,6 +4,7 @@ import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
 
+import type { TweetFull, TweetJS } from '~/types';
 import { commitSession, getSession } from '~/session.server';
 import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
 import { getUserIdFromSession, log } from '~/utils.server';
@@ -13,9 +14,8 @@ import Column from '~/components/column';
 import Empty from '~/components/empty';
 import SyncIcon from '~/icons/sync';
 import { TimeAgo } from '~/components/timeago';
-import type { TweetFull, TweetJS } from '~/types';
-import { wrapTweet } from '~/types';
 import TweetItem from '~/components/tweet';
+import { wrapTweet } from '~/types';
 
 export type LoaderData = { tweet: TweetJS; replies: TweetJS[] }[];
 

@@ -1,4 +1,3 @@
-import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import {
   useFetcher,
   useFetchers,
@@ -6,10 +5,9 @@ import {
   useMatches,
   useNavigate,
 } from 'remix';
+import type { ReactNode } from 'react';
 import cn from 'classnames';
 
-import type { Ref, TweetJS, UserJS } from '~/types';
-import { eq, num } from '~/utils';
 import LikeIcon from '~/icons/like';
 import LikedIcon from '~/icons/liked';
 import type { LoaderData } from '~/root';
@@ -19,7 +17,9 @@ import RetweetIcon from '~/icons/retweet';
 import RetweetedIcon from '~/icons/retweeted';
 import ShareIcon from '~/icons/share';
 import { TimeAgo } from '~/components/timeago';
+import type { TweetJS } from '~/types';
 import VerifiedIcon from '~/icons/verified';
+import { num } from '~/utils';
 
 type ActionProps = {
   active?: boolean;
@@ -236,7 +236,7 @@ function TweetInner({ tweet, nested }: TweetProps) {
           })}
           dangerouslySetInnerHTML={{ __html: tweet?.html ?? '' }}
         />
-        {tweet.quotes?.length &&
+        {!!tweet?.quotes?.length &&
           tweet.quotes.map((t) => <TweetItem nested tweet={t} key={t.id} />)}
         <div className='-m-1.5 flex items-stretch min-w-0 justify-between text-gray-500'>
           <Action
