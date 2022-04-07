@@ -199,6 +199,7 @@ export default function TweetsPage() {
           <InfiniteLoader
             isItemLoaded={(idx) => idx < tweets.length}
             itemCount={tweets.length + 1}
+            threshold={30}
             loadMoreItems={() => {
               setSearchParams({
                 ...Object.fromEntries(searchParams.entries()),
