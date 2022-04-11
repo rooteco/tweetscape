@@ -16,7 +16,7 @@ function PostLink({ children, href }: PostLinkProps) {
   );
 }
 
-function Post({ code, frontmatter }: LoaderData[0]) {
+function Post({ code, frontmatter, week }: LoaderData[0] & { week: number }) {
   const Component = useMemo(() => getMDXComponent(code), [code]);
   return (
     <section>
@@ -24,11 +24,15 @@ function Post({ code, frontmatter }: LoaderData[0]) {
       <div className='my-20 flex items-start'>
         <header className='w-1/4 sticky top-6 mr-6 shrink-0'>
           <h4 className='text-gray-600 dark:text-gray-400 font-medium'>
-            {new Date(frontmatter.date).toLocaleString(undefined, {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            Week {week}
+            <span className='mx-1.5 text-gray-500'>·</span>
+            <span className='text-gray-500'>
+              {new Date(frontmatter.date).toLocaleString(undefined, {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </span>
           </h4>
           <a
             className='block text-gray-500'
@@ -80,11 +84,12 @@ export default function Changelog() {
         </div>
       </header>
       <main className='my-8 relative'>
-        {posts.map((post) => (
+        {posts.map((post, idx) => (
           <Post
             code={post.code}
             frontmatter={post.frontmatter}
             key={post.frontmatter.date}
+            week={posts.length - idx}
           />
         ))}
       </main>
