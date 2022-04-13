@@ -85,7 +85,7 @@
     "autoprefixer": "^10.4.4",
     "concurrently": "^7.1.0",
     "cross-env": "^7.0.3",
-    "cypress": "^9.5.3",
+    "cypress": "^9.5.4",
     "dotenv": "^16.0.0",
     "dotenv-cli": "^5.1.0",
     "eslint": "^8.12.0",
