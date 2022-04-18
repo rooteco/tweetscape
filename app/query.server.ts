@@ -4,12 +4,21 @@ import {
   ArticlesSort,
   DEFAULT_TIME,
   DEFAULT_TWEETS_LIMIT,
+  Time,
   TweetsFilter,
   TweetsSort,
 } from '~/query';
 import { log } from '~/utils.server';
 import { swr } from '~/swr.server';
 
+const TWEETS_TIMES: Record<Time, string> = {
+  [Time.Day]: `tweets.created_at > current_date - 1`,
+  [Time.Week]: `tweets.created_at > current_date - 7`,
+  [Time.Month]: `tweets.created_at > current_date - 30`,
+  [Time.Year]: `tweets.created_at > current_date - 365`,
+  [Time.Decade]: `tweets.created_at > current_date - 3650`,
+  [Time.Century]: `tweets.created_at > current_date - 36500`,
+};
 const TWEETS_ORDER_BY: Record<TweetsSort, string> = {
   [TweetsSort.TweetCount]: `(tweets.retweet_count + tweets.quote_count) desc`,
   [TweetsSort.RetweetCount]: `tweets.retweet_count desc`,
@@ -114,7 +123,8 @@ function getListTweetsQuery(
       left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
       ${uid ? `left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${uid}` : ''}
       ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
-    ${filter === TweetsFilter.HideRetweets ? `where refs is null` : ''}
+    where ${TWEETS_TIMES[time]}
+    ${filter === TweetsFilter.HideRetweets ? `and refs is null` : ''}
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by ${TWEETS_ORDER_BY[sort]}
     limit ${limit};`;
@@ -167,7 +177,8 @@ function getClusterTweetsQuery(
       left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
       ${uid ? `left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${uid}` : ''}
       ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
-    ${filter === TweetsFilter.HideRetweets ? `where refs is null` : ''}
+    where ${TWEETS_TIMES[time]}
+    ${filter === TweetsFilter.HideRetweets ? `and refs is null` : ''}
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by ${TWEETS_ORDER_BY[sort]}
     limit ${limit};`;
@@ -218,7 +229,8 @@ function getRektTweetsQuery(
       left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
       ${uid ? `left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${uid}` : ''}
       ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
-    ${filter === TweetsFilter.HideRetweets ? `where refs is null` : ''}
+    where ${TWEETS_TIMES[time]}
+    ${filter === TweetsFilter.HideRetweets ? `and refs is null` : ''}
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by ${TWEETS_ORDER_BY[sort]}
     limit ${limit};`;
