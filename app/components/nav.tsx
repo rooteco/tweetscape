@@ -2,12 +2,12 @@ import type { ReactNode, RefObject } from 'react';
 import { animated, config, useSpring } from '@react-spring/web';
 import { useEffect, useRef, useState } from 'react';
 
-export type HeaderProps = {
+export type NavProps = {
   scrollerRef: RefObject<HTMLElement | null>;
   children?: ReactNode;
 };
 
-export default function Header({ children, scrollerRef }: HeaderProps) {
+export default function Nav({ children, scrollerRef }: NavProps) {
   const [visible, setVisible] = useState<boolean>(true);
   const lastScrollPosition = useRef<number>(0);
 
