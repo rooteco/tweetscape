@@ -1,6 +1,7 @@
 import {
   json,
   useLoaderData,
+  useLocation,
   useOutletContext,
   useSearchParams,
   useTransition,
@@ -111,6 +112,7 @@ export default function TweetsPage() {
   const variableSizeListRef = useRef<VariableSizeList>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const { pathname } = useLocation();
   const prevLength = useRef(tweets.length);
   const transition = useTransition();
   useEffect(() => {
@@ -120,8 +122,14 @@ export default function TweetsPage() {
       // this, `react-window` will wrongly use the height of the fallback item.
       variableSizeListRef.current?.resetAfterIndex(prevLength.current);
       prevLength.current = tweets.length;
+    } else if (
+      transition.state === 'loading' &&
+      transition.location.pathname !== pathname
+    ) {
+      // Queue a recalculation of all the items loaded into the next page.
+      prevLength.current = 0;
     }
-  }, [transition.state, tweets.length]);
+  }, [transition.state, transition.location, tweets.length, pathname]);
 
   return (
     <Column
