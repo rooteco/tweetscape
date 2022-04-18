@@ -2,6 +2,7 @@ import type { ArticleFull, List, TweetFull } from '~/types';
 import {
   ArticlesFilter,
   ArticlesSort,
+  DEFAULT_TIME,
   DEFAULT_TWEETS_LIMIT,
   TweetsFilter,
   TweetsSort,
@@ -87,6 +88,7 @@ function getListTweetsQuery(
   listId: bigint,
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ) {
@@ -121,12 +123,13 @@ export async function getListTweets(
   listId: bigint,
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort]}...`);
   const tweets = await swr<TweetFull>(
-    getListTweetsQuery(listId, sort, filter, limit, uid),
+    getListTweetsQuery(listId, sort, filter, time, limit, uid),
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for list (${listId}).`);
@@ -137,6 +140,7 @@ function getClusterTweetsQuery(
   clusterSlug: string,
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ) {
@@ -172,12 +176,13 @@ export async function getClusterTweets(
   clusterSlug: string,
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort]}...`);
   const tweets = await swr<TweetFull>(
-    getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid),
+    getClusterTweetsQuery(clusterSlug, sort, filter, time, limit, uid),
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
@@ -187,6 +192,7 @@ export async function getClusterTweets(
 function getRektTweetsQuery(
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ) {
@@ -220,12 +226,13 @@ function getRektTweetsQuery(
 export async function getRektTweets(
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort]}...`);
   const tweets = await swr<TweetFull>(
-    getRektTweetsQuery(sort, filter, limit, uid),
+    getRektTweetsQuery(sort, filter, time, limit, uid),
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for Rekt.`);

@@ -6,6 +6,7 @@ export enum Param {
   TweetsSort = 'ts',
   TweetsFilter = 'tf',
   TweetsLimit = 'tl',
+  Time = 't',
 }
 
 export enum ArticlesSort {
@@ -44,3 +45,12 @@ export enum TweetsFilter {
   ShowRetweets,
 }
 export const DEFAULT_TWEETS_FILTER = TweetsFilter.ShowRetweets;
+export enum Time {
+  Day,
+  Week,
+  Month,
+  Year,
+  Decade,
+  Century,
+}
+export const DEFAULT_TIME = Time.Week;

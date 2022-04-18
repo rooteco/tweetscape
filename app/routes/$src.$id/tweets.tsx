@@ -16,10 +16,12 @@ import invariant from 'tiny-invariant';
 import mergeRefs from 'react-merge-refs';
 
 import {
+  DEFAULT_TIME,
   DEFAULT_TWEETS_FILTER,
   DEFAULT_TWEETS_LIMIT,
   DEFAULT_TWEETS_SORT,
   Param,
+  Time,
   TweetsFilter,
   TweetsSort,
 } from '~/query';
@@ -39,6 +41,7 @@ import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
+import TimeIcon from '~/icons/time';
 import { useError } from '~/error';
 import { wrapTweet } from '~/types';
 
@@ -62,25 +65,34 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const filter = Number(
     url.searchParams.get(Param.TweetsFilter) ?? DEFAULT_TWEETS_FILTER
   ) as TweetsFilter;
+  const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
   const limit = Number(
     url.searchParams.get(Param.TweetsLimit) ?? DEFAULT_TWEETS_LIMIT
   );
   let tweetsPromise: Promise<TweetFull[]>;
   switch (params.src) {
     case 'clusters':
-      tweetsPromise = getClusterTweets(params.id, sort, filter, limit, uid);
+      tweetsPromise = getClusterTweets(
+        params.id,
+        sort,
+        filter,
+        time,
+        limit,
+        uid
+      );
       break;
     case 'lists':
       tweetsPromise = getListTweets(
         BigInt(params.id),
         sort,
         filter,
+        time,
         limit,
         uid
       );
       break;
     case 'rekt':
-      tweetsPromise = getRektTweets(sort, filter, limit, uid);
+      tweetsPromise = getRektTweets(sort, filter, time, limit, uid);
       break;
     default:
       throw new Response('Not Found', { status: 404 });
@@ -195,6 +207,41 @@ export default function TweetsPage() {
                   name: 'Show retweets',
                   to: `?${Param.TweetsFilter}=${TweetsFilter.ShowRetweets}`,
                   isActiveByDefault: true,
+                },
+              ],
+            },
+          ]}
+        />
+        <Switcher
+          icon={<TimeIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
+          sections={[
+            {
+              header: 'From the last',
+              links: [
+                {
+                  name: 'Day',
+                  to: `?${Param.Time}=${Time.Day}`,
+                },
+                {
+                  name: 'Week',
+                  to: `?${Param.Time}=${Time.Week}`,
+                  isActiveByDefault: true,
+                },
+                {
+                  name: 'Month',
+                  to: `?${Param.Time}=${Time.Month}`,
+                },
+                {
+                  name: 'Year',
+                  to: `?${Param.Time}=${Time.Year}`,
+                },
+                {
+                  name: 'Decade',
+                  to: `?${Param.Time}=${Time.Decade}`,
+                },
+                {
+                  name: 'Century',
+                  to: `?${Param.Time}=${Time.Century}`,
                 },
               ],
             },
