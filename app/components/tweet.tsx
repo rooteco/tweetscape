@@ -5,7 +5,7 @@ import {
   useLocation,
   useMatches,
   useNavigate,
-} from 'remix';
+} from '@remix-run/react';
 import cn from 'classnames';
 
 import { canUseDOM, num } from '~/utils';

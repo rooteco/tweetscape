@@ -1,5 +1,5 @@
 import type { ReactNode, Ref } from 'react';
-import { Outlet } from 'remix';
+import { Outlet } from '@remix-run/react';
 import cn from 'classnames';
 import { forwardRef } from 'react';
 

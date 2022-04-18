@@ -1,4 +1,4 @@
-import type { ActionFunction } from 'remix';
+import type { ActionFunction } from '@remix-run/node';
 import invariant from 'tiny-invariant';
 
 import { getLoggedInSession, log } from '~/utils.server';

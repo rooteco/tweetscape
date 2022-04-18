@@ -1,14 +1,16 @@
+import type { LoaderFunction } from '@remix-run/node';
+import { json } from '@remix-run/node';
+
 import {
-  json,
   useLoaderData,
   useLocation,
   useOutletContext,
   useSearchParams,
   useTransition,
-} from 'remix';
+} from '@remix-run/react';
+
 import { useEffect, useRef } from 'react';
 import InfiniteLoader from 'react-window-infinite-loader';
-import type { LoaderFunction } from 'remix';
 import { VariableSizeList } from 'react-window';
 import invariant from 'tiny-invariant';
 import mergeRefs from 'react-merge-refs';

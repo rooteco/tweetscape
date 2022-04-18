@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { useFetcher, useLocation, useMatches } from 'remix';
+import { useFetcher, useLocation, useMatches } from '@remix-run/react';
 
 import BoltIcon from '~/icons/bolt';
 import { ErrorContext } from '~/error';

@@ -1,9 +1,9 @@
 import fs from 'fs/promises';
 import { resolve } from 'path';
 
-import type { LoaderFunction } from 'remix';
+import type { LoaderFunction } from '@remix-run/node';
+import { json } from '@remix-run/node';
 import { bundleMDX } from 'mdx-bundler';
-import { json } from 'remix';
 
 import { log } from '~/utils.server';
 

@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
+
 import {
   Link,
   NavLink,
@@ -7,7 +8,8 @@ import {
   useMatches,
   useResolvedPath,
   useTransition,
-} from 'remix';
+} from '@remix-run/react';
+
 import { animated, config, useSpring } from '@react-spring/web';
 import { useRef, useState } from 'react';
 import cn from 'classnames';

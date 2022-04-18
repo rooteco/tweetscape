@@ -6,7 +6,7 @@ import {
   useResolvedPath,
   useSearchParams,
   useTransition,
-} from 'remix';
+} from '@remix-run/react';
 import {
   animated,
   config,

@@ -1,4 +1,4 @@
-import type { ActionFunction } from 'remix';
+import type { ActionFunction } from '@remix-run/node';
 
 import { commitSession, getSession } from '~/session.server';
 import { isTheme } from '~/theme';

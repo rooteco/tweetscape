@@ -11317,13 +11317,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"remix@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "remix@npm:1.4.0"
-  checksum: 503641d1e927a9c9687b6d1334bb5f040efe8c0a30c3feec6c1130776f25c70707a862e74b8a8e634e0feb7f08cffd1e725a17386fe7386ac93fd26d388d735a
-  languageName: node
-  linkType: hard
-
 "remote-origin-url@npm:^0.5.1":
   version: 0.5.3
   resolution: "remote-origin-url@npm:0.5.3"
@@ -12879,7 +12872,6 @@ __metadata:
     react-window-infinite-loader: ^1.0.7
     redis: ^4.0.6
     release: ^6.3.1
-    remix: ^1.4.0
     sharp: ^0.30.4
     tailwindcss: ^3.0.24
     timeago-react: ^3.0.4

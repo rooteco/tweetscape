@@ -1,6 +1,12 @@
-import { Link, json, useFetchers, useLoaderData, useLocation } from 'remix';
+import type { LoaderFunction } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import {
+  Link,
+  useFetchers,
+  useLoaderData,
+  useLocation,
+} from '@remix-run/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { LoaderFunction } from 'remix';
 import cn from 'classnames';
 import invariant from 'tiny-invariant';
 

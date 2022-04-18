@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useFetcher } from 'remix';
+import { useFetcher } from '@remix-run/react';
 
 import { Theme, Themed, isTheme, useTheme } from '~/theme';
 import DarkIcon from '~/icons/dark';

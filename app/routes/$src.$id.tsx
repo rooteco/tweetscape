@@ -1,6 +1,6 @@
 import { animated, useSpring } from '@react-spring/web';
 import { useEffect, useRef } from 'react';
-import { Outlet } from 'remix';
+import { Outlet } from '@remix-run/react';
 import useMeasure from 'react-use-measure';
 
 import ErrorDisplay from '~/components/error';

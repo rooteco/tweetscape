@@ -1,3 +1,9 @@
+import type {
+  LinksFunction,
+  LoaderFunction,
+  MetaFunction,
+} from '@remix-run/node';
+import { json } from '@remix-run/node';
 import {
   Links,
   LiveReload,
@@ -5,10 +11,8 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  json,
   useLoaderData,
-} from 'remix';
-import type { LinksFunction, LoaderFunction, MetaFunction } from 'remix';
+} from '@remix-run/react';
 import { StrictMode, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 

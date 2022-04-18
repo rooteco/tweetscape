@@ -1,5 +1,5 @@
 import { SyntaxKind, parse, walk } from 'html5parser';
-import type { ActionFunction } from 'remix';
+import type { ActionFunction } from '@remix-run/node';
 import Bottleneck from 'bottleneck';
 import type { IText } from 'html5parser';
 import { decode } from 'html-entities';

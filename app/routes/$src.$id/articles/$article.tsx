@@ -1,4 +1,9 @@
-import { Link, useLocation, useOutletContext, useSearchParams } from 'remix';
+import {
+  Link,
+  useLocation,
+  useOutletContext,
+  useSearchParams,
+} from '@remix-run/react';
 import { useEffect, useMemo, useRef } from 'react';
 
 import {

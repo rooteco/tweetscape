@@ -1,4 +1,4 @@
-import type { ActionFunction } from 'remix';
+import type { ActionFunction } from '@remix-run/node';
 
 import type { List, ListFollower, User } from '~/types';
 import {

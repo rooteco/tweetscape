@@ -1,9 +1,9 @@
 import type { Hash } from 'crypto';
 import { createHash } from 'crypto';
 
-import type { LoaderFunction } from 'remix';
+import type { LoaderFunction } from '@remix-run/node';
+import { redirect } from '@remix-run/node';
 import { nanoid } from 'nanoid';
-import { redirect } from 'remix';
 
 import { commitSession, getSession } from '~/session.server';
 

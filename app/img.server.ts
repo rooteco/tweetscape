@@ -7,7 +7,7 @@ import https from 'https';
 import path from 'path';
 
 import type { FitEnum } from 'sharp';
-import type { LoaderFunction } from 'remix';
+import type { LoaderFunction } from '@remix-run/node';
 import type { Request as NodeRequest } from '@remix-run/node';
 import { Response as NodeResponse } from '@remix-run/node';
 import invariant from 'tiny-invariant';

@@ -1,4 +1,4 @@
-import type { LoaderFunction } from 'remix';
+import type { LoaderFunction } from '@remix-run/node';
 
 import { TwitterApi, USER_FIELDS } from '~/twitter.server';
 import { getBaseURL, log, redirectToLastVisited } from '~/utils.server';

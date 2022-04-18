@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { animated, useSpring } from '@react-spring/web';
 import { memo, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'remix';
+import { useLocation, useNavigate } from '@remix-run/react';
 import { dequal } from 'dequal/lite';
 
 import type { ArticleJS } from '~/types';

@@ -1,7 +1,8 @@
 import { animated, useSpring } from '@react-spring/web';
-import { json, useLoaderData, useLocation } from 'remix';
+import type { LoaderFunction } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { useLoaderData, useLocation } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
-import type { LoaderFunction } from 'remix';
 import { dequal } from 'dequal/lite';
 import invariant from 'tiny-invariant';
 
