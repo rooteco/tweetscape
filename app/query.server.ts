@@ -2,13 +2,23 @@ import type { ArticleFull, List, TweetFull } from '~/types';
 import {
   ArticlesFilter,
   ArticlesSort,
+  DEFAULT_TIME,
   DEFAULT_TWEETS_LIMIT,
+  Time,
   TweetsFilter,
   TweetsSort,
 } from '~/query';
 import { log } from '~/utils.server';
 import { swr } from '~/swr.server';
 
+const TWEETS_TIMES: Record<Time, string> = {
+  [Time.Day]: `tweets.created_at > current_date - 1`,
+  [Time.Week]: `tweets.created_at > current_date - 7`,
+  [Time.Month]: `tweets.created_at > current_date - 30`,
+  [Time.Year]: `tweets.created_at > current_date - 365`,
+  [Time.Decade]: `tweets.created_at > current_date - 3650`,
+  [Time.Century]: `tweets.created_at > current_date - 36500`,
+};
 const TWEETS_ORDER_BY: Record<TweetsSort, string> = {
   [TweetsSort.TweetCount]: `(tweets.retweet_count + tweets.quote_count) desc`,
   [TweetsSort.RetweetCount]: `tweets.retweet_count desc`,
@@ -87,6 +97,7 @@ function getListTweetsQuery(
   listId: bigint,
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ) {
@@ -112,7 +123,8 @@ function getListTweetsQuery(
       left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
       ${uid ? `left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${uid}` : ''}
       ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
-    ${filter === TweetsFilter.HideRetweets ? `where refs is null` : ''}
+    where ${TWEETS_TIMES[time]}
+    ${filter === TweetsFilter.HideRetweets ? `and refs is null` : ''}
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by ${TWEETS_ORDER_BY[sort]}
     limit ${limit};`;
@@ -121,12 +133,13 @@ export async function getListTweets(
   listId: bigint,
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort]}...`);
   const tweets = await swr<TweetFull>(
-    getListTweetsQuery(listId, sort, filter, limit, uid),
+    getListTweetsQuery(listId, sort, filter, time, limit, uid),
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for list (${listId}).`);
@@ -137,6 +150,7 @@ function getClusterTweetsQuery(
   clusterSlug: string,
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ) {
@@ -163,7 +177,8 @@ function getClusterTweetsQuery(
       left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
       ${uid ? `left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${uid}` : ''}
       ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
-    ${filter === TweetsFilter.HideRetweets ? `where refs is null` : ''}
+    where ${TWEETS_TIMES[time]}
+    ${filter === TweetsFilter.HideRetweets ? `and refs is null` : ''}
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by ${TWEETS_ORDER_BY[sort]}
     limit ${limit};`;
@@ -172,12 +187,13 @@ export async function getClusterTweets(
   clusterSlug: string,
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort]}...`);
   const tweets = await swr<TweetFull>(
-    getClusterTweetsQuery(clusterSlug, sort, filter, limit, uid),
+    getClusterTweetsQuery(clusterSlug, sort, filter, time, limit, uid),
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for cluster (${clusterSlug}).`);
@@ -187,6 +203,7 @@ export async function getClusterTweets(
 function getRektTweetsQuery(
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ) {
@@ -212,7 +229,8 @@ function getRektTweetsQuery(
       left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
       ${uid ? `left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${uid}` : ''}
       ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
-    ${filter === TweetsFilter.HideRetweets ? `where refs is null` : ''}
+    where ${TWEETS_TIMES[time]}
+    ${filter === TweetsFilter.HideRetweets ? `and refs is null` : ''}
     group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
     order by ${TWEETS_ORDER_BY[sort]}
     limit ${limit};`;
@@ -220,12 +238,13 @@ function getRektTweetsQuery(
 export async function getRektTweets(
   sort: TweetsSort,
   filter: TweetsFilter,
+  time = DEFAULT_TIME,
   limit = DEFAULT_TWEETS_LIMIT,
   uid?: bigint
 ): Promise<TweetFull[]> {
   log.debug(`Ordering tweets by ${TWEETS_ORDER_BY[sort]}...`);
   const tweets = await swr<TweetFull>(
-    getRektTweetsQuery(sort, filter, limit, uid),
+    getRektTweetsQuery(sort, filter, time, limit, uid),
     uid
   );
   log.trace(`Fetched ${tweets.length} tweets for Rekt.`);
