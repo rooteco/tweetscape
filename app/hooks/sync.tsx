@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useFetcher, useFetchers, useResolvedPath } from '@remix-run/react';
 import cn from 'classnames';
 
 import BoltIcon from '~/icons/bolt';
+import { ErrorContext } from '~/error';
+import ErrorIcon from '~/icons/error';
 import SyncIcon from '~/icons/sync';
 import { TimeAgo } from '~/components/timeago';
 
-export default function useSync(action?: string) {
+export default function useSync(action?: string, obj = '', shouldSync = true) {
+  const { error } = useContext(ErrorContext);
   const { pathname } = useResolvedPath('');
   const fetchers = useFetchers();
   const syncing = useMemo(
@@ -25,9 +28,9 @@ export default function useSync(action?: string) {
   }, [syncing]);
   const fetcher = useFetcher();
   useEffect(() => {
-    if (!syncing && !lastSynced)
+    if (!syncing && !lastSynced && !error && shouldSync)
       fetcher.submit(null, { method: 'patch', action: action ?? pathname });
-  }, [fetcher, syncing, lastSynced, action, pathname]);
+  }, [fetcher, syncing, lastSynced, action, pathname, error, shouldSync]);
   const indicator = useMemo(
     () => (
       <div
@@ -36,24 +39,30 @@ export default function useSync(action?: string) {
           { 'cursor-wait': syncing, 'cursor-default': !syncing }
         )}
       >
-        {syncing && (
+        {error && (
           <>
-            <SyncIcon />
-            <span>Syncing</span>
+            <ErrorIcon />
+            <span>Sync error</span>
           </>
         )}
-        {!syncing && (
+        {!error && syncing && (
+          <>
+            <SyncIcon />
+            <span>Syncing{obj ? ` ${obj}` : ''}</span>
+          </>
+        )}
+        {!error && !syncing && (
           <>
             <BoltIcon />
             <span>
-              Synced{' '}
+              Synced{obj ? ` ${obj} ` : ' '}
               <TimeAgo datetime={lastSynced ?? new Date()} locale='en_short' />
             </span>
           </>
         )}
       </div>
     ),
-    [syncing, lastSynced]
+    [syncing, lastSynced, obj]
   );
   return { syncing, indicator };
 }

@@ -1,5 +1,4 @@
 import type { Dispatch, SetStateAction } from 'react';
-
 import {
   Link,
   NavLink,
@@ -9,7 +8,6 @@ import {
   useResolvedPath,
   useTransition,
 } from '@remix-run/react';
-
 import { animated, config, useSpring } from '@react-spring/web';
 import { useRef, useState } from 'react';
 import cn from 'classnames';
@@ -20,8 +18,8 @@ import type { LoaderData } from '~/root';
 import LogoutIcon from '~/icons/logout';
 import OpenInNewIcon from '~/icons/open-in-new';
 import Switcher from '~/components/switcher';
-import Sync from '~/components/sync';
 import ThemeSwitcher from '~/components/theme-switcher';
+import useSync from '~/hooks/sync';
 
 function PageSwitcher() {
   const { pathname } = useLocation();
@@ -111,6 +109,7 @@ function Tabs() {
 export default function Header() {
   const root = useMatches()[0].data as LoaderData | undefined;
   const fetcher = useFetcher();
+  const { indicator } = useSync('/sync/lists', 'lists', !!root?.user);
   return (
     <header className='flex-none border-b border-gray-200 dark:border-gray-800'>
       <nav className='flex items-stretch justify-center p-1.5 mx-auto'>
@@ -140,7 +139,7 @@ export default function Header() {
             <span>Login with Twitter</span>
           </Link>
         )}
-        {root?.user && <Sync />}
+        {root?.user && indicator}
         <Link
           prefetch='intent'
           className='mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6'
