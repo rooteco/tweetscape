@@ -8,12 +8,13 @@ import {
   useTransition,
 } from '@remix-run/react';
 import InfiniteLoader from 'react-window-infinite-loader';
+import type { TwitterApi } from 'twitter-api-v2';
 import { VariableSizeList } from 'react-window';
 import invariant from 'tiny-invariant';
 import { json } from '@remix-run/node';
 import mergeRefs from 'react-merge-refs';
 
-import type { Cluster, TweetFull, TweetJS } from '~/types';
+import type { Cluster, Rekt, TweetFull, TweetJS, User } from '~/types';
 import {
   DEFAULT_TIME,
   DEFAULT_TWEETS_FILTER,
@@ -29,7 +30,6 @@ import TweetItem, {
   ITEM_WIDTH,
   getTweetItemHeight,
 } from '~/components/tweet';
-import { commitSession, getSession } from '~/session.server';
 import {
   TWEET_EXPANSIONS,
   TWEET_FIELDS,
@@ -39,6 +39,7 @@ import {
   initQueue,
   toCreateQueue,
 } from '~/twitter.server';
+import { commitSession, getSession } from '~/session.server';
 import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
 import Column from '~/components/column';
@@ -176,6 +177,47 @@ async function getBorgCollectiveInfluencers(c: Cluster, pg = 0) {
   return { influencers: [], total: 0 };
 }
 
+interface RektInfluencer {
+  id: number;
+  screen_name: string;
+  name: string;
+  profile_picture: string;
+  points_v2: number;
+  rank: number;
+  followers: number;
+  followers_in_people_count: number;
+}
+
+async function syncTweetsFromUsernames(api: TwitterApi, usernames: string[]) {
+  const queries: string[] = [];
+  usernames.forEach((username) => {
+    const query = queries[queries.length - 1];
+    if (query && `${query} OR from:${username}`.length < 512)
+      queries[queries.length - 1] = `${query} OR from:${username}`;
+    else queries.push(`from:${username}`);
+  });
+  const queue = initQueue();
+  await Promise.all(
+    queries.map(async (query) => {
+      log.debug(`Query (${query.length}):\n${query}`);
+      const hash = createHash('sha256').update(query).digest('hex');
+      const key = `sinceid:${hash}`;
+      const id = (await redis.get(key)) ?? undefined;
+      log.debug(`Pagination id for query (${query.length}): ${id}`);
+      const res = await api.v2.search(query, {
+        'max_results': 100,
+        'since_id': id,
+        'tweet.fields': TWEET_FIELDS,
+        'expansions': TWEET_EXPANSIONS,
+        'user.fields': USER_FIELDS,
+      });
+      toCreateQueue(res, queue);
+      if (res.meta.next_token) await redis.set(key, res.meta.newest_id);
+    })
+  );
+  await executeCreateQueue(queue);
+}
+
 export const action: ActionFunction = async ({ params, request }) => {
   const invocationId = nanoid(5);
   console.time(`src-id-loader-${invocationId}`);
@@ -190,35 +232,12 @@ export const action: ActionFunction = async ({ params, request }) => {
         where: { slug: params.id },
       });
       if (!cluster) throw new Response('Not Found', { status: 404 });
+      // TODO: Sync cluster influencer scores on-demand.
       const { influencers } = await getBorgCollectiveInfluencers(cluster);
-      const queries: string[] = [];
-      influencers.forEach((influencer) => {
-        const username = influencer.social_account.social_account.screen_name;
-        const query = queries[queries.length - 1];
-        if (query && `${query} OR from:${username}`.length < 512)
-          queries[queries.length - 1] = `${query} OR from:${username}`;
-        else queries.push(`from:${username}`);
-      });
-      const queue = initQueue();
-      await Promise.all(
-        queries.map(async (query) => {
-          log.debug(`Query (${query.length}):\n${query}`);
-          const hash = createHash('sha256').update(query).digest('hex');
-          const key = `sinceid:${hash}`;
-          const id = (await redis.get(key)) ?? undefined;
-          log.debug(`Pagination id for query (${query.length}): ${id}`);
-          const res = await api.v2.search(query, {
-            'max_results': 100,
-            'since_id': id,
-            'tweet.fields': TWEET_FIELDS,
-            'expansions': TWEET_EXPANSIONS,
-            'user.fields': USER_FIELDS,
-          });
-          toCreateQueue(res, queue);
-          if (res.meta.next_token) await redis.set(key, res.meta.newest_id);
-        })
+      const usernames = influencers.map(
+        (influencer) => influencer.social_account.social_account.screen_name
       );
-      await executeCreateQueue(queue);
+      await syncTweetsFromUsernames(api, usernames);
       break;
     }
     case 'lists': {
@@ -243,7 +262,73 @@ export const action: ActionFunction = async ({ params, request }) => {
       break;
     }
     case 'rekt': {
-      log.warn('TODO: Implement lists inline tweet syncing...');
+      const n = 1000;
+      const parse = (_: unknown, value: unknown) =>
+        typeof value === 'bigint' ? `${value.toString()}n` : value;
+      log.info(`Fetching ${n} rekt scores...`);
+      const res = await fetch(
+        `https://feed.rekt.news/api/v1/parlor/crypto/0/${n}`
+      );
+      const influencers = (await res.json()) as RektInfluencer[];
+      log.info(`Fetching ${influencers.length} rekt users...`);
+      const splits: RektInfluencer[][] = [];
+      while (json.length) splits.push(influencers.splice(0, 100));
+      const usersToCreate: User[] = [];
+      const scoresToCreate: Rekt[] = [];
+      await Promise.all(
+        splits.map(async (scores) => {
+          const data = await api.v2.usersByUsernames(
+            scores.map((r) => r.screen_name),
+            {
+              'user.fields': USER_FIELDS,
+              'tweet.fields': TWEET_FIELDS,
+              'expansions': ['pinned_tweet_id'],
+            }
+          );
+          log.trace(`Fetched users: ${JSON.stringify(data, parse, 2)}`);
+          log.info(`Parsing ${data.data.length} users...`);
+          const users = data.data.map((u) => ({
+            id: BigInt(u.id),
+            name: u.name,
+            username: u.username,
+            verified: u.verified ?? null,
+            description: u.description ?? null,
+            profile_image_url: u.profile_image_url ?? null,
+            followers_count: u.public_metrics?.followers_count ?? null,
+            following_count: u.public_metrics?.following_count ?? null,
+            tweets_count: u.public_metrics?.tweet_count ?? null,
+            created_at: u.created_at ? new Date(u.created_at) : null,
+            updated_at: new Date(),
+          }));
+          users.forEach((i) => usersToCreate.push(i));
+          log.info(`Parsing ${scores.length} rekt scores...`);
+          const rekt = scores.map((d) => ({
+            id: BigInt(d.id),
+            user_id: users.find((i) => i.username === d.screen_name)
+              ?.id as bigint,
+            username: d.screen_name,
+            name: d.name,
+            profile_image_url: d.profile_picture,
+            points: d.points_v2,
+            rank: d.rank,
+            followers_count: d.followers,
+            followers_in_people_count: d.followers_in_people_count,
+          }));
+          const missing = rekt.filter((r) => !r.user_id);
+          log.warn(
+            `Missing user data for: ${JSON.stringify(missing, parse, 2)}`
+          );
+          rekt.filter((r) => r.user_id).forEach((r) => scoresToCreate.push(r));
+        })
+      );
+      log.info(`Inserting ${scoresToCreate.length} rekt scores and users...`);
+      const skipDuplicates = true;
+      await db.$transaction([
+        db.users.createMany({ data: usersToCreate, skipDuplicates }),
+        db.rekt.createMany({ data: scoresToCreate, skipDuplicates }),
+      ]);
+      const usernames = usersToCreate.map((u) => u.username);
+      await syncTweetsFromUsernames(api, usernames);
       break;
     }
     default:

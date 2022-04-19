@@ -11,6 +11,7 @@ import type {
   mentions,
   ref_type,
   refs,
+  rekt,
   retweets,
   scores,
   tag_type,
@@ -31,6 +32,7 @@ export type Like = likes;
 export type Retweet = retweets;
 export type Mention = mentions;
 export type Ref = refs;
+export type Rekt = rekt;
 export type Score = scores;
 export type Tag = tags;
 export type Tweet = tweets;
