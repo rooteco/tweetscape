@@ -62,7 +62,7 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
         )}
       </div>
     ),
-    [syncing, lastSynced, obj]
+    [syncing, lastSynced, obj, error]
   );
   return { syncing, indicator };
 }
