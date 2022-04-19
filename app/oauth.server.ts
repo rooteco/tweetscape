@@ -2,8 +2,8 @@ import type { Hash } from 'crypto';
 import { createHash } from 'crypto';
 
 import type { LoaderFunction } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
 import { nanoid } from 'nanoid';
+import { redirect } from '@remix-run/node';
 
 import { commitSession, getSession } from '~/session.server';
 
@@ -28,8 +28,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   const codeVerifier = nanoid(128);
   const codeHash = createHash('sha256').update(codeVerifier);
   const session = await getSession(request.headers.get('Cookie'));
-  session.flash('stateId', stateId);
-  session.flash('codeVerifier', codeVerifier);
+  session.set('stateId', stateId);
+  session.set('codeVerifier', codeVerifier);
   // Fly flattens all requests to HTTP in its private network.
   // @see {@link https://fly.io/blog/always-be-connecting-with-https}
   const proto = request.headers.get('X-Forwarded-Proto');
