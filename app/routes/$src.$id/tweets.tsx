@@ -279,11 +279,7 @@ export const action: ActionFunction = async ({ params, request }) => {
         splits.map(async (scores) => {
           const data = await api.v2.usersByUsernames(
             scores.map((r) => r.screen_name),
-            {
-              'user.fields': USER_FIELDS,
-              'tweet.fields': TWEET_FIELDS,
-              'expansions': ['pinned_tweet_id'],
-            }
+            { 'user.fields': USER_FIELDS }
           );
           log.trace(`Fetched users: ${JSON.stringify(data, parse, 2)}`);
           log.info(`Parsing ${data.data.length} users...`);
