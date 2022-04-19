@@ -25,11 +25,6 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
-import TweetItem, {
-  FALLBACK_ITEM_HEIGHT,
-  ITEM_WIDTH,
-  getTweetItemHeight,
-} from '~/components/tweet';
 import {
   TWEET_EXPANSIONS,
   TWEET_FIELDS,
@@ -39,6 +34,11 @@ import {
   initQueue,
   toCreateQueue,
 } from '~/twitter.server';
+import TweetItem, {
+  FALLBACK_ITEM_HEIGHT,
+  ITEM_WIDTH,
+  getTweetItemHeight,
+} from '~/components/tweet';
 import { commitSession, getSession } from '~/session.server';
 import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
@@ -189,6 +189,7 @@ interface RektInfluencer {
 }
 
 async function syncTweetsFromUsernames(api: TwitterApi, usernames: string[]) {
+  log.info(`Syncing tweets from ${usernames.length} users...`);
   const queries: string[] = [];
   usernames.forEach((username) => {
     const query = queries[queries.length - 1];
@@ -199,11 +200,11 @@ async function syncTweetsFromUsernames(api: TwitterApi, usernames: string[]) {
   const queue = initQueue();
   await Promise.all(
     queries.map(async (query) => {
-      log.debug(`Query (${query.length}):\n${query}`);
+      log.trace(`Query (${query.length}):\n${query}`);
       const hash = createHash('sha256').update(query).digest('hex');
       const key = `sinceid:${hash}`;
       const id = (await redis.get(key)) ?? undefined;
-      log.debug(`Pagination id for query (${query.length}): ${id}`);
+      log.trace(`Pagination id for query (${query.length}): ${id}`);
       const res = await api.v2.search(query, {
         'max_results': 100,
         'since_id': id,
@@ -263,8 +264,6 @@ export const action: ActionFunction = async ({ params, request }) => {
     }
     case 'rekt': {
       const n = 1000;
-      const parse = (_: unknown, value: unknown) =>
-        typeof value === 'bigint' ? `${value.toString()}n` : value;
       log.info(`Fetching ${n} rekt scores...`);
       const res = await fetch(
         `https://feed.rekt.news/api/v1/parlor/crypto/0/${n}`
@@ -272,7 +271,7 @@ export const action: ActionFunction = async ({ params, request }) => {
       const influencers = (await res.json()) as RektInfluencer[];
       log.info(`Fetching ${influencers.length} rekt users...`);
       const splits: RektInfluencer[][] = [];
-      while (json.length) splits.push(influencers.splice(0, 100));
+      while (influencers.length) splits.push(influencers.splice(0, 100));
       const usersToCreate: User[] = [];
       const scoresToCreate: Rekt[] = [];
       await Promise.all(
@@ -281,7 +280,6 @@ export const action: ActionFunction = async ({ params, request }) => {
             scores.map((r) => r.screen_name),
             { 'user.fields': USER_FIELDS }
           );
-          log.trace(`Fetched users: ${JSON.stringify(data, parse, 2)}`);
           log.info(`Parsing ${data.data.length} users...`);
           const users = data.data.map((u) => ({
             id: BigInt(u.id),
@@ -311,9 +309,7 @@ export const action: ActionFunction = async ({ params, request }) => {
             followers_in_people_count: d.followers_in_people_count,
           }));
           const missing = rekt.filter((r) => !r.user_id);
-          log.warn(
-            `Missing user data for: ${JSON.stringify(missing, parse, 2)}`
-          );
+          log.warn(`Missing: ${missing.map((u) => u.username).join()}`);
           rekt.filter((r) => r.user_id).forEach((r) => scoresToCreate.push(r));
         })
       );
