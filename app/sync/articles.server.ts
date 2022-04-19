@@ -1,16 +1,11 @@
 import { SyntaxKind, parse, walk } from 'html5parser';
-import type { ActionFunction } from '@remix-run/node';
 import Bottleneck from 'bottleneck';
 import type { IText } from 'html5parser';
 import { decode } from 'html-entities';
 
 import type { ArticleFull, Link } from '~/types';
-import { ArticlesFilter, ArticlesSort } from '~/query';
-import { getListArticles, getLists } from '~/query.server';
-import { getLoggedInSession, log } from '~/utils.server';
-import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
-import { invalidate } from '~/swr.server';
+import { log } from '~/utils.server';
 
 const limiter = new Bottleneck({
   trackDoneStatus: true,
@@ -24,33 +19,14 @@ limiter.on('failed', (e) => {
   log.warn(`Limiter job failed: ${(e as Error).message}`);
 });
 
-export const action: ActionFunction = async ({ request }) => {
-  const { session, uid } = await getLoggedInSession(request);
-  log.info(`Fetching owned and followed lists for user (${uid})...`);
-  const listIds = (await getLists(uid)).map((l) => l.id);
-  log.info(`Fetching articles for ${listIds.length} user (${uid}) lists...`);
+export async function syncArticleMetadata(articles: ArticleFull[]) {
   const articlesToFetch: ArticleFull[] = [];
-  /* eslint-disable consistent-return */
-  await Promise.all(
-    listIds
-      .map((listId) =>
-        Object.values(ArticlesSort).map((sort) => {
-          if (typeof sort === 'string') return;
-          return Object.values(ArticlesFilter).map(async (filter) => {
-            if (typeof filter === 'string') return;
-            const articles = await getListArticles(listId, sort, filter, uid);
-            articles.forEach((article) => {
-              if (article.status === 200) return;
-              if (article.title && article.description) return;
-              if (articlesToFetch.some((a) => a.url === article.url)) return;
-              articlesToFetch.push(article);
-            });
-          });
-        })
-      )
-      .flat(2)
-  );
-  /* eslint-enable consistent-return */
+  articles.forEach((article) => {
+    if (article.status === 200) return;
+    if (article.title && article.description) return;
+    if (articlesToFetch.some((a) => a.url === article.url)) return;
+    articlesToFetch.push(article);
+  });
   log.info(`Fetching ${articlesToFetch.length} link metadata...`);
   const linksToUpdate: Link[] = [];
   await Promise.all(
@@ -111,7 +87,4 @@ export const action: ActionFunction = async ({ request }) => {
       db.links.update({ data, where: { url: data.url } })
     )
   );
-  await invalidate(uid);
-  const headers = { 'Set-Cookie': await commitSession(session) };
-  return new Response('Sync Success', { status: 200, headers });
-};
+}
