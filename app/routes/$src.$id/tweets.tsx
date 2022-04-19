@@ -222,7 +222,24 @@ export const action: ActionFunction = async ({ params, request }) => {
       break;
     }
     case 'lists': {
-      log.warn('TODO: Implement lists inline tweet syncing...');
+      log.info(`Fetching tweets from list (${params.id})...`);
+      const key = `latest-tweet-id:list-tweets:${params.id}`;
+      const latestTweetId = await redis.get(key);
+      log.debug(`Found the latest tweet (${params.id}): ${latestTweetId}`);
+      const check = await api.v2.listTweets(params.id, { max_results: 1 });
+      const latestTweet = check.tweets[0];
+      if (latestTweet && latestTweet.id === latestTweetId) {
+        log.debug(`Skipping fetch for list (${params.id})...`);
+      } else {
+        if (latestTweet) await redis.set(key, check.tweets[0].id);
+        const res = await api.v2.listTweets(params.id, {
+          'tweet.fields': TWEET_FIELDS,
+          'expansions': TWEET_EXPANSIONS,
+          'user.fields': USER_FIELDS,
+        });
+        const queue = toCreateQueue(res, initQueue(), BigInt(params.id));
+        await executeCreateQueue(queue);
+      }
       break;
     }
     case 'rekt': {
