@@ -2,8 +2,8 @@ import fs from 'fs/promises';
 import { resolve } from 'path';
 
 import type { LoaderFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
 import { bundleMDX } from 'mdx-bundler';
+import { json } from '@remix-run/node';
 
 import { log } from '~/utils.server';
 
@@ -18,5 +18,11 @@ export const loader: LoaderFunction = async () => {
   const posts = await Promise.all(
     files.map((file) => bundleMDX<Meta>({ file, cwd }))
   );
-  return json<LoaderData>(posts);
+  return json<LoaderData>(
+    posts.sort(
+      (a, b) =>
+        new Date(b.frontmatter.date).valueOf() -
+        new Date(a.frontmatter.date).valueOf()
+    )
+  );
 };
