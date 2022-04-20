@@ -12,7 +12,9 @@ import {
   ArticlesSort,
   DEFAULT_ARTICLES_FILTER,
   DEFAULT_ARTICLES_SORT,
+  DEFAULT_TIME,
   Param,
+  Time,
 } from '~/query';
 import { commitSession, getSession } from '~/session.server';
 import {
@@ -29,6 +31,7 @@ import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
+import TimeIcon from '~/icons/time';
 import { syncArticleMetadata } from '~/sync/articles.server';
 import { action as syncTweets } from '~/routes/$src.$id/tweets';
 import { useError } from '~/error';
@@ -49,44 +52,33 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const session = await getSession(request.headers.get('Cookie'));
   const uid = getUserIdFromSession(session);
   session.set('href', `${url.pathname}${url.search}`);
-  const articlesSort = Number(
+  const sort = Number(
     url.searchParams.get(Param.ArticlesSort) ?? DEFAULT_ARTICLES_SORT
   ) as ArticlesSort;
-  const articlesFilter = Number(
+  const filter = Number(
     url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
-  let articlesPromise: Promise<ArticleFull[]>;
+  const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
+  let articles: ArticleFull[] = [];
   switch (params.src) {
     case 'clusters':
-      articlesPromise = getClusterArticles(
-        params.id,
-        articlesSort,
-        articlesFilter,
-        uid
-      );
+      articles = await getClusterArticles(params.id, sort, filter, time, uid);
       break;
     case 'lists':
-      articlesPromise = getListArticles(
+      articles = await getListArticles(
         BigInt(params.id),
-        articlesSort,
-        articlesFilter,
+        sort,
+        filter,
+        time,
         uid
       );
       break;
     case 'rekt':
-      articlesPromise = getRektArticles(uid);
+      articles = await getRektArticles(time, uid);
       break;
     default:
       throw new Response('Not Found', { status: 404 });
   }
-  let articles: ArticleFull[] = [];
-  await Promise.all([
-    (async () => {
-      console.time(`swr-get-articles-${invocationId}`);
-      articles = await articlesPromise;
-      console.timeEnd(`swr-get-articles-${invocationId}`);
-    })(),
-  ]);
   const headers = { 'Set-Cookie': await commitSession(session) };
   return json<LoaderData>(articles.map(wrapArticle), { headers });
 };
@@ -96,30 +88,23 @@ export const action: ActionFunction = async ({ params, request, ...rest }) => {
   invariant(params.src, 'expected params.src');
   invariant(params.id, 'expected params.id');
   const url = new URL(request.url);
-  const articlesSort = Number(
+  const sort = Number(
     url.searchParams.get(Param.ArticlesSort) ?? DEFAULT_ARTICLES_SORT
   ) as ArticlesSort;
-  const articlesFilter = Number(
+  const filter = Number(
     url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
+  const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
   let articles: ArticleFull[] = [];
   switch (params.src) {
     case 'clusters':
-      articles = await getClusterArticles(
-        params.id,
-        articlesSort,
-        articlesFilter
-      );
+      articles = await getClusterArticles(params.id, sort, filter, time);
       break;
     case 'lists':
-      articles = await getListArticles(
-        BigInt(params.id),
-        articlesSort,
-        articlesFilter
-      );
+      articles = await getListArticles(BigInt(params.id), sort, filter, time);
       break;
     case 'rekt':
-      articles = await getRektArticles();
+      articles = await getRektArticles(time);
       break;
     default:
       throw new Response('Not Found', { status: 404 });
@@ -210,6 +195,41 @@ export default function ArticlesPage() {
                 {
                   name: 'Show retweets',
                   to: `?${Param.ArticlesFilter}=${ArticlesFilter.ShowRetweets}`,
+                },
+              ],
+            },
+          ]}
+        />
+        <Switcher
+          icon={<TimeIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
+          sections={[
+            {
+              header: 'From the last',
+              links: [
+                {
+                  name: 'Day',
+                  to: `?${Param.Time}=${Time.Day}`,
+                },
+                {
+                  name: 'Week',
+                  to: `?${Param.Time}=${Time.Week}`,
+                  isActiveByDefault: true,
+                },
+                {
+                  name: 'Month',
+                  to: `?${Param.Time}=${Time.Month}`,
+                },
+                {
+                  name: 'Year',
+                  to: `?${Param.Time}=${Time.Year}`,
+                },
+                {
+                  name: 'Decade',
+                  to: `?${Param.Time}=${Time.Decade}`,
+                },
+                {
+                  name: 'Century',
+                  to: `?${Param.Time}=${Time.Century}`,
                 },
               ],
             },

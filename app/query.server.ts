@@ -267,6 +267,7 @@ function getListArticlesQuery(
   listId: bigint,
   sort: ArticlesSort,
   filter: ArticlesFilter,
+  time = DEFAULT_TIME,
   uid?: bigint
 ): string {
   /* prettier-ignore */
@@ -302,7 +303,8 @@ function getListArticlesQuery(
               left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
               ${uid ? `left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${uid}` : ''}
               ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
-            ${filter === ArticlesFilter.HideRetweets ? `where refs is null or 'retweeted' not in (refs.type)` : ''}
+            where ${TWEETS_TIMES[time]}
+            ${filter === ArticlesFilter.HideRetweets ? `and (refs is null or 'retweeted' not in (refs.type))` : ''}
             group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}users.id
           ) as tweets on tweets.id = urls.tweet_id or urls.tweet_id = any (tweets.ref_ids)
       ) as tweets on tweets.link_url = links.url
@@ -315,10 +317,11 @@ export async function getListArticles(
   listId: bigint,
   sort: ArticlesSort,
   filter: ArticlesFilter,
+  time = DEFAULT_TIME,
   uid?: bigint
 ): Promise<ArticleFull[]> {
   const articles = await swr<ArticleFull>(
-    getListArticlesQuery(listId, sort, filter, uid),
+    getListArticlesQuery(listId, sort, filter, time, uid),
     uid
   );
   log.trace(`Fetched ${articles.length} articles for list (${listId}).`);
@@ -329,6 +332,7 @@ function getClusterArticlesQuery(
   clusterSlug: string,
   sort: ArticlesSort,
   filter: ArticlesFilter,
+  time = DEFAULT_TIME,
   uid?: bigint
 ): string {
   /* prettier-ignore */
@@ -371,7 +375,8 @@ function getClusterArticlesQuery(
               left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
               ${uid ? `left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${uid}` : ''}
               ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
-            ${filter === ArticlesFilter.HideRetweets ? `where refs is null or 'retweeted' not in (refs.type)` : ''}
+            where ${TWEETS_TIMES[time]}
+            ${filter === ArticlesFilter.HideRetweets ? `and (refs is null or 'retweeted' not in (refs.type))` : ''}
             group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}scores.id,users.id
           ) as tweets on tweets.id = urls.tweet_id or urls.tweet_id = any (tweets.ref_ids)
       ) as tweets on tweets.link_url = links.url
@@ -384,10 +389,11 @@ export async function getClusterArticles(
   clusterSlug: string,
   sort: ArticlesSort,
   filter: ArticlesFilter,
+  time = DEFAULT_TIME,
   uid?: bigint
 ): Promise<ArticleFull[]> {
   const articles = await swr<ArticleFull>(
-    getClusterArticlesQuery(clusterSlug, sort, filter, uid),
+    getClusterArticlesQuery(clusterSlug, sort, filter, time, uid),
     uid
   );
   log.trace(
@@ -396,7 +402,7 @@ export async function getClusterArticles(
   return articles;
 }
 
-function getRektArticlesQuery(uid?: bigint): string {
+function getRektArticlesQuery(time = DEFAULT_TIME, uid?: bigint): string {
   /* prettier-ignore */
   return `
     select
@@ -433,7 +439,7 @@ function getRektArticlesQuery(uid?: bigint): string {
               left outer join users ref_authors on ref_authors.id = ref_tweets.author_id
               ${uid ? `left outer join likes ref_likes on ref_likes.tweet_id = refs.referenced_tweet_id and ref_likes.user_id = ${uid}` : ''}
               ${uid ? `left outer join retweets ref_retweets on ref_retweets.tweet_id = refs.referenced_tweet_id and ref_retweets.user_id = ${uid}` : ''}
-            where refs is null or 'retweeted' not in (refs.type)
+            where ${TWEETS_TIMES[time]} and (refs is null or 'retweeted' not in (refs.type))
             group by tweets.id,${uid ? `likes.*,retweets.*,` : ''}rekt.id,users.id
           ) as tweets on tweets.id = urls.tweet_id or urls.tweet_id = any (tweets.ref_ids)
       ) as tweets on tweets.link_url = links.url
@@ -442,8 +448,11 @@ function getRektArticlesQuery(uid?: bigint): string {
     order by points desc
     limit 50;`
 }
-export async function getRektArticles(uid?: bigint): Promise<ArticleFull[]> {
-  const articles = await swr<ArticleFull>(getRektArticlesQuery(uid), uid);
+export async function getRektArticles(
+  time = DEFAULT_TIME,
+  uid?: bigint
+): Promise<ArticleFull[]> {
+  const articles = await swr<ArticleFull>(getRektArticlesQuery(time, uid), uid);
   log.trace(`Fetched ${articles.length} articles for Rekt.`);
   return articles;
 }
