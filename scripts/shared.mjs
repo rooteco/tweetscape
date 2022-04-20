@@ -92,7 +92,7 @@ export async function getTweets(
     `max_results=100${token ? `&pagination_token=${token}` : ''}` +
     `${lastTweetId ? `&since_id=${lastTweetId}` : ''}`;
   const headers = { authorization: `Bearer ${process.env.TWITTER_TOKEN}` };
-  const res = await limiter.schedule({ id: url }, fetch, url, { headers });
+  const res = await limiter.schedule(fetch, url, { headers });
   const data = await res.json();
   if (data.errors && data.errors[0])
     log.error(

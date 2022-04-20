@@ -36,9 +36,10 @@ import type {
   URL,
   User,
 } from '~/types';
+import { getUserIdFromSession, log } from '~/utils.server';
 import { TwitterApiRateLimitDBStore } from '~/limit.server';
 import { db } from '~/db.server';
-import { log } from '~/utils.server';
+import { getSession } from '~/session.server';
 
 export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
 
@@ -119,6 +120,15 @@ export async function getTwitterClientForUser(
     api = new TwitterApi(accessToken, { plugins: [limits] });
   }
   return { api, limits };
+}
+
+export async function getClient(request: Request) {
+  const session = await getSession(request.headers.get('Cookie'));
+  const uid = getUserIdFromSession(session);
+  const client = uid
+    ? await getTwitterClientForUser(uid)
+    : { api: new TwitterApi(process.env.TWITTER_TOKEN as string) };
+  return { ...client, uid, session };
 }
 
 export function toList(l: ListV2): List {
@@ -224,7 +234,7 @@ export function toImages(u: TweetEntityUrlV2): Image[] {
   }));
 }
 
-type CreateQueue = {
+export type CreateQueue = {
   users: User[];
   list_members: ListMember[];
   tweets: Tweet[];
@@ -236,9 +246,9 @@ type CreateQueue = {
   images: Image[];
   urls: URL[];
 };
-export function toCreateQueue(
-  res: TweetV2ListTweetsPaginator | TweetSearchRecentV2Paginator,
-  queue: CreateQueue = {
+
+export function initQueue(): CreateQueue {
+  return {
     users: [] as User[],
     list_members: [] as ListMember[],
     tweets: [] as Tweet[],
@@ -249,7 +259,12 @@ export function toCreateQueue(
     links: [] as Link[],
     images: [] as Image[],
     urls: [] as URL[],
-  },
+  };
+}
+
+export function toCreateQueue(
+  res: TweetV2ListTweetsPaginator | TweetSearchRecentV2Paginator,
+  queue: CreateQueue = initQueue(),
   listId?: bigint
 ) {
   const includes = new TwitterV2IncludesHelper(res);

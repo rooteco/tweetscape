@@ -1,9 +1,9 @@
 import 'json-bigint-patch';
 import type { Session } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
 import { autoLink } from 'twitter-text';
 import invariant from 'tiny-invariant';
 import { parse as parseLangHeader } from 'accept-language-parser';
+import { redirect } from '@remix-run/node';
 
 import { commitSession, getSession } from '~/session.server';
 

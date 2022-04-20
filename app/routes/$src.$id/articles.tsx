@@ -1,10 +1,10 @@
+import type { ActionFunction, LoaderFunction } from '@remix-run/node';
 import { animated, useSpring } from '@react-spring/web';
-import type { LoaderFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { useLoaderData, useLocation } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
+import { useLoaderData, useLocation } from '@remix-run/react';
 import { dequal } from 'dequal/lite';
 import invariant from 'tiny-invariant';
+import { json } from '@remix-run/node';
 
 import type { ArticleFull, ArticleJS } from '~/types';
 import {
@@ -29,8 +29,11 @@ import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
-import { wrapArticle } from '~/types';
+import { syncArticleMetadata } from '~/sync/articles.server';
+import { action as syncTweets } from '~/routes/$src.$id/tweets';
 import { useError } from '~/error';
+import useSync from '~/hooks/sync';
+import { wrapArticle } from '~/types';
 
 export type LoaderData = ArticleJS[];
 
@@ -88,6 +91,43 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   return json<LoaderData>(articles.map(wrapArticle), { headers });
 };
 
+export const action: ActionFunction = async ({ params, request, ...rest }) => {
+  await syncTweets({ params, request, ...rest });
+  invariant(params.src, 'expected params.src');
+  invariant(params.id, 'expected params.id');
+  const url = new URL(request.url);
+  const articlesSort = Number(
+    url.searchParams.get(Param.ArticlesSort) ?? DEFAULT_ARTICLES_SORT
+  ) as ArticlesSort;
+  const articlesFilter = Number(
+    url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
+  ) as ArticlesFilter;
+  let articles: ArticleFull[] = [];
+  switch (params.src) {
+    case 'clusters':
+      articles = await getClusterArticles(
+        params.id,
+        articlesSort,
+        articlesFilter
+      );
+      break;
+    case 'lists':
+      articles = await getListArticles(
+        BigInt(params.id),
+        articlesSort,
+        articlesFilter
+      );
+      break;
+    case 'rekt':
+      articles = await getRektArticles();
+      break;
+    default:
+      throw new Response('Not Found', { status: 404 });
+  }
+  await syncArticleMetadata(articles);
+  return new Response('Sync Success');
+};
+
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);
   return (
@@ -121,6 +161,8 @@ export default function ArticlesPage() {
       return found;
     });
   }, [articles, pathname]);
+
+  const { indicator } = useSync();
 
   return (
     <Column
@@ -171,6 +213,7 @@ export default function ArticlesPage() {
             },
           ]}
         />
+        {indicator}
       </Nav>
       {!articles.length && (
         <Empty className='flex-1 m-5'>No articles to show</Empty>
