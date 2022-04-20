@@ -107,7 +107,9 @@ export default function ArticlePage() {
           </span>
         </div>
         <Switcher
-          icon={<SortIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
+          icon={
+            <SortIcon className='fill-gray-500 h-4 w-4 mr-1 inline-block' />
+          }
           sections={[
             {
               header: 'Sort by',
@@ -136,7 +138,7 @@ export default function ArticlePage() {
         />
         <Switcher
           icon={
-            <FilterIcon className='fill-current h-4 w-4 mr-1 inline-block' />
+            <FilterIcon className='fill-gray-500 h-4 w-4 mr-1 inline-block' />
           }
           sections={[
             {

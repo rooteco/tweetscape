@@ -376,7 +376,9 @@ export default function TweetsPage() {
     >
       <Nav scrollerRef={scrollerRef}>
         <Switcher
-          icon={<SortIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
+          icon={
+            <SortIcon className='fill-gray-500 h-4 w-4 mr-1 inline-block' />
+          }
           sections={[
             {
               header: 'Sort by',
@@ -416,7 +418,7 @@ export default function TweetsPage() {
         />
         <Switcher
           icon={
-            <FilterIcon className='fill-current h-4 w-4 mr-1 inline-block' />
+            <FilterIcon className='fill-gray-500 h-4 w-4 mr-1 inline-block' />
           }
           sections={[
             {
@@ -436,7 +438,9 @@ export default function TweetsPage() {
           ]}
         />
         <Switcher
-          icon={<TimeIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
+          icon={
+            <TimeIcon className='fill-gray-500 h-4 w-4 mr-1 inline-block' />
+          }
           sections={[
             {
               header: 'From the last',
