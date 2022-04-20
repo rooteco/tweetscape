@@ -13,7 +13,12 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
   const { pathname } = useResolvedPath('');
   const fetchers = useFetchers();
   const syncing = useMemo(
-    () => fetchers.some((f) => f.submission?.action === (action ?? pathname)),
+    () =>
+      fetchers.some(
+        (f) =>
+          f.type === 'actionSubmission' &&
+          f.submission.action === (action ?? pathname)
+      ),
     [fetchers, action, pathname]
   );
   const prevSyncing = useRef(syncing);
