@@ -1,0 +1,49 @@
+---
+date: April 20, 2022
+author: niicholaschiang
+---
+
+![Sync](/ss/sync.png)
+
+import Sparkles from '~/components/sparkles';
+
+## Follow the _<Sparkles>tweetscape</Sparkles>_ in realtime
+
+The biggest flaw that has been preventing our [first](https://twitter.com/shingaithornton) [early](https://twitter.com/thebrendonwong) [adopters](https://twitter.com/RhysLindmark) from using Tweetscape as their daily driver for Twitter interaction was that it simply wasn't up-to-date.
+One of the primary facets of Twitter's value offering is that it's the most realtime window into "What's happening?" available on the web:
+
+- You have journalists who tweet breaking news before it gets released on (potentially biased) news platforms.
+- You have government and based corporate leaders discussing topics as they occur in realtime.
+- Etc, etc.
+
+All of this value is lost, however, if your window into the <Sparkles>Twitterverse</Sparkles> (i.e. your Twitter client) isn't always up-to-date.
+
+To address this, I've implemented a realtime sync engine that pulls data from Twitter as you need it:
+
+1. Every time you visit a page in Tweetscape, I first try to fetch data from our server-side Redis cache (~30ms) or, if a query isn't yet cached, from our Postgres database (~3s).
+2. Then, I trigger a sync to revalidate our stored data with the freshest content from Twitter.
+3. Once that sync completes, [Remix](https://remix.run) automatically revalidates that first data fetch in step #1.
+
+More low-level implementation details can be found in [#397](https://github.com/rooteco/tweetscape/pull/397).
+
+## Reddit-style time filters
+
+**You can now see the top tweets from the last day, week, month, year, decade, or even the last century.**
+While I'm not sure exactly what you'll do with those last two options, our philosophy is always to give the end-user (you) as much control as possible.
+We simply provide the tools: you get to come up with your own "algorithms" for exploring Twitter.
+
+> The choice of which algorithm to use (or not) should be open to everyone
+> —[@jack](https://twitter.com/jack/status/1507146276416098307) (romantic moron, 1/8th hippie)
+
+Implementation details can be found in [#396](https://github.com/rooteco/tweetscape/pull/396) and [#405](https://github.com/rooteco/tweetscape/pull/405).
+
+## Fixes & Improvements
+
+- We are now managing issues on [GitHub](https://github.com).
+  Have a feature request or idea?
+  Discovered a bug?
+  Open [an issue](https://github.com/rooteco/tweetscape/issues/new) and we'll get to it!
+  Previously, we were using [Linear](https://linear.app)—which we still love and admire—but due to the open-source nature of this project, we ultimately decided GitHub issues were the natural way to go.
+- Fixed an issue where tweets would size themselves incorrectly after changing pages or filters (see [#188](https://github.com/rooteco/tweetscape/issues/188)).
+- Replaced [the now deprecated](https://github.com/remix-run/remix/releases/tag/v1.4.0) top-level `remix` imports with individual `@remix-run/*` package imports.
+- Chip button icons are now consistently colored with TailwindCSS's `fill-gray-500` (see [#398](https://github.com/rooteco/tweetscape/issues/398)).
