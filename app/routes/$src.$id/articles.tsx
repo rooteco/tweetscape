@@ -3,8 +3,8 @@ import { animated, useSpring } from '@react-spring/web';
 import { useEffect, useRef, useState } from 'react';
 import { useLoaderData, useLocation } from '@remix-run/react';
 import { dequal } from 'dequal/lite';
-import { json } from '@remix-run/node';
 import invariant from 'tiny-invariant';
+import { json } from '@remix-run/node';
 
 import type { ArticleFull, ArticleJS } from '~/types';
 import {
@@ -30,6 +30,7 @@ import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
 import { syncArticleMetadata } from '~/sync/articles.server';
+import { action as syncTweets } from '~/routes/$src.$id/tweets';
 import { useError } from '~/error';
 import useSync from '~/hooks/sync';
 import { wrapArticle } from '~/types';
@@ -90,7 +91,8 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   return json<LoaderData>(articles.map(wrapArticle), { headers });
 };
 
-export const action: ActionFunction = async ({ params, request }) => {
+export const action: ActionFunction = async ({ params, request, ...rest }) => {
+  await syncTweets({ params, request, ...rest });
   invariant(params.src, 'expected params.src');
   invariant(params.id, 'expected params.id');
   const url = new URL(request.url);
