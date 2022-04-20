@@ -33,36 +33,42 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
   }, [fetcher, syncing, lastSynced, action, pathname, error, shouldSync]);
   const indicator = useMemo(
     () => (
-      <div
-        className={cn(
-          'mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6',
-          { 'cursor-wait': syncing, 'cursor-default': !syncing }
-        )}
-      >
-        {error && (
-          <>
-            <ErrorIcon />
-            <span>Sync error</span>
-          </>
-        )}
-        {!error && syncing && (
-          <>
-            <SyncIcon />
-            <span>Syncing{obj ? ` ${obj}` : ''}</span>
-          </>
-        )}
-        {!error && !syncing && (
-          <>
-            <BoltIcon />
-            <span>
-              Synced{obj ? ` ${obj} ` : ' '}
-              <TimeAgo datetime={lastSynced ?? new Date()} locale='en_short' />
-            </span>
-          </>
-        )}
-      </div>
+      <fetcher.Form action={syncing ? '' : action ?? pathname} method='patch'>
+        <button
+          type='submit'
+          className={cn(
+            'mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6',
+            { 'cursor-wait': syncing }
+          )}
+        >
+          {error && (
+            <>
+              <ErrorIcon />
+              <span>Sync error</span>
+            </>
+          )}
+          {!error && syncing && (
+            <>
+              <SyncIcon />
+              <span>Syncing{obj ? ` ${obj}` : ''}</span>
+            </>
+          )}
+          {!error && !syncing && (
+            <>
+              <BoltIcon />
+              <span>
+                Synced{obj ? ` ${obj} ` : ' '}
+                <TimeAgo
+                  datetime={lastSynced ?? new Date()}
+                  locale='en_short'
+                />
+              </span>
+            </>
+          )}
+        </button>
+      </fetcher.Form>
     ),
-    [syncing, lastSynced, obj, error]
+    [syncing, lastSynced, obj, error, action, fetcher, pathname]
   );
   return { syncing, indicator };
 }
