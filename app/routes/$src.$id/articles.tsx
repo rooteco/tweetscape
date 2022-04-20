@@ -12,7 +12,9 @@ import {
   ArticlesSort,
   DEFAULT_ARTICLES_FILTER,
   DEFAULT_ARTICLES_SORT,
+  DEFAULT_TIME,
   Param,
+  Time,
 } from '~/query';
 import { commitSession, getSession } from '~/session.server';
 import {
@@ -29,6 +31,7 @@ import FilterIcon from '~/icons/filter';
 import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
+import TimeIcon from '~/icons/time';
 import { syncArticleMetadata } from '~/sync/articles.server';
 import { action as syncTweets } from '~/routes/$src.$id/tweets';
 import { useError } from '~/error';
@@ -55,6 +58,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const articlesFilter = Number(
     url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
+  const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
   let articlesPromise: Promise<ArticleFull[]>;
   switch (params.src) {
     case 'clusters':
@@ -62,6 +66,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
         params.id,
         articlesSort,
         articlesFilter,
+        time,
         uid
       );
       break;
@@ -70,11 +75,12 @@ export const loader: LoaderFunction = async ({ params, request }) => {
         BigInt(params.id),
         articlesSort,
         articlesFilter,
+        time,
         uid
       );
       break;
     case 'rekt':
-      articlesPromise = getRektArticles(uid);
+      articlesPromise = getRektArticles(time, uid);
       break;
     default:
       throw new Response('Not Found', { status: 404 });
@@ -102,24 +108,27 @@ export const action: ActionFunction = async ({ params, request, ...rest }) => {
   const articlesFilter = Number(
     url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
+  const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
   let articles: ArticleFull[] = [];
   switch (params.src) {
     case 'clusters':
       articles = await getClusterArticles(
         params.id,
         articlesSort,
-        articlesFilter
+        articlesFilter,
+        time
       );
       break;
     case 'lists':
       articles = await getListArticles(
         BigInt(params.id),
         articlesSort,
-        articlesFilter
+        articlesFilter,
+        time
       );
       break;
     case 'rekt':
-      articles = await getRektArticles();
+      articles = await getRektArticles(time);
       break;
     default:
       throw new Response('Not Found', { status: 404 });
@@ -208,6 +217,41 @@ export default function ArticlesPage() {
                 {
                   name: 'Show retweets',
                   to: `?${Param.ArticlesFilter}=${ArticlesFilter.ShowRetweets}`,
+                },
+              ],
+            },
+          ]}
+        />
+        <Switcher
+          icon={<TimeIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
+          sections={[
+            {
+              header: 'From the last',
+              links: [
+                {
+                  name: 'Day',
+                  to: `?${Param.Time}=${Time.Day}`,
+                },
+                {
+                  name: 'Week',
+                  to: `?${Param.Time}=${Time.Week}`,
+                  isActiveByDefault: true,
+                },
+                {
+                  name: 'Month',
+                  to: `?${Param.Time}=${Time.Month}`,
+                },
+                {
+                  name: 'Year',
+                  to: `?${Param.Time}=${Time.Year}`,
+                },
+                {
+                  name: 'Decade',
+                  to: `?${Param.Time}=${Time.Decade}`,
+                },
+                {
+                  name: 'Century',
+                  to: `?${Param.Time}=${Time.Century}`,
                 },
               ],
             },
