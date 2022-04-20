@@ -52,29 +52,23 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const session = await getSession(request.headers.get('Cookie'));
   const uid = getUserIdFromSession(session);
   session.set('href', `${url.pathname}${url.search}`);
-  const articlesSort = Number(
+  const sort = Number(
     url.searchParams.get(Param.ArticlesSort) ?? DEFAULT_ARTICLES_SORT
   ) as ArticlesSort;
-  const articlesFilter = Number(
+  const filter = Number(
     url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
   const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
   let articlesPromise: Promise<ArticleFull[]>;
   switch (params.src) {
     case 'clusters':
-      articlesPromise = getClusterArticles(
-        params.id,
-        articlesSort,
-        articlesFilter,
-        time,
-        uid
-      );
+      articlesPromise = getClusterArticles(params.id, sort, filter, time, uid);
       break;
     case 'lists':
       articlesPromise = getListArticles(
         BigInt(params.id),
-        articlesSort,
-        articlesFilter,
+        sort,
+        filter,
         time,
         uid
       );
@@ -102,30 +96,20 @@ export const action: ActionFunction = async ({ params, request, ...rest }) => {
   invariant(params.src, 'expected params.src');
   invariant(params.id, 'expected params.id');
   const url = new URL(request.url);
-  const articlesSort = Number(
+  const sort = Number(
     url.searchParams.get(Param.ArticlesSort) ?? DEFAULT_ARTICLES_SORT
   ) as ArticlesSort;
-  const articlesFilter = Number(
+  const filter = Number(
     url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
   const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
   let articles: ArticleFull[] = [];
   switch (params.src) {
     case 'clusters':
-      articles = await getClusterArticles(
-        params.id,
-        articlesSort,
-        articlesFilter,
-        time
-      );
+      articles = await getClusterArticles(params.id, sort, filter, time);
       break;
     case 'lists':
-      articles = await getListArticles(
-        BigInt(params.id),
-        articlesSort,
-        articlesFilter,
-        time
-      );
+      articles = await getListArticles(BigInt(params.id), sort, filter, time);
       break;
     case 'rekt':
       articles = await getRektArticles(time);
