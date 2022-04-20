@@ -59,13 +59,13 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
   ) as ArticlesFilter;
   const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
-  let articlesPromise: Promise<ArticleFull[]>;
+  let articles: ArticleFull[] = [];
   switch (params.src) {
     case 'clusters':
-      articlesPromise = getClusterArticles(params.id, sort, filter, time, uid);
+      articles = await getClusterArticles(params.id, sort, filter, time, uid);
       break;
     case 'lists':
-      articlesPromise = getListArticles(
+      articles = await getListArticles(
         BigInt(params.id),
         sort,
         filter,
@@ -74,19 +74,11 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       );
       break;
     case 'rekt':
-      articlesPromise = getRektArticles(time, uid);
+      articles = await getRektArticles(time, uid);
       break;
     default:
       throw new Response('Not Found', { status: 404 });
   }
-  let articles: ArticleFull[] = [];
-  await Promise.all([
-    (async () => {
-      console.time(`swr-get-articles-${invocationId}`);
-      articles = await articlesPromise;
-      console.timeEnd(`swr-get-articles-${invocationId}`);
-    })(),
-  ]);
   const headers = { 'Set-Cookie': await commitSession(session) };
   return json<LoaderData>(articles.map(wrapArticle), { headers });
 };
