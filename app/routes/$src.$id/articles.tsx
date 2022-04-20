@@ -201,7 +201,9 @@ export default function ArticlesPage() {
           ]}
         />
         <Switcher
-          icon={<TimeIcon className='fill-current h-4 w-4 mr-1 inline-block' />}
+          icon={
+            <TimeIcon className='fill-gray-500 h-4 w-4 mr-1 inline-block' />
+          }
           sections={[
             {
               header: 'From the last',
