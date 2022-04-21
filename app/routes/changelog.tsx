@@ -65,6 +65,15 @@ export default function Changelog() {
           <p className='text-gray-600 dark:text-gray-400'>
             <a
               className='dark:text-sky-400 text-sky-500'
+              href='https://www.getrevue.co/profile/tweetscapehq'
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              Subscribe to Updates
+            </a>
+            <span className='mx-3'>·</span>
+            <a
+              className='dark:text-sky-400 text-sky-500'
               href='https://discord.gg/3KYQBJwRSS'
               target='_blank'
               rel='noopener noreferrer'
