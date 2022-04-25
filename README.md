@@ -21,24 +21,34 @@
   </a>
 </p>
 
-Tweetscape surfaces the best "insider" information—and the conversation around it—as shared by the smartest people in a given topic (e.g. ETH, BTC, NFTs, or Tesla) on Twitter.
+Tweetscape is the [Superhuman](https://superhuman.com) for social media: the open-source, extensible social media client for power users.
+Among other things, Tweetscape surfaces the best "insider" information—and the conversation around it—as shared by the smartest people in a given topic (e.g. ETH, BTC, NFTs, or Tesla) on Twitter.
 Tweetscape curates article links shared by the most reputable accounts on Twitter for a number of topics (e.g. ETH, BTC, NFTs, or Tesla).
 Learn more [here](https://www.roote.co/tweetscape).
 
-## How it works
+## Implementation
 
-### High level
+Tweetscape's architecture consists of:
+
+1. A set of adapters that:
+   - Consume data from centralized social media platform APIs (e.g. Twitter API v2 or Instagram's Graph API) and parse that data into universally compatible [`ActivityPub`](https://activitypub.rocks) [objects](https://www.w3.org/TR/activitystreams-vocabulary).
+   - Reverse that process: consume `ActivityPub` objects and post them back to the centralized social media platform APIs (for two-way syncing).
+   - Store and retrieve `ActivityPub` objects from various data stores (i.e. instead of consuming and posting to an API, consume and post to a database).
+2. A fancy front-end (that consumes data using our Postgres adapter) built with [Remix](https://remix.run), [Tailwind](https://tailwindcss.com), and [Radix Primitives](https://www.radix-ui.com).
+
+Currently, all of that is written in Typescript for simplicity and to avoid context switching (I'm most familiar with Typescript).
+Eventually, we'll want to rewrite those adapters and most of our back-end in a faster compiled language like Rust, but it's not a priority for now—though if you're an experienced Rustacean and want to help out, our PRs are always open!
+
+### Article ranking
 
 Tweetscape uses [`hive.one`](https://hive.one) to determine who are the most reputable (i.e. the "smartest") people in a specific field (e.g. who are the experts in ETH, BTC, NFTs, or Tesla) on Twitter; [`hive.one`](https://hive.one) acts as [a reputation layer for the internet](https://borgcollective.notion.site/About-15b9db2c1f414cf998c5abc58b715176), determining who you can trust through [a weighted graph of who follows who](https://borgcollective.notion.site/FAQ-5434e4695d60456cb481acb98bb88b18) (e.g. a reputable user following another user raises that other user's "attention score" by more than if some random Joe follows them).
 
 Tweetscape then uses Twitter's API and that list of "smartest" people to get links to the articles most abundantly (and most recently) shared by the "smartest" people on Twitter for a given topic (e.g. ETH, BTC, NFTs, or Tesla).
 It also shows you the conversation around each link; you get to see the best links _and_ what the smartest people are saying about them.
 
-### Low level
+## Contributing
 
 Tweetscape is a full-stack React application built with [Remix](https://remix.run) and deployed on [Fly](https://fly.io).
-
-## Contributing
 
 ### Project Structure
 
