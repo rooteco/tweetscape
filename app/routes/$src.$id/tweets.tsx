@@ -360,11 +360,7 @@ export default function TweetsPage() {
       // this, `react-window` will wrongly use the height of the fallback item.
       variableSizeListRef.current?.resetAfterIndex(prevLength.current);
       prevLength.current = tweets.length;
-    } else if (
-      transition.state === 'loading' &&
-      (transition.location.pathname !== location.pathname ||
-        transition.location.search !== location.search)
-    ) {
+    } else if (transition.state === 'loading') {
       // Queue a recalculation of all the items loaded into the next page.
       prevLength.current = 0;
     }
