@@ -2,10 +2,8 @@ import type { ActionFunction, LoaderFunction } from '@remix-run/node';
 import { useEffect, useRef } from 'react';
 import {
   useLoaderData,
-  useLocation,
   useOutletContext,
   useSearchParams,
-  useTransition,
 } from '@remix-run/react';
 import InfiniteLoader from 'react-window-infinite-loader';
 import type { TwitterApi } from 'twitter-api-v2';
@@ -14,7 +12,6 @@ import invariant from 'tiny-invariant';
 import { json } from '@remix-run/node';
 import mergeRefs from 'react-merge-refs';
 
-import type { Cluster, Rekt, TweetFull, TweetJS, User } from '~/types';
 import {
   DEFAULT_TIME,
   DEFAULT_TWEETS_FILTER,
@@ -25,12 +22,14 @@ import {
   TweetsFilter,
   TweetsSort,
 } from '~/query';
+import type { Rekt, TweetFull, TweetJS, User } from '~/types';
 import {
   TWEET_EXPANSIONS,
   TWEET_FIELDS,
   USER_FIELDS,
   executeCreateQueue,
   getClient,
+  handleTwitterApiError,
   initQueue,
   toCreateQueue,
 } from '~/twitter.server';
@@ -40,7 +39,14 @@ import TweetItem, {
   getTweetItemHeight,
 } from '~/components/tweet';
 import { commitSession, getSession } from '~/session.server';
-import { getClusterTweets, getListTweets, getRektTweets } from '~/query.server';
+import {
+  getClusterTweets,
+  getClusterTweetsQuery,
+  getListTweets,
+  getListTweetsQuery,
+  getRektTweets,
+  getRektTweetsQuery,
+} from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
 import Column from '~/components/column';
 import Empty from '~/components/empty';
@@ -52,11 +58,31 @@ import Switcher from '~/components/switcher';
 import TimeIcon from '~/icons/time';
 import { createHash } from '~/crypto.server';
 import { db } from '~/db.server';
+import { invalidateCacheForQuery } from '~/swr.server';
 import { useError } from '~/error';
 import useSync from '~/hooks/sync';
 import { wrapTweet } from '~/types';
 
 export type LoaderData = TweetJS[];
+
+function parseSearchParams(searchParams: URLSearchParams): {
+  sort: TweetsSort;
+  filter: TweetsFilter;
+  time: Time;
+  limit: number;
+} {
+  const sort = Number(
+    searchParams.get(Param.TweetsSort) ?? DEFAULT_TWEETS_SORT
+  ) as TweetsSort;
+  const filter = Number(
+    searchParams.get(Param.TweetsFilter) ?? DEFAULT_TWEETS_FILTER
+  ) as TweetsFilter;
+  const time = Number(searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
+  const limit = Number(
+    searchParams.get(Param.TweetsLimit) ?? DEFAULT_TWEETS_LIMIT
+  );
+  return { sort, filter, time, limit };
+}
 
 // $src - the type of source (e.g. clusters or lists).
 // $id - the id of a specific source (e.g. a cluster slug or user list id).
@@ -66,20 +92,11 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.src, 'expected params.src');
   invariant(params.id, 'expected params.id');
   log.info(`Fetching tweets for ${params.src} (${params.id})...`);
-  const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
   const uid = getUserIdFromSession(session);
+  const url = new URL(request.url);
+  const { sort, filter, time, limit } = parseSearchParams(url.searchParams);
   session.set('href', `${url.pathname}${url.search}`);
-  const sort = Number(
-    url.searchParams.get(Param.TweetsSort) ?? DEFAULT_TWEETS_SORT
-  ) as TweetsSort;
-  const filter = Number(
-    url.searchParams.get(Param.TweetsFilter) ?? DEFAULT_TWEETS_FILTER
-  ) as TweetsFilter;
-  const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
-  const limit = Number(
-    url.searchParams.get(Param.TweetsLimit) ?? DEFAULT_TWEETS_LIMIT
-  );
   let tweets: TweetFull[];
   switch (params.src) {
     case 'clusters':
@@ -156,110 +173,148 @@ async function syncTweetsFromUsernames(api: TwitterApi, usernames: string[]) {
 }
 
 export const action: ActionFunction = async ({ params, request }) => {
-  const invocationId = nanoid(5);
-  console.time(`src-id-loader-${invocationId}`);
-  invariant(params.src, 'expected params.src');
-  invariant(params.id, 'expected params.id');
-  log.info(`Fetching tweets for ${params.src} (${params.id})...`);
-  const { api, session } = await getClient(request);
-  switch (params.src) {
-    case 'clusters': {
-      log.info(`Fetching scores for cluster (${params.id}) from database...`);
-      const scores = await db.scores.findMany({
-        where: { clusters: { slug: params.id } },
-        orderBy: { rank: 'asc' },
-      });
-      const usernames = scores.map((s) => s.user_id.toString());
-      await syncTweetsFromUsernames(api, usernames);
-      break;
-    }
-    case 'lists': {
-      log.info(`Fetching tweets from list (${params.id})...`);
-      const key = `latest-tweet-id:list-tweets:${params.id}`;
-      const latestTweetId = await redis.get(key);
-      log.debug(`Found the latest tweet (${params.id}): ${latestTweetId}`);
-      const check = await api.v2.listTweets(params.id, { max_results: 1 });
-      const latestTweet = check.tweets[0];
-      if (latestTweet && latestTweet.id === latestTweetId) {
-        log.debug(`Skipping fetch for list (${params.id})...`);
-      } else {
-        if (latestTweet) await redis.set(key, check.tweets[0].id);
-        const res = await api.v2.listTweets(params.id, {
-          'tweet.fields': TWEET_FIELDS,
-          'expansions': TWEET_EXPANSIONS,
-          'user.fields': USER_FIELDS,
+  try {
+    const invocationId = nanoid(5);
+    console.time(`src-id-loader-${invocationId}`);
+    invariant(params.src, 'expected params.src');
+    invariant(params.id, 'expected params.id');
+    log.info(`Fetching tweets for ${params.src} (${params.id})...`);
+    const { api, session } = await getClient(request);
+    switch (params.src) {
+      case 'clusters': {
+        log.info(`Fetching scores for cluster (${params.id}) from database...`);
+        const scores = await db.scores.findMany({
+          where: { clusters: { slug: params.id } },
+          orderBy: { rank: 'asc' },
         });
-        const queue = toCreateQueue(res, initQueue(), BigInt(params.id));
-        await executeCreateQueue(queue);
+        const usernames = scores.map((s) => s.user_id.toString());
+        await syncTweetsFromUsernames(api, usernames);
+        break;
       }
-      break;
+      case 'lists': {
+        log.info(`Fetching tweets from list (${params.id})...`);
+        const key = `latest-tweet-id:list-tweets:${params.id}`;
+        const latestTweetId = await redis.get(key);
+        log.debug(`Found the latest tweet (${params.id}): ${latestTweetId}`);
+        const check = await api.v2.listTweets(params.id, { max_results: 1 });
+        const latestTweet = check.tweets[0];
+        if (latestTweet && latestTweet.id === latestTweetId) {
+          log.debug(`Skipping fetch for list (${params.id})...`);
+        } else {
+          if (latestTweet) await redis.set(key, check.tweets[0].id);
+          const res = await api.v2.listTweets(params.id, {
+            'tweet.fields': TWEET_FIELDS,
+            'expansions': TWEET_EXPANSIONS,
+            'user.fields': USER_FIELDS,
+          });
+          const queue = toCreateQueue(res, initQueue(), BigInt(params.id));
+          await executeCreateQueue(queue);
+        }
+        break;
+      }
+      case 'rekt': {
+        const n = 1000;
+        log.info(`Fetching ${n} rekt scores...`);
+        const res = await fetch(
+          `https://feed.rekt.news/api/v1/parlor/crypto/0/${n}`
+        );
+        const influencers = (await res.json()) as RektInfluencer[];
+        log.info(`Fetching ${influencers.length} rekt users...`);
+        const splits: RektInfluencer[][] = [];
+        while (influencers.length) splits.push(influencers.splice(0, 100));
+        const usersToCreate: User[] = [];
+        const scoresToCreate: Rekt[] = [];
+        await Promise.all(
+          splits.map(async (scores) => {
+            const data = await api.v2.usersByUsernames(
+              scores.map((r) => r.screen_name),
+              { 'user.fields': USER_FIELDS }
+            );
+            log.info(`Parsing ${data.data.length} users...`);
+            const users = data.data.map((u) => ({
+              id: BigInt(u.id),
+              name: u.name,
+              username: u.username,
+              verified: u.verified ?? null,
+              description: u.description ?? null,
+              profile_image_url: u.profile_image_url ?? null,
+              followers_count: u.public_metrics?.followers_count ?? null,
+              following_count: u.public_metrics?.following_count ?? null,
+              tweets_count: u.public_metrics?.tweet_count ?? null,
+              created_at: u.created_at ? new Date(u.created_at) : null,
+              updated_at: new Date(),
+            }));
+            users.forEach((i) => usersToCreate.push(i));
+            log.info(`Parsing ${scores.length} rekt scores...`);
+            const rekt = scores.map((d) => ({
+              id: BigInt(d.id),
+              user_id: users.find((i) => i.username === d.screen_name)
+                ?.id as bigint,
+              username: d.screen_name,
+              name: d.name,
+              profile_image_url: d.profile_picture,
+              points: d.points_v2,
+              rank: d.rank,
+              followers_count: d.followers,
+              followers_in_people_count: d.followers_in_people_count,
+            }));
+            const missing = rekt.filter((r) => !r.user_id);
+            log.warn(`Missing: ${missing.map((u) => u.username).join()}`);
+            rekt
+              .filter((r) => r.user_id)
+              .forEach((r) => scoresToCreate.push(r));
+          })
+        );
+        log.info(`Inserting ${scoresToCreate.length} rekt scores and users...`);
+        const skipDuplicates = true;
+        await db.$transaction([
+          db.users.createMany({ data: usersToCreate, skipDuplicates }),
+          db.rekt.createMany({ data: scoresToCreate, skipDuplicates }),
+        ]);
+        const usernames = usersToCreate.map((u) => u.username);
+        await syncTweetsFromUsernames(api, usernames);
+        break;
+      }
+      default:
+        throw new Response('Not Found', { status: 404 });
     }
-    case 'rekt': {
-      const n = 1000;
-      log.info(`Fetching ${n} rekt scores...`);
-      const res = await fetch(
-        `https://feed.rekt.news/api/v1/parlor/crypto/0/${n}`
-      );
-      const influencers = (await res.json()) as RektInfluencer[];
-      log.info(`Fetching ${influencers.length} rekt users...`);
-      const splits: RektInfluencer[][] = [];
-      while (influencers.length) splits.push(influencers.splice(0, 100));
-      const usersToCreate: User[] = [];
-      const scoresToCreate: Rekt[] = [];
-      await Promise.all(
-        splits.map(async (scores) => {
-          const data = await api.v2.usersByUsernames(
-            scores.map((r) => r.screen_name),
-            { 'user.fields': USER_FIELDS }
-          );
-          log.info(`Parsing ${data.data.length} users...`);
-          const users = data.data.map((u) => ({
-            id: BigInt(u.id),
-            name: u.name,
-            username: u.username,
-            verified: u.verified ?? null,
-            description: u.description ?? null,
-            profile_image_url: u.profile_image_url ?? null,
-            followers_count: u.public_metrics?.followers_count ?? null,
-            following_count: u.public_metrics?.following_count ?? null,
-            tweets_count: u.public_metrics?.tweet_count ?? null,
-            created_at: u.created_at ? new Date(u.created_at) : null,
-            updated_at: new Date(),
-          }));
-          users.forEach((i) => usersToCreate.push(i));
-          log.info(`Parsing ${scores.length} rekt scores...`);
-          const rekt = scores.map((d) => ({
-            id: BigInt(d.id),
-            user_id: users.find((i) => i.username === d.screen_name)
-              ?.id as bigint,
-            username: d.screen_name,
-            name: d.name,
-            profile_image_url: d.profile_picture,
-            points: d.points_v2,
-            rank: d.rank,
-            followers_count: d.followers,
-            followers_in_people_count: d.followers_in_people_count,
-          }));
-          const missing = rekt.filter((r) => !r.user_id);
-          log.warn(`Missing: ${missing.map((u) => u.username).join()}`);
-          rekt.filter((r) => r.user_id).forEach((r) => scoresToCreate.push(r));
-        })
-      );
-      log.info(`Inserting ${scoresToCreate.length} rekt scores and users...`);
-      const skipDuplicates = true;
-      await db.$transaction([
-        db.users.createMany({ data: usersToCreate, skipDuplicates }),
-        db.rekt.createMany({ data: scoresToCreate, skipDuplicates }),
-      ]);
-      const usernames = usersToCreate.map((u) => u.username);
-      await syncTweetsFromUsernames(api, usernames);
-      break;
+    const url = new URL(request.url);
+    const uid = getUserIdFromSession(session);
+    const { sort, filter, time, limit } = parseSearchParams(url.searchParams);
+    let query: string;
+    switch (params.src) {
+      case 'clusters':
+        query = getClusterTweetsQuery(
+          params.id,
+          sort,
+          filter,
+          time,
+          limit,
+          uid
+        );
+        break;
+      case 'lists':
+        query = getListTweetsQuery(
+          BigInt(params.id),
+          sort,
+          filter,
+          time,
+          limit,
+          uid
+        );
+        break;
+      case 'rekt':
+        query = getRektTweetsQuery(sort, filter, time, limit, uid);
+        break;
+      default:
+        throw new Response('Not Found', { status: 404 });
     }
-    default:
-      throw new Response('Not Found', { status: 404 });
+    await invalidateCacheForQuery(query, uid);
+    const headers = { 'Set-Cookie': await commitSession(session) };
+    return json({}, { status: 200, headers });
+  } catch (e) {
+    return handleTwitterApiError(e);
   }
-  const headers = { 'Set-Cookie': await commitSession(session) };
-  return new Response('Sync Success', { headers });
 };
 
 export function ErrorBoundary({ error }: { error: Error }) {
@@ -278,21 +333,11 @@ export default function TweetsPage() {
   const variableSizeListRef = useRef<VariableSizeList>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const location = useLocation();
-  const prevLength = useRef(tweets.length);
-  const transition = useTransition();
   useEffect(() => {
-    if (transition.state === 'idle' && prevLength.current < tweets.length) {
-      // Recalculate the size of the now-loaded tweet item (which replaced the
-      // previously fallback state, fixed height tweet item). If we don't do
-      // this, `react-window` will wrongly use the height of the fallback item.
-      variableSizeListRef.current?.resetAfterIndex(prevLength.current);
-      prevLength.current = tweets.length;
-    } else if (transition.state === 'loading') {
-      // Queue a recalculation of all the items loaded into the next page.
-      prevLength.current = 0;
-    }
-  }, [transition.state, transition.location, tweets.length, location]);
+    // TODO: Do some more advanced (and more performant) size re-calculations.
+    // @see {@link https://github.com/rooteco/tweetscape/blob/develop/app/routes/%24src.%24id/tweets.tsx#L353-L367}
+    variableSizeListRef.current?.resetAfterIndex(0);
+  });
 
   const { syncing, indicator } = useSync();
 

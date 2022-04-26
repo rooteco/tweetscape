@@ -20,6 +20,7 @@ import type {
 import type { Decimal } from '@prisma/client/runtime';
 import { TwitterApiRateLimitPlugin } from '@twitter-api-v2/plugin-rate-limit';
 import invariant from 'tiny-invariant';
+import { json } from '@remix-run/node';
 
 import type {
   Annotation,
@@ -66,21 +67,26 @@ export const TWEET_EXPANSIONS: TTweetv2Expansion[] = [
   'entities.mentions.username',
 ];
 
-export function handleTwitterApiError(e: unknown): never {
+export type APIError = { msg: string; reset?: string };
+export function handleTwitterApiError(e: unknown): Response {
   if (e instanceof ApiResponseError && e.rateLimitError && e.rateLimit) {
     const msg1 =
       `You just hit the rate limit! Limit for this endpoint is ` +
       `${e.rateLimit.limit} requests!`;
-    const reset = new Date(e.rateLimit.reset * 1000).toLocaleString('en-US', {
+    const reset = new Date(e.rateLimit.reset * 1000);
+    const resetString = reset.toLocaleString('en-US', {
       dateStyle: 'full',
       timeStyle: 'full',
     });
-    const msg2 = `Request counter will reset at ${reset}.`;
+    const msg2 = `Request counter will reset at ${resetString}.`;
     log.error(msg1);
     log.error(msg2);
-    throw new Error(`${msg1} ${msg2}`);
+    return json<APIError>({
+      msg: `${msg1} ${msg2}`,
+      reset: reset.toISOString(),
+    });
   }
-  throw e;
+  return json<APIError>({ msg: e.message });
 }
 
 export async function getTwitterClientForUser(

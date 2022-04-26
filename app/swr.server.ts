@@ -68,7 +68,7 @@ export function cache<
   return Promise.all(promises.flat());
 }
 
-export async function invalidate(uid: bigint) {
+export async function invalidateCacheForUser(uid: bigint) {
   log.info(`Invalidating cache keys for user (${uid})...`);
   const scan = redis.scanIterator({
     TYPE: 'string',
@@ -79,6 +79,11 @@ export async function invalidate(uid: bigint) {
     log.debug(`Unlinking cache key (${key})...`);
     await redis.unlink(key);
   }
+}
+
+export async function invalidateCacheForQuery(query: string, uid?: bigint) {
+  const { stillGoodKey, responseKey } = keys(query, uid);
+  await Promise.all([redis.unlink(stillGoodKey), redis.unlink(responseKey)]);
 }
 
 export async function revalidate<T>(

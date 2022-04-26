@@ -1,7 +1,13 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useFetcher, useFetchers, useResolvedPath } from '@remix-run/react';
+import {
+  useActionData,
+  useFetcher,
+  useFetchers,
+  useResolvedPath,
+} from '@remix-run/react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import cn from 'classnames';
 
+import type { APIError } from '~/twitter.server';
 import BoltIcon from '~/icons/bolt';
 import { ErrorContext } from '~/error';
 import ErrorIcon from '~/icons/error';
@@ -11,6 +17,7 @@ import { TimeAgo } from '~/components/timeago';
 export default function useSync(action?: string, obj = '', shouldSync = true) {
   const { error } = useContext(ErrorContext);
   const { pathname } = useResolvedPath('');
+  const data = useActionData<APIError>();
   const fetchers = useFetchers();
   const syncing = useMemo(
     () =>
@@ -21,15 +28,12 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
       ),
     [fetchers, action, pathname]
   );
-  const prevSyncing = useRef(syncing);
   const [lastSynced, setLastSynced] = useState<Date>();
   useEffect(() => {
     setLastSynced(undefined);
   }, [pathname, action]);
   useEffect(() => {
-    if (!syncing && prevSyncing.current)
-      setLastSynced((prev) => prev ?? new Date());
-    prevSyncing.current = syncing;
+    if (!syncing) setLastSynced(new Date());
   }, [syncing]);
   const fetcher = useFetcher();
   useEffect(() => {
@@ -50,6 +54,13 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
             <>
               <ErrorIcon />
               <span>Sync error</span>
+            </>
+          )}
+          {data?.msg && !syncing && (
+            <>
+              <ErrorIcon />
+              {data.reset && <TimeAgo datetime={data.reset} />}
+              {!data.reset && <span>{data.msg}</span>}
             </>
           )}
           {syncing && (

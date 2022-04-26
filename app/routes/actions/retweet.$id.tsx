@@ -8,7 +8,7 @@ import {
 } from '~/twitter.server';
 import { commitSession } from '~/session.server';
 import { db } from '~/db.server';
-import { invalidate } from '~/swr.server';
+import { invalidateCacheForUser } from '~/swr.server';
 
 export const action: ActionFunction = async ({ request, params }) => {
   try {
@@ -41,7 +41,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       default:
         return new Response('Method Not Allowed', { status: 405 });
     }
-    await invalidate(uid);
+    await invalidateCacheForUser(uid);
     const headers = { 'Set-Cookie': await commitSession(session) };
     return new Response('Success', { headers });
   } catch (e) {

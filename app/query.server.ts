@@ -93,7 +93,7 @@ export async function getTweetRepliesByIds(
     order by created_at desc;`, uid);
 }
 
-function getListTweetsQuery(
+export function getListTweetsQuery(
   listId: bigint,
   sort: TweetsSort,
   filter: TweetsFilter,
@@ -146,7 +146,7 @@ export async function getListTweets(
   return tweets;
 }
 
-function getClusterTweetsQuery(
+export function getClusterTweetsQuery(
   clusterSlug: string,
   sort: TweetsSort,
   filter: TweetsFilter,
@@ -200,7 +200,7 @@ export async function getClusterTweets(
   return tweets;
 }
 
-function getRektTweetsQuery(
+export function getRektTweetsQuery(
   sort: TweetsSort,
   filter: TweetsFilter,
   time = DEFAULT_TIME,
@@ -263,7 +263,7 @@ export async function getLists(uid: bigint): Promise<List[]> {
   return swr<List>(getListsQuery(uid), uid);
 }
 
-function getListArticlesQuery(
+export function getListArticlesQuery(
   listId: bigint,
   sort: ArticlesSort,
   filter: ArticlesFilter,
@@ -328,7 +328,7 @@ export async function getListArticles(
   return articles;
 }
 
-function getClusterArticlesQuery(
+export function getClusterArticlesQuery(
   clusterSlug: string,
   sort: ArticlesSort,
   filter: ArticlesFilter,
@@ -402,7 +402,10 @@ export async function getClusterArticles(
   return articles;
 }
 
-function getRektArticlesQuery(time = DEFAULT_TIME, uid?: bigint): string {
+export function getRektArticlesQuery(
+  time = DEFAULT_TIME,
+  uid?: bigint
+): string {
   /* prettier-ignore */
   return `
     select

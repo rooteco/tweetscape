@@ -10,7 +10,7 @@ import {
   toCreateQueue,
 } from '~/twitter.server';
 import { commitSession } from '~/session.server';
-import { invalidate } from '~/swr.server';
+import { invalidateCacheForUser } from '~/swr.server';
 import { log } from '~/utils.server';
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -26,7 +26,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   });
   await executeCreateQueue(toCreateQueue(res));
   // TODO: Invalidate cached responses for this tweet's replies.
-  if (uid) await invalidate(uid);
+  if (uid) await invalidateCacheForUser(uid);
   const headers = { 'Set-Cookie': await commitSession(session) };
   return new Response('Sync Success', { status: 200, headers });
 };
