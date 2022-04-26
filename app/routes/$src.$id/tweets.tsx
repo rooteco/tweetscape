@@ -80,10 +80,10 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const limit = Number(
     url.searchParams.get(Param.TweetsLimit) ?? DEFAULT_TWEETS_LIMIT
   );
-  let tweetsPromise: Promise<TweetFull[]>;
+  let tweets: TweetFull[];
   switch (params.src) {
     case 'clusters':
-      tweetsPromise = getClusterTweets(
+      tweets = await getClusterTweets(
         params.id,
         sort,
         filter,
@@ -93,7 +93,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       );
       break;
     case 'lists':
-      tweetsPromise = getListTweets(
+      tweets = await getListTweets(
         BigInt(params.id),
         sort,
         filter,
@@ -103,19 +103,11 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       );
       break;
     case 'rekt':
-      tweetsPromise = getRektTweets(sort, filter, time, limit, uid);
+      tweets = await getRektTweets(sort, filter, time, limit, uid);
       break;
     default:
       throw new Response('Not Found', { status: 404 });
   }
-  let tweets: TweetFull[] = [];
-  await Promise.all([
-    (async () => {
-      console.time(`swr-get-tweets-${invocationId}`);
-      tweets = await tweetsPromise;
-      console.timeEnd(`swr-get-tweets-${invocationId}`);
-    })(),
-  ]);
   console.timeEnd(`src-id-loader-${invocationId}`);
   const headers = { 'Set-Cookie': await commitSession(session) };
   return json<LoaderData>(tweets.map(wrapTweet), { headers });
