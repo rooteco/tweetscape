@@ -49,7 +49,7 @@ const fallback = Array(10)
 
 function Section({ tweet, replies }: LoaderData[number]) {
   const { pathname } = useLocation();
-  const { syncing, indicator } = useSync(`/sync/${tweet.id}`);
+  const { syncing, reloading, indicator } = useSync(`/sync/${tweet.id}`);
   return (
     <Column className='w-[36rem] border-r border-gray-200 dark:border-gray-800'>
       <header className='z-30 sticky top-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow'>
@@ -69,9 +69,9 @@ function Section({ tweet, replies }: LoaderData[number]) {
         {replies.map((reply) => (
           <TweetItem tweet={reply} key={reply.id.toString()} />
         ))}
-        {syncing && fallback}
+        {(syncing || reloading) && fallback}
       </ol>
-      {!syncing && !replies.length && (
+      {!syncing && !reloading && !replies.length && (
         <Empty className='flex-1 m-5'>No replies to show</Empty>
       )}
     </Column>
