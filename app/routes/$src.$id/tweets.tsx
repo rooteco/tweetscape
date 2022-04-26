@@ -200,11 +200,11 @@ async function syncTweetsFromUsernames(api: TwitterApi, usernames: string[]) {
   const queue = initQueue();
   await Promise.all(
     queries.map(async (query) => {
-      log.trace(`Query (${query.length}):\n${query}`);
+      log.debug(`Query (${query.length}):\n${query}`);
       const hash = createHash('sha256').update(query).digest('hex');
       const key = `sinceid:${hash}`;
       const id = (await redis.get(key)) ?? undefined;
-      log.trace(`Pagination id for query (${query.length}): ${id}`);
+      log.debug(`Pagination id for query (${query.length}): ${id}`);
       const res = await api.v2.search(query, {
         'max_results': 100,
         'since_id': id,
@@ -234,7 +234,11 @@ export const action: ActionFunction = async ({ params, request }) => {
       });
       if (!cluster) throw new Response('Not Found', { status: 404 });
       // TODO: Sync cluster influencer scores on-demand.
-      const { influencers } = await getBorgCollectiveInfluencers(cluster);
+      const influencers: BorgInfluencer[] = [];
+      for (let pg = 0; pg < 1000 / 50; pg += 1) {
+        const data = await getBorgCollectiveInfluencers(cluster, pg);
+        data.influencers.forEach((i) => influencers.push(i));
+      }
       const usernames = influencers.map(
         (influencer) => influencer.social_account.social_account.screen_name
       );
