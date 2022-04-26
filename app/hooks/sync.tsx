@@ -48,6 +48,7 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
       <fetcher.Form action={syncing ? '' : action ?? pathname} method='patch'>
         <button
           type='submit'
+          title={fetcher.data?.msg ?? error?.message}
           className={cn(
             'mr-1.5 flex truncate items-center text-xs bg-gray-200 dark:bg-gray-700 rounded px-2 h-6',
             { 'cursor-wait': syncing }
@@ -67,7 +68,7 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
                   Reset <TimeAgo datetime={fetcher.data.reset} />
                 </span>
               )}
-              {!fetcher.data.reset && <span>{fetcher.data.msg}</span>}
+              {!fetcher.data.reset && <span>Sync error</span>}
             </>
           )}
           {syncing && (
