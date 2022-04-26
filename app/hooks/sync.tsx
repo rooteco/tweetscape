@@ -1,10 +1,5 @@
-import {
-  useActionData,
-  useFetcher,
-  useFetchers,
-  useResolvedPath,
-} from '@remix-run/react';
 import { useContext, useEffect, useMemo, useState } from 'react';
+import { useFetcher, useFetchers, useResolvedPath } from '@remix-run/react';
 import cn from 'classnames';
 
 import type { APIError } from '~/twitter.server';
@@ -17,7 +12,6 @@ import { TimeAgo } from '~/components/timeago';
 export default function useSync(action?: string, obj = '', shouldSync = true) {
   const { error } = useContext(ErrorContext);
   const { pathname } = useResolvedPath('');
-  const data = useActionData<APIError>();
   const fetchers = useFetchers();
   const syncing = useMemo(
     () =>
@@ -44,7 +38,7 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
   useEffect(() => {
     if (!syncing) setLastSynced(new Date());
   }, [syncing]);
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<APIError>();
   useEffect(() => {
     if (!syncing && !lastSynced && !error && shouldSync)
       fetcher.submit(null, { method: 'patch', action: action ?? pathname });
@@ -59,17 +53,21 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
             { 'cursor-wait': syncing }
           )}
         >
-          {error && !syncing && !reloading && (
+          {error && !fetcher.data?.msg && !syncing && !reloading && (
             <>
               <ErrorIcon />
               <span>Sync error</span>
             </>
           )}
-          {data?.msg && !syncing && !reloading && (
+          {fetcher.data?.msg && !syncing && !reloading && (
             <>
               <ErrorIcon />
-              {data.reset && <TimeAgo datetime={data.reset} />}
-              {!data.reset && <span>{data.msg}</span>}
+              {fetcher.data.reset && (
+                <span>
+                  Reset <TimeAgo datetime={fetcher.data.reset} />
+                </span>
+              )}
+              {!fetcher.data.reset && <span>{fetcher.data.msg}</span>}
             </>
           )}
           {syncing && (
@@ -78,13 +76,13 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
               <span>Syncing{obj ? ` ${obj}` : ''}</span>
             </>
           )}
-          {!syncing && reloading && (
+          {reloading && !syncing && (
             <>
               <SyncIcon />
               <span>Reloading{obj ? ` ${obj}` : ''}</span>
             </>
           )}
-          {!error && !syncing && !reloading && (
+          {!fetcher.data?.msg && !error && !syncing && !reloading && (
             <>
               <BoltIcon />
               <span>
@@ -99,17 +97,7 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
         </button>
       </fetcher.Form>
     ),
-    [
-      syncing,
-      reloading,
-      data,
-      lastSynced,
-      obj,
-      error,
-      action,
-      fetcher,
-      pathname,
-    ]
+    [syncing, reloading, lastSynced, obj, error, action, fetcher, pathname]
   );
-  return { syncing, indicator };
+  return { syncing, reloading, indicator };
 }
