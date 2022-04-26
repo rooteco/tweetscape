@@ -81,12 +81,15 @@ export function handleTwitterApiError(e: unknown): Response {
     const msg2 = `Request counter will reset at ${resetString}.`;
     log.error(msg1);
     log.error(msg2);
-    return json<APIError>({
-      msg: `${msg1} ${msg2}`,
-      reset: reset.toISOString(),
-    });
+    return json<APIError>(
+      {
+        msg: `${msg1} ${msg2}`,
+        reset: reset.toISOString(),
+      },
+      { status: 429 }
+    );
   }
-  return json<APIError>({ msg: e.message });
+  return json<APIError>({ msg: e.message }, { status: 500 });
 }
 
 export async function getTwitterClientForUser(
