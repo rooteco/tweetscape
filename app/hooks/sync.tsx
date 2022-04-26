@@ -28,6 +28,15 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
       ),
     [fetchers, action, pathname]
   );
+  const reloading = useMemo(
+    () =>
+      fetchers.some(
+        (f) =>
+          f.type === 'actionReload' &&
+          f.submission.action === (action ?? pathname)
+      ),
+    [fetchers, action, pathname]
+  );
   const [lastSynced, setLastSynced] = useState<Date>();
   useEffect(() => {
     setLastSynced(undefined);
@@ -50,13 +59,13 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
             { 'cursor-wait': syncing }
           )}
         >
-          {error && !syncing && (
+          {error && !syncing && !reloading && (
             <>
               <ErrorIcon />
               <span>Sync error</span>
             </>
           )}
-          {data?.msg && !syncing && (
+          {data?.msg && !syncing && !reloading && (
             <>
               <ErrorIcon />
               {data.reset && <TimeAgo datetime={data.reset} />}
@@ -69,7 +78,13 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
               <span>Syncing{obj ? ` ${obj}` : ''}</span>
             </>
           )}
-          {!error && !syncing && (
+          {!syncing && reloading && (
+            <>
+              <SyncIcon />
+              <span>Reloading{obj ? ` ${obj}` : ''}</span>
+            </>
+          )}
+          {!error && !syncing && !reloading && (
             <>
               <BoltIcon />
               <span>
@@ -84,7 +99,17 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
         </button>
       </fetcher.Form>
     ),
-    [syncing, lastSynced, obj, error, action, fetcher, pathname]
+    [
+      syncing,
+      reloading,
+      data,
+      lastSynced,
+      obj,
+      error,
+      action,
+      fetcher,
+      pathname,
+    ]
   );
   return { syncing, indicator };
 }
