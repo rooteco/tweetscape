@@ -46,13 +46,13 @@ export default function useSync(action?: string, obj = '', shouldSync = true) {
             { 'cursor-wait': syncing }
           )}
         >
-          {error && (
+          {error && !syncing && (
             <>
               <ErrorIcon />
               <span>Sync error</span>
             </>
           )}
-          {!error && syncing && (
+          {syncing && (
             <>
               <SyncIcon />
               <span>Syncing{obj ? ` ${obj}` : ''}</span>
