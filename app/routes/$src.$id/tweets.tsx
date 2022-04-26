@@ -121,62 +121,6 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   return json<LoaderData>(tweets.map(wrapTweet), { headers });
 };
 
-interface BorgCluster {
-  active: boolean;
-  created_at: string;
-  id: string;
-  name: string;
-  updated_at: string;
-}
-
-interface BorgSocialAccount {
-  created_at: string;
-  description: string;
-  followers_count: string;
-  following_count: string;
-  id: string;
-  location: string;
-  name: string;
-  personal: boolean;
-  profile_image_url: string;
-  screen_name: string;
-  tweets_count: string;
-  updated_at: string;
-  url: string;
-}
-
-interface BorgInfluencer {
-  attention_score: number;
-  attention_score_change_week: number;
-  cluster_id: string;
-  created_at: string;
-  id: string;
-  identity: { clusters: BorgCluster[] };
-  insider_score: number;
-  personal_rank: string;
-  rank: string;
-  social_accounts: { social_account: BorgSocialAccount }[];
-  social_account: { social_account: BorgSocialAccount };
-}
-
-interface BorgResponse {
-  influencers: BorgInfluencer[];
-  total: string;
-  has_more: boolean;
-}
-
-async function getBorgCollectiveInfluencers(c: Cluster, pg = 0) {
-  log.debug(`Fetching influencers (${pg}) for ${c.name} (${c.id})...`);
-  const url =
-    `https://api.borg.id/influence/clusters/${c.name}/influencers?` +
-    `page=${pg}&sort_by=score&sort_direction=desc&influence_type=all`;
-  const headers = { authorization: `Token ${process.env.HIVE_TOKEN}` };
-  const data = (await (await fetch(url, { headers })).json()) as BorgResponse;
-  if (data.influencers && data.total) return data;
-  log.warn(`Fetched influencers: ${JSON.stringify(data, null, 2)}`);
-  return { influencers: [], total: 0 };
-}
-
 interface RektInfluencer {
   id: number;
   screen_name: string;
@@ -200,11 +144,11 @@ async function syncTweetsFromUsernames(api: TwitterApi, usernames: string[]) {
   const queue = initQueue();
   await Promise.all(
     queries.map(async (query) => {
-      log.debug(`Query (${query.length}):\n${query}`);
+      log.trace(`Query (${query.length}):\n${query}`);
       const hash = createHash('sha256').update(query).digest('hex');
       const key = `sinceid:${hash}`;
       const id = (await redis.get(key)) ?? undefined;
-      log.debug(`Pagination id for query (${query.length}): ${id}`);
+      log.trace(`Pagination id for query (${query.length}): ${id}`);
       const res = await api.v2.search(query, {
         'max_results': 100,
         'since_id': id,
@@ -228,20 +172,12 @@ export const action: ActionFunction = async ({ params, request }) => {
   const { api, session } = await getClient(request);
   switch (params.src) {
     case 'clusters': {
-      log.info(`Fetching cluster (${params.id}) from database...`);
-      const cluster = await db.clusters.findUnique({
-        where: { slug: params.id },
+      log.info(`Fetching scores for cluster (${params.id}) from database...`);
+      const scores = await db.scores.findMany({
+        where: { clusters: { slug: params.id } },
+        orderBy: { rank: 'asc' },
       });
-      if (!cluster) throw new Response('Not Found', { status: 404 });
-      // TODO: Sync cluster influencer scores on-demand.
-      const influencers: BorgInfluencer[] = [];
-      for (let pg = 0; pg < 1000 / 50; pg += 1) {
-        const data = await getBorgCollectiveInfluencers(cluster, pg);
-        data.influencers.forEach((i) => influencers.push(i));
-      }
-      const usernames = influencers.map(
-        (influencer) => influencer.social_account.social_account.screen_name
-      );
+      const usernames = scores.map((s) => s.user_id.toString());
       await syncTweetsFromUsernames(api, usernames);
       break;
     }
