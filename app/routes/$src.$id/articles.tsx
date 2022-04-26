@@ -19,8 +19,11 @@ import {
 import { commitSession, getSession } from '~/session.server';
 import {
   getClusterArticles,
+  getClusterArticlesQuery,
   getListArticles,
+  getListArticlesQuery,
   getRektArticles,
+  getRektArticlesQuery,
 } from '~/query.server';
 import { getUserIdFromSession, log, nanoid } from '~/utils.server';
 import ArticleItem from '~/components/article';
@@ -32,6 +35,8 @@ import Nav from '~/components/nav';
 import SortIcon from '~/icons/sort';
 import Switcher from '~/components/switcher';
 import TimeIcon from '~/icons/time';
+import { handleTwitterApiError } from '~/twitter.server';
+import { invalidateCacheForQuery } from '~/swr.server';
 import { syncArticleMetadata } from '~/sync/articles.server';
 import { action as syncTweets } from '~/routes/$src.$id/tweets';
 import { useError } from '~/error';
@@ -39,6 +44,17 @@ import useSync from '~/hooks/sync';
 import { wrapArticle } from '~/types';
 
 export type LoaderData = ArticleJS[];
+
+function parseSearchParams(searchParams: URLSearchParams) {
+  const sort = Number(
+    searchParams.get(Param.ArticlesSort) ?? DEFAULT_ARTICLES_SORT
+  ) as ArticlesSort;
+  const filter = Number(
+    searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
+  ) as ArticlesFilter;
+  const time = Number(searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
+  return { sort, filter, time };
+}
 
 // $src - the type of source (e.g. clusters or lists).
 // $id - the id of a specific source (e.g. a cluster slug or user list id).
@@ -48,17 +64,11 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   invariant(params.src, 'expected params.src');
   invariant(params.id, 'expected params.id');
   log.info(`Fetching articles for ${params.src} (${params.id})...`);
-  const url = new URL(request.url);
   const session = await getSession(request.headers.get('Cookie'));
   const uid = getUserIdFromSession(session);
+  const url = new URL(request.url);
   session.set('href', `${url.pathname}${url.search}`);
-  const sort = Number(
-    url.searchParams.get(Param.ArticlesSort) ?? DEFAULT_ARTICLES_SORT
-  ) as ArticlesSort;
-  const filter = Number(
-    url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
-  ) as ArticlesFilter;
-  const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
+  const { sort, filter, time } = parseSearchParams(url.searchParams);
   let articles: ArticleFull[] = [];
   switch (params.src) {
     case 'clusters':
@@ -84,33 +94,62 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 };
 
 export const action: ActionFunction = async ({ params, request, ...rest }) => {
-  await syncTweets({ params, request, ...rest });
-  invariant(params.src, 'expected params.src');
-  invariant(params.id, 'expected params.id');
-  const url = new URL(request.url);
-  const sort = Number(
-    url.searchParams.get(Param.ArticlesSort) ?? DEFAULT_ARTICLES_SORT
-  ) as ArticlesSort;
-  const filter = Number(
-    url.searchParams.get(Param.ArticlesFilter) ?? DEFAULT_ARTICLES_FILTER
-  ) as ArticlesFilter;
-  const time = Number(url.searchParams.get(Param.Time) ?? DEFAULT_TIME) as Time;
-  let articles: ArticleFull[] = [];
-  switch (params.src) {
-    case 'clusters':
-      articles = await getClusterArticles(params.id, sort, filter, time);
-      break;
-    case 'lists':
-      articles = await getListArticles(BigInt(params.id), sort, filter, time);
-      break;
-    case 'rekt':
-      articles = await getRektArticles(time);
-      break;
-    default:
-      throw new Response('Not Found', { status: 404 });
+  try {
+    const res = (await syncTweets({ params, request, ...rest })) as Response;
+    if (res.status !== 200) return res;
+    invariant(params.src, 'expected params.src');
+    invariant(params.id, 'expected params.id');
+    const session = await getSession(request.headers.get('Cookie'));
+    const uid = getUserIdFromSession(session);
+    const url = new URL(request.url);
+    const { sort, filter, time } = parseSearchParams(url.searchParams);
+    let articles: ArticleFull[] = [];
+    switch (params.src) {
+      case 'clusters':
+        articles = await getClusterArticles(params.id, sort, filter, time, uid);
+        break;
+      case 'lists':
+        articles = await getListArticles(
+          BigInt(params.id),
+          sort,
+          filter,
+          time,
+          uid
+        );
+        break;
+      case 'rekt':
+        articles = await getRektArticles(time, uid);
+        break;
+      default:
+        throw new Response('Not Found', { status: 404 });
+    }
+    await syncArticleMetadata(articles);
+    let query: string;
+    switch (params.src) {
+      case 'clusters':
+        query = getClusterArticlesQuery(params.id, sort, filter, time, uid);
+        break;
+      case 'lists':
+        query = getListArticlesQuery(
+          BigInt(params.id),
+          sort,
+          filter,
+          time,
+          uid
+        );
+        break;
+      case 'rekt':
+        query = getRektArticlesQuery(time, uid);
+        break;
+      default:
+        throw new Response('Not Found', { status: 404 });
+    }
+    await invalidateCacheForQuery(query, uid);
+    const headers = { 'Set-Cookie': await commitSession(session) };
+    return json({}, { status: 200, headers });
+  } catch (e) {
+    return handleTwitterApiError(e);
   }
-  await syncArticleMetadata(articles);
-  return new Response('Sync Success');
 };
 
 export function ErrorBoundary({ error }: { error: Error }) {

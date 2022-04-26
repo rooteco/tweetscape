@@ -65,12 +65,7 @@ import { wrapTweet } from '~/types';
 
 export type LoaderData = TweetJS[];
 
-function parseSearchParams(searchParams: URLSearchParams): {
-  sort: TweetsSort;
-  filter: TweetsFilter;
-  time: Time;
-  limit: number;
-} {
+function parseSearchParams(searchParams: URLSearchParams) {
   const sort = Number(
     searchParams.get(Param.TweetsSort) ?? DEFAULT_TWEETS_SORT
   ) as TweetsSort;
