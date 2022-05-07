@@ -88,7 +88,7 @@
     "cypress": "^9.5.4",
     "dotenv": "^16.0.0",
     "dotenv-cli": "^5.1.0",
-    "eslint": "^8.13.0",
+    "eslint": "^8.15.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-typescript": "^16.2.0",
     "eslint-config-prettier": "^8.5.0",
