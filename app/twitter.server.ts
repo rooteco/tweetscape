@@ -89,7 +89,7 @@ export function handleTwitterApiError(e: unknown): Response {
       { status: 429 }
     );
   }
-  return json<APIError>({ msg: e.message }, { status: 500 });
+  return json<APIError>({ msg: (e as Error).message }, { status: 500 });
 }
 
 export async function getTwitterClientForUser(
