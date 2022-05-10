@@ -161,7 +161,12 @@ async function syncTweetsFromUsernames(api: TwitterApi, usernames: string[]) {
         'user.fields': USER_FIELDS,
       });
       toCreateQueue(res, queue);
-      if (res.meta.next_token) await redis.set(key, res.meta.newest_id);
+      if (res.meta.next_token) {
+        // Twitter's recent search API limits the `since_id` to be within a wk.
+        // @see {@link https://github.com/rooteco/tweetscape/issues/421}
+        const SECONDS_IN_A_WEEK = 60 * 60 * 24 * 7;
+        await redis.setEx(key, SECONDS_IN_A_WEEK, res.meta.newest_id);
+      }
     })
   );
   await executeCreateQueue(queue);
