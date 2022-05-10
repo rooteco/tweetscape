@@ -194,7 +194,7 @@ $ psql postgres://postgres:<pwd-from-env-file>@localhost:5432/postgres
 $ yarn dev
 ```
 
-13. (Optional) To run fully local versions of our deployed infrastructure, you'll have to first make sure you've got Docker properly installed and configured on your system. Then, you'll be able to start a local PostgreSQL database and Redis instance by running:
+13. (Optional) To run fully local versions of our deployed infrastructure, you'll have to first make sure you've got Docker [properly installed](https://docs.docker.com/engine/install/ubuntu) and [configured](https://docs.docker.com/engine/install/linux-postinstall) on your system. Then, you'll be able to start a local PostgreSQL database and Redis instance by running:
 
 ```
 $ yarn concurrently yarn:dev:postgres yarn:dev:redis
