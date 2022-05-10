@@ -18,6 +18,7 @@ import type {
   UserV2,
 } from 'twitter-api-v2';
 import type { Decimal } from '@prisma/client/runtime';
+import type { ITask } from 'pg-promise';
 import { TwitterApiRateLimitPlugin } from '@twitter-api-v2/plugin-rate-limit';
 import invariant from 'tiny-invariant';
 import { json } from '@remix-run/node';
@@ -39,7 +40,7 @@ import type {
 } from '~/types';
 import { getUserIdFromSession, log } from '~/utils.server';
 import { TwitterApiRateLimitDBStore } from '~/limit.server';
-import { db } from '~/db.server';
+import { db, pgp, pool } from '~/db.server';
 import { getSession } from '~/session.server';
 
 export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
@@ -89,6 +90,8 @@ export function handleTwitterApiError(e: unknown): Response {
       { status: 429 }
     );
   }
+  log.error(`Handling Twitter API ${(e as Error).name}: ${(e as Error).stack}`);
+  log.error(`Full error object: ${JSON.stringify(e, null, 2)}`);
   return json<APIError>({ msg: (e as Error).message }, { status: 500 });
 }
 
@@ -321,6 +324,37 @@ export function toCreateQueue(
   return queue;
 }
 
+// We can't currently perform bulk upserts with Prisma so we have to use our own
+// custom Postgres queries constructed and executed with `pg-promise`.
+// @see {@link https://github.com/rooteco/tweetscape/issues/400}
+// @see {@link https://github.com/prisma/prisma/issues/4134}
+function getBulkQuery<T extends Record<string, unknown>>(
+  table: string,
+  vals: T[],
+  primaryKey?: string
+): string | false {
+  // Filter out duplicate values (otherwise, DO UPDATE can fail).
+  const rows = primaryKey
+    ? vals.filter(
+        (obj, idx, arr) =>
+          arr.map((o) => o[primaryKey]).indexOf(obj[primaryKey]) === idx
+      )
+    : vals;
+  if (!rows.length) return false;
+  // Multi-row upsert: https://stackoverflow.com/a/37302557
+  const cs = new pgp.helpers.ColumnSet(Object.keys(rows[0]), { table });
+  let query = pgp.helpers.insert(rows, cs);
+  if (primaryKey) {
+    query += ` ON CONFLICT (${primaryKey}) DO UPDATE SET ${Object.keys(rows[0])
+      .map((col) => `"${col}" = excluded."${col}"`)
+      .join(', ')}`;
+  } else {
+    query += ` ON CONFLICT DO NOTHING`;
+  }
+  log.trace(`Executing bulk upsert query: ${query}`);
+  return query;
+}
+
 export async function executeCreateQueue(queue: CreateQueue) {
   log.info(`Creating ${queue.users.length} tweet authors...`);
   log.info(`Creating ${queue.list_members.length} list members...`);
@@ -331,17 +365,18 @@ export async function executeCreateQueue(queue: CreateQueue) {
   log.info(`Creating ${queue.links.length} links...`);
   log.info(`Creating ${queue.images.length} link images...`);
   log.info(`Creating ${queue.urls.length} tweet urls...`);
-  const skipDuplicates = true;
-  await db.$transaction([
-    db.users.createMany({ data: queue.users, skipDuplicates }),
-    db.list_members.createMany({ data: queue.list_members, skipDuplicates }),
-    db.tweets.createMany({ data: queue.tweets, skipDuplicates }),
-    db.mentions.createMany({ data: queue.mentions, skipDuplicates }),
-    db.annotations.createMany({ data: queue.annotations, skipDuplicates }),
-    db.tags.createMany({ data: queue.tags, skipDuplicates }),
-    db.refs.createMany({ data: queue.refs, skipDuplicates }),
-    db.links.createMany({ data: queue.links, skipDuplicates }),
-    db.images.createMany({ data: queue.images, skipDuplicates }),
-    db.urls.createMany({ data: queue.urls, skipDuplicates }),
-  ]);
+  await pool.tx((t: ITask<Record<string, never>>) => {
+    const queries = [
+      getBulkQuery('users', queue.users, 'id'),
+      getBulkQuery('list_members', queue.list_members),
+      getBulkQuery('tweets', queue.tweets, 'id'),
+      getBulkQuery('mentions', queue.mentions),
+      getBulkQuery('tags', queue.tags),
+      getBulkQuery('refs', queue.refs),
+      getBulkQuery('links', queue.links, 'url'),
+      getBulkQuery('images', queue.images),
+      getBulkQuery('urls', queue.urls),
+    ];
+    return t.batch(queries.filter(Boolean).map((q) => t.none(q as string)));
+  });
 }

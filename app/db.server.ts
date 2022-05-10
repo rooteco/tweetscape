@@ -1,12 +1,10 @@
-import type { IDatabase } from 'pg-promise';
+import type { IDatabase, IMain } from 'pg-promise';
 import { PrismaClient } from '@prisma/client';
 import array from 'postgres-array';
 import invariant from 'tiny-invariant';
 import pgPromise from 'pg-promise';
 
 import { log, parse } from '~/utils.server';
-
-type Pool = IDatabase<Record<string, never>>;
 
 function getDatabaseURL(): string {
   const { DATABASE_URL } = process.env;
@@ -66,7 +64,7 @@ function parseJsonArray(value: string) {
  * @see {@link https://stackoverflow.com/a/18755261}
  * @see {@link https://github.com/tc39/proposal-json-parse-with-source}
  */
-function getPool(): Pool {
+function getPostgresClient(): IMain {
   const pgp = pgPromise();
   pgp.pg.types.setTypeParser(20, parseBigInteger);
   pgp.pg.types.setTypeParser(1016, parseBigIntegerArray);
@@ -74,16 +72,17 @@ function getPool(): Pool {
   pgp.pg.types.setTypeParser(3802, parseJson);
   pgp.pg.types.setTypeParser(199, parseJsonArray);
   pgp.pg.types.setTypeParser(3807, parseJsonArray);
-  const pool = pgp(getDatabaseURL());
-  return pool;
+  return pgp;
 }
 
-let pool: Pool;
 let db: PrismaClient;
+let pgp: IMain;
+let pool: IDatabase<Record<string, never>>;
 
 declare global {
   var __db__: PrismaClient;
-  var __pool__: Pool;
+  var __pgp__: IMain;
+  var __pool__: IDatabase<Record<string, never>>;
 }
 
 // this is needed because in development we don't want to restart
@@ -92,12 +91,15 @@ declare global {
 // in production we'll have a single connection to the DB.
 if (process.env.NODE_ENV === 'production') {
   db = getClient();
-  pool = getPool();
+  pgp = getPostgresClient();
+  pool = pgp(getDatabaseURL());
 } else {
   if (!global.__db__) global.__db__ = getClient();
   db = global.__db__;
-  if (!global.__pool__) global.__pool__ = getPool();
+  if (!global.__pgp__) global.__pgp__ = getPostgresClient();
+  pgp = global.__pgp__;
+  if (!global.__pool__) global.__pool__ = pgp(getDatabaseURL());
   pool = global.__pool__;
 }
 
-export { db, pool };
+export { db, pgp, pool };
