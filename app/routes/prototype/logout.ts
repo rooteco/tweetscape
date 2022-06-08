@@ -1,1 +1,1 @@
-export { action } from '~/prototype/prototype/logout.server';
+export { action } from '~/prototype/logout.server';

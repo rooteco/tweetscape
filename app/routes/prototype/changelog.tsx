@@ -3,9 +3,9 @@ import { getMDXComponent } from 'mdx-bundler/client';
 import { useLoaderData } from '@remix-run/react';
 import { useMemo } from 'react';
 
-import type { LoaderData } from '~/prototype/prototype/changelog.server';
+import type { LoaderData } from '~/prototype/changelog.server';
 
-export { loader } from '~/prototype/prototype/changelog.server';
+export { loader } from '~/prototype/changelog.server';
 
 type PostLinkProps = { children?: ReactNode; href?: string };
 function PostLink({ children, href }: PostLinkProps) {

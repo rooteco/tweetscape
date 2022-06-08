@@ -1,13 +1,13 @@
 import type { LoaderFunction } from '@remix-run/node';
 
-import { TwitterApi, USER_FIELDS } from '~/prototype/prototype/twitter.server';
+import { TwitterApi, USER_FIELDS } from '~/prototype/twitter.server';
 import {
   getBaseURL,
   log,
   redirectToLastVisited,
-} from '~/prototype/prototype/utils.server';
-import { db } from '~/prototype/prototype/db.server';
-import { getSession } from '~/prototype/prototype/session.server';
+} from '~/prototype/utils.server';
+import { db } from '~/prototype/db.server';
+import { getSession } from '~/prototype/session.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);

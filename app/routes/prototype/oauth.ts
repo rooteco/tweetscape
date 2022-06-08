@@ -1,1 +1,1 @@
-export { loader } from '~/prototype/prototype/oauth.server';
+export { loader } from '~/prototype/oauth.server';

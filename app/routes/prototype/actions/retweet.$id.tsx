@@ -1,14 +1,14 @@
 import type { ActionFunction } from '@remix-run/node';
 import invariant from 'tiny-invariant';
 
-import { getLoggedInSession, log } from '~/prototype/prototype/utils.server';
+import { getLoggedInSession, log } from '~/prototype/utils.server';
 import {
   getTwitterClientForUser,
   handleTwitterApiError,
-} from '~/prototype/prototype/twitter.server';
-import { commitSession } from '~/prototype/prototype/session.server';
-import { db } from '~/prototype/prototype/db.server';
-import { invalidateCacheForUser } from '~/prototype/prototype/swr.server';
+} from '~/prototype/twitter.server';
+import { commitSession } from '~/prototype/session.server';
+import { db } from '~/prototype/db.server';
+import { invalidateCacheForUser } from '~/prototype/swr.server';
 
 export const action: ActionFunction = async ({ request, params }) => {
   try {

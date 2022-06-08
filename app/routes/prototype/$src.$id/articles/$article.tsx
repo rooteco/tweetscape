@@ -12,18 +12,18 @@ import {
   ArticlesFilter,
   DEFAULT_ARTICLES_FILTER,
   Param,
-} from '~/prototype/prototype/query';
-import type { ArticleJS } from '~/prototype/prototype/types';
-import BoltIcon from '~/prototype/prototype/icons/bolt';
-import CloseIcon from '~/prototype/prototype/icons/close';
-import Column from '~/prototype/prototype/components/column';
-import Empty from '~/prototype/prototype/components/empty';
-import FilterIcon from '~/prototype/prototype/icons/filter';
-import Nav from '~/prototype/prototype/components/nav';
-import SortIcon from '~/prototype/prototype/icons/sort';
-import Switcher from '~/prototype/prototype/components/switcher';
-import { TimeAgo } from '~/prototype/prototype/components/timeago';
-import TweetItem from '~/prototype/prototype/components/tweet';
+} from '~/prototype/query';
+import type { ArticleJS } from '~/prototype/types';
+import BoltIcon from '~/prototype/icons/bolt';
+import CloseIcon from '~/prototype/icons/close';
+import Column from '~/prototype/components/column';
+import Empty from '~/prototype/components/empty';
+import FilterIcon from '~/prototype/icons/filter';
+import Nav from '~/prototype/components/nav';
+import SortIcon from '~/prototype/icons/sort';
+import Switcher from '~/prototype/components/switcher';
+import { TimeAgo } from '~/prototype/components/timeago';
+import TweetItem from '~/prototype/components/tweet';
 
 export default function ArticlePage() {
   const article = useOutletContext<ArticleJS | undefined>();

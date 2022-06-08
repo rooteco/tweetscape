@@ -8,10 +8,10 @@ import {
   executeCreateQueue,
   getClient,
   toCreateQueue,
-} from '~/prototype/prototype/twitter.server';
-import { commitSession } from '~/prototype/prototype/session.server';
-import { invalidateCacheForUser } from '~/prototype/prototype/swr.server';
-import { log } from '~/prototype/prototype/utils.server';
+} from '~/prototype/twitter.server';
+import { commitSession } from '~/prototype/session.server';
+import { invalidateCacheForUser } from '~/prototype/swr.server';
+import { log } from '~/prototype/utils.server';
 
 export const action: ActionFunction = async ({ request, params }) => {
   invariant(params.tweet, 'expected params.tweet');
