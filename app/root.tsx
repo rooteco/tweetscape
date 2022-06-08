@@ -39,7 +39,7 @@ import { ErrorContext } from '~/prototype/error';
 import ErrorDisplay from '~/prototype/components/error';
 import { db } from '~/prototype/db.server';
 import { getLists } from '~/prototype/query.server';
-import styles from '~/prototype/styles/app.css';
+import styles from '~/styles/app.css';
 import { swr } from '~/prototype/swr.server';
 
 export type LoaderData = {
