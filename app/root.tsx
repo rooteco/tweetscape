@@ -1,9 +1,3 @@
-import type {
-  LinksFunction,
-  LoaderFunction,
-  MetaFunction,
-} from '@remix-run/node';
-import { json } from '@remix-run/node';
 import {
   Links,
   LiveReload,
@@ -13,10 +7,23 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from '@remix-run/react';
+import type {
+  LinksFunction,
+  LoaderFunction,
+  MetaFunction,
+} from '@remix-run/node';
 import { StrictMode, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { json } from '@remix-run/node';
 
-import type { Cluster, ClusterJS, List, ListJS, User, UserJS } from '~/types';
+import type {
+  Cluster,
+  ClusterJS,
+  List,
+  ListJS,
+  User,
+  UserJS,
+} from '~/prototype/types';
 import {
   Theme,
   ThemeBody,
@@ -24,16 +31,16 @@ import {
   ThemeProvider,
   isTheme,
   useTheme,
-} from '~/theme';
-import { commitSession, getSession } from '~/session.server';
-import { getUserIdFromSession, log, nanoid } from '~/utils.server';
-import { wrapCluster, wrapList, wrapUser } from '~/types';
-import { ErrorContext } from '~/error';
-import ErrorDisplay from '~/components/error';
-import { db } from '~/db.server';
-import { getLists } from '~/query.server';
+} from '~/prototype/theme';
+import { commitSession, getSession } from '~/prototype/session.server';
+import { getUserIdFromSession, log, nanoid } from '~/prototype/utils.server';
+import { wrapCluster, wrapList, wrapUser } from '~/prototype/types';
+import { ErrorContext } from '~/prototype/error';
+import ErrorDisplay from '~/prototype/components/error';
+import { db } from '~/prototype/db.server';
+import { getLists } from '~/prototype/query.server';
 import styles from '~/styles/app.css';
-import { swr } from '~/swr.server';
+import { swr } from '~/prototype/swr.server';
 
 export type LoaderData = {
   clusters: ClusterJS[];
