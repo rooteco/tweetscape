@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { random } from '~/utils';
+import { random } from '~/prototype/utils';
 
 // Utility helper for random number generation
 // @see https://www.joshwcomeau.com/snippets/react-hooks/use-random-interval/

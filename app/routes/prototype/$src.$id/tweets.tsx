@@ -21,8 +21,13 @@ import {
   Time,
   TweetsFilter,
   TweetsSort,
-} from '~/query';
-import type { Rekt, TweetFull, TweetJS, User } from '~/types';
+} from '~/prototype/prototype/query';
+import type {
+  Rekt,
+  TweetFull,
+  TweetJS,
+  User,
+} from '~/prototype/prototype/types';
 import {
   TWEET_EXPANSIONS,
   TWEET_FIELDS,
@@ -32,13 +37,16 @@ import {
   handleTwitterApiError,
   initQueue,
   toCreateQueue,
-} from '~/twitter.server';
+} from '~/prototype/prototype/twitter.server';
 import TweetItem, {
   FALLBACK_ITEM_HEIGHT,
   ITEM_WIDTH,
   getTweetItemHeight,
-} from '~/components/tweet';
-import { commitSession, getSession } from '~/session.server';
+} from '~/prototype/prototype/components/tweet';
+import {
+  commitSession,
+  getSession,
+} from '~/prototype/prototype/session.server';
 import {
   getClusterTweets,
   getClusterTweetsQuery,
@@ -46,22 +54,26 @@ import {
   getListTweetsQuery,
   getRektTweets,
   getRektTweetsQuery,
-} from '~/query.server';
-import { getUserIdFromSession, log, nanoid } from '~/utils.server';
-import Column from '~/components/column';
-import Empty from '~/components/empty';
-import ErrorDisplay from '~/components/error';
-import FilterIcon from '~/icons/filter';
-import Nav from '~/components/nav';
-import SortIcon from '~/icons/sort';
-import Switcher from '~/components/switcher';
-import TimeIcon from '~/icons/time';
-import { createHash } from '~/crypto.server';
-import { db } from '~/db.server';
-import { invalidateCacheForQuery } from '~/swr.server';
-import { useError } from '~/error';
-import useSync from '~/hooks/sync';
-import { wrapTweet } from '~/types';
+} from '~/prototype/prototype/query.server';
+import {
+  getUserIdFromSession,
+  log,
+  nanoid,
+} from '~/prototype/prototype/utils.server';
+import Column from '~/prototype/prototype/components/column';
+import Empty from '~/prototype/prototype/components/empty';
+import ErrorDisplay from '~/prototype/prototype/components/error';
+import FilterIcon from '~/prototype/prototype/icons/filter';
+import Nav from '~/prototype/prototype/components/nav';
+import SortIcon from '~/prototype/prototype/icons/sort';
+import Switcher from '~/prototype/prototype/components/switcher';
+import TimeIcon from '~/prototype/prototype/icons/time';
+import { createHash } from '~/prototype/prototype/crypto.server';
+import { db } from '~/prototype/prototype/db.server';
+import { invalidateCacheForQuery } from '~/prototype/prototype/swr.server';
+import { useError } from '~/prototype/prototype/error';
+import useSync from '~/prototype/prototype/hooks/sync';
+import { wrapTweet } from '~/prototype/prototype/types';
 
 export type LoaderData = TweetJS[];
 

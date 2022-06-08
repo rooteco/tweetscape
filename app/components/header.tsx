@@ -12,14 +12,14 @@ import { animated, config, useSpring } from '@react-spring/web';
 import { useRef, useState } from 'react';
 import cn from 'classnames';
 
-import BirdIcon from '~/icons/bird';
-import FireIcon from '~/icons/fire';
-import type { LoaderData } from '~/root';
-import LogoutIcon from '~/icons/logout';
-import OpenInNewIcon from '~/icons/open-in-new';
-import Switcher from '~/components/switcher';
-import ThemeSwitcher from '~/components/theme-switcher';
-import useSync from '~/hooks/sync';
+import BirdIcon from '~/prototype/icons/bird';
+import FireIcon from '~/prototype/icons/fire';
+import type { LoaderData } from '~/prototype/root';
+import LogoutIcon from '~/prototype/icons/logout';
+import OpenInNewIcon from '~/prototype/icons/open-in-new';
+import Switcher from '~/prototype/components/switcher';
+import ThemeSwitcher from '~/prototype/components/theme-switcher';
+import useSync from '~/prototype/hooks/sync';
 
 function PageSwitcher() {
   const { pathname } = useLocation();

@@ -3,16 +3,16 @@ import type { LoaderFunction } from '@remix-run/node';
 import invariant from 'tiny-invariant';
 import { json } from '@remix-run/node';
 
-import type { TweetFull, TweetJS } from '~/types';
-import { commitSession, getSession } from '~/session.server';
-import { getTweetRepliesByIds, getTweetsByIds } from '~/query.server';
-import { getUserIdFromSession, log } from '~/utils.server';
-import CloseIcon from '~/icons/close';
-import Column from '~/components/column';
-import Empty from '~/components/empty';
-import TweetItem from '~/components/tweet';
-import useSync from '~/hooks/sync';
-import { wrapTweet } from '~/types';
+import type { TweetFull, TweetJS } from '~/prototype/types';
+import { commitSession, getSession } from '~/prototype/session.server';
+import { getTweetRepliesByIds, getTweetsByIds } from '~/prototype/query.server';
+import { getUserIdFromSession, log } from '~/prototype/utils.server';
+import CloseIcon from '~/prototype/icons/close';
+import Column from '~/prototype/components/column';
+import Empty from '~/prototype/components/empty';
+import TweetItem from '~/prototype/components/tweet';
+import useSync from '~/prototype/hooks/sync';
+import { wrapTweet } from '~/prototype/types';
 
 export type LoaderData = { tweet: TweetJS; replies: TweetJS[] }[];
 

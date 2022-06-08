@@ -8,18 +8,18 @@ import {
 } from '@remix-run/react';
 import cn from 'classnames';
 
-import { canUseDOM, num } from '~/utils';
-import LikeIcon from '~/icons/like';
-import LikedIcon from '~/icons/liked';
-import type { LoaderData } from '~/root';
-import Profile from '~/components/profile';
-import ReplyIcon from '~/icons/reply';
-import RetweetIcon from '~/icons/retweet';
-import RetweetedIcon from '~/icons/retweeted';
-import ShareIcon from '~/icons/share';
-import { TimeAgo } from '~/components/timeago';
-import type { TweetJS } from '~/types';
-import VerifiedIcon from '~/icons/verified';
+import { canUseDOM, num } from '~/prototype/utils';
+import LikeIcon from '~/prototype/icons/like';
+import LikedIcon from '~/prototype/icons/liked';
+import type { LoaderData } from '~/prototype/root';
+import Profile from '~/prototype/components/profile';
+import ReplyIcon from '~/prototype/icons/reply';
+import RetweetIcon from '~/prototype/icons/retweet';
+import RetweetedIcon from '~/prototype/icons/retweeted';
+import ShareIcon from '~/prototype/icons/share';
+import { TimeAgo } from '~/prototype/components/timeago';
+import type { TweetJS } from '~/prototype/types';
+import VerifiedIcon from '~/prototype/icons/verified';
 
 export const ITEM_WIDTH = 574;
 export const FALLBACK_ITEM_HEIGHT = 132;

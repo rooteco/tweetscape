@@ -8,8 +8,8 @@ import type {
 import { TwitterApiRateLimitMemoryStore } from '@twitter-api-v2/plugin-rate-limit';
 import type { TwitterRateLimit } from 'twitter-api-v2';
 
-import { log, parse, stringify } from '~/utils.server';
-import { redis } from '~/redis.server';
+import { log, parse, stringify } from '~/prototype/utils.server';
+import { redis } from '~/prototype/redis.server';
 
 let connectionPromise: Promise<void>;
 if (!redis.isOpen) connectionPromise = redis.connect();

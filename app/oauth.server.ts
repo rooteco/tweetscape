@@ -5,7 +5,7 @@ import type { LoaderFunction } from '@remix-run/node';
 import { nanoid } from 'nanoid';
 import { redirect } from '@remix-run/node';
 
-import { commitSession, getSession } from '~/session.server';
+import { commitSession, getSession } from '~/prototype/session.server';
 
 // Base64-URL-encoding is a minor variation on the typical Base64 encoding
 // method. It starts with the same Base64-encoding method available in most

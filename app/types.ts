@@ -22,7 +22,7 @@ import type {
   users,
 } from '@prisma/client';
 
-import { html } from '~/utils.server';
+import { html } from '~/prototype/utils.server';
 
 export type Annotation = annotations;
 export type Cluster = clusters;

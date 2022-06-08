@@ -37,11 +37,11 @@ import type {
   Tweet,
   URL,
   User,
-} from '~/types';
-import { getUserIdFromSession, log } from '~/utils.server';
-import { TwitterApiRateLimitDBStore } from '~/limit.server';
-import { db, pgp, pool } from '~/db.server';
-import { getSession } from '~/session.server';
+} from '~/prototype/types';
+import { getUserIdFromSession, log } from '~/prototype/utils.server';
+import { TwitterApiRateLimitDBStore } from '~/prototype/limit.server';
+import { db, pgp, pool } from '~/prototype/db.server';
+import { getSession } from '~/prototype/session.server';
 
 export { TwitterApi, TwitterV2IncludesHelper } from 'twitter-api-v2';
 

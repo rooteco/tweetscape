@@ -4,9 +4,9 @@ import { memo, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from '@remix-run/react';
 import { dequal } from 'dequal/lite';
 
-import type { ArticleJS } from '~/types';
-import { TimeAgo } from '~/components/timeago';
-import { substr } from '~/utils';
+import type { ArticleJS } from '~/prototype/types';
+import { TimeAgo } from '~/prototype/components/timeago';
+import { substr } from '~/prototype/utils';
 
 export function ArticleContent({ article }: { article: ArticleJS }) {
   const earliestTweet = useMemo(

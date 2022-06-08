@@ -3,9 +3,9 @@ import Bottleneck from 'bottleneck';
 import type { IText } from 'html5parser';
 import { decode } from 'html-entities';
 
-import type { ArticleFull, Link } from '~/types';
-import { db } from '~/db.server';
-import { log } from '~/utils.server';
+import type { ArticleFull, Link } from '~/prototype/types';
+import { db } from '~/prototype/db.server';
+import { log } from '~/prototype/utils.server';
 
 const limiter = new Bottleneck({
   trackDoneStatus: true,

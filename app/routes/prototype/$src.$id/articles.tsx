@@ -6,7 +6,7 @@ import { dequal } from 'dequal/lite';
 import invariant from 'tiny-invariant';
 import { json } from '@remix-run/node';
 
-import type { ArticleFull, ArticleJS } from '~/types';
+import type { ArticleFull, ArticleJS } from '~/prototype/prototype/types';
 import {
   ArticlesFilter,
   ArticlesSort,
@@ -15,8 +15,11 @@ import {
   DEFAULT_TIME,
   Param,
   Time,
-} from '~/query';
-import { commitSession, getSession } from '~/session.server';
+} from '~/prototype/prototype/query';
+import {
+  commitSession,
+  getSession,
+} from '~/prototype/prototype/session.server';
 import {
   getClusterArticles,
   getClusterArticlesQuery,
@@ -24,24 +27,28 @@ import {
   getListArticlesQuery,
   getRektArticles,
   getRektArticlesQuery,
-} from '~/query.server';
-import { getUserIdFromSession, log, nanoid } from '~/utils.server';
-import ArticleItem from '~/components/article';
-import Column from '~/components/column';
-import Empty from '~/components/empty';
-import ErrorDisplay from '~/components/error';
-import FilterIcon from '~/icons/filter';
-import Nav from '~/components/nav';
-import SortIcon from '~/icons/sort';
-import Switcher from '~/components/switcher';
-import TimeIcon from '~/icons/time';
-import { handleTwitterApiError } from '~/twitter.server';
-import { invalidateCacheForQuery } from '~/swr.server';
-import { syncArticleMetadata } from '~/sync/articles.server';
-import { action as syncTweets } from '~/routes/$src.$id/tweets';
-import { useError } from '~/error';
-import useSync from '~/hooks/sync';
-import { wrapArticle } from '~/types';
+} from '~/prototype/prototype/query.server';
+import {
+  getUserIdFromSession,
+  log,
+  nanoid,
+} from '~/prototype/prototype/utils.server';
+import ArticleItem from '~/prototype/prototype/components/article';
+import Column from '~/prototype/prototype/components/column';
+import Empty from '~/prototype/prototype/components/empty';
+import ErrorDisplay from '~/prototype/prototype/components/error';
+import FilterIcon from '~/prototype/prototype/icons/filter';
+import Nav from '~/prototype/prototype/components/nav';
+import SortIcon from '~/prototype/prototype/icons/sort';
+import Switcher from '~/prototype/prototype/components/switcher';
+import TimeIcon from '~/prototype/prototype/icons/time';
+import { handleTwitterApiError } from '~/prototype/prototype/twitter.server';
+import { invalidateCacheForQuery } from '~/prototype/prototype/swr.server';
+import { syncArticleMetadata } from '~/prototype/prototype/sync/articles.server';
+import { action as syncTweets } from '~/prototype/prototype/routes/$src.$id/tweets';
+import { useError } from '~/prototype/prototype/error';
+import useSync from '~/prototype/prototype/hooks/sync';
+import { wrapArticle } from '~/prototype/prototype/types';
 
 export type LoaderData = ArticleJS[];
 

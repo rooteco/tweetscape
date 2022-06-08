@@ -1,7 +1,7 @@
-import OpenInNewIcon from '~/icons/open-in-new';
-import type { UserJS } from '~/types';
-import VerifiedIcon from '~/icons/verified';
-import { num } from '~/utils';
+import OpenInNewIcon from '~/prototype/icons/open-in-new';
+import type { UserJS } from '~/prototype/types';
+import VerifiedIcon from '~/prototype/icons/verified';
+import { num } from '~/prototype/utils';
 
 export default function Profile({
   name,

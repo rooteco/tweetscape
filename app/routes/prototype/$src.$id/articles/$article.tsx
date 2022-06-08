@@ -12,18 +12,18 @@ import {
   ArticlesFilter,
   DEFAULT_ARTICLES_FILTER,
   Param,
-} from '~/query';
-import type { ArticleJS } from '~/types';
-import BoltIcon from '~/icons/bolt';
-import CloseIcon from '~/icons/close';
-import Column from '~/components/column';
-import Empty from '~/components/empty';
-import FilterIcon from '~/icons/filter';
-import Nav from '~/components/nav';
-import SortIcon from '~/icons/sort';
-import Switcher from '~/components/switcher';
-import { TimeAgo } from '~/components/timeago';
-import TweetItem from '~/components/tweet';
+} from '~/prototype/prototype/query';
+import type { ArticleJS } from '~/prototype/prototype/types';
+import BoltIcon from '~/prototype/prototype/icons/bolt';
+import CloseIcon from '~/prototype/prototype/icons/close';
+import Column from '~/prototype/prototype/components/column';
+import Empty from '~/prototype/prototype/components/empty';
+import FilterIcon from '~/prototype/prototype/icons/filter';
+import Nav from '~/prototype/prototype/components/nav';
+import SortIcon from '~/prototype/prototype/icons/sort';
+import Switcher from '~/prototype/prototype/components/switcher';
+import { TimeAgo } from '~/prototype/prototype/components/timeago';
+import TweetItem from '~/prototype/prototype/components/tweet';
 
 export default function ArticlePage() {
   const article = useOutletContext<ArticleJS | undefined>();

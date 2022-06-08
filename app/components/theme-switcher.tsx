@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useFetcher } from '@remix-run/react';
 
-import { Theme, Themed, isTheme, useTheme } from '~/theme';
-import DarkIcon from '~/icons/dark';
-import LightIcon from '~/icons/light';
+import { Theme, Themed, isTheme, useTheme } from '~/prototype/theme';
+import DarkIcon from '~/prototype/icons/dark';
+import LightIcon from '~/prototype/icons/light';
 
 export default function ThemeSwitcher() {
   const [theme, setTheme] = useTheme();

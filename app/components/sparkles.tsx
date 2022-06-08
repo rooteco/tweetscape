@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { random, range } from '~/utils';
-import { usePrefersReducedMotion } from '~/hooks/reduced-motion';
-import { useRandomInterval } from '~/hooks/random-interval';
+import { random, range } from '~/prototype/utils';
+import { usePrefersReducedMotion } from '~/prototype/hooks/reduced-motion';
+import { useRandomInterval } from '~/prototype/hooks/random-interval';
 
 // @see https://www.joshwcomeau.com/react/animated-sparkles-in-react
 const DEFAULT_COLOR = '#FFC700';

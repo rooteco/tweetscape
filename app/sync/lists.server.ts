@@ -1,6 +1,6 @@
 import type { ActionFunction } from '@remix-run/node';
 
-import type { List, ListFollower, User } from '~/types';
+import type { List, ListFollower, User } from '~/prototype/types';
 import {
   TwitterV2IncludesHelper,
   USER_FIELDS,
@@ -8,12 +8,12 @@ import {
   handleTwitterApiError,
   toList,
   toUser,
-} from '~/twitter.server';
-import { getLoggedInSession, log } from '~/utils.server';
-import { commitSession } from '~/session.server';
-import { db } from '~/db.server';
-import { getListsQuery } from '~/query.server';
-import { revalidate } from '~/swr.server';
+} from '~/prototype/twitter.server';
+import { getLoggedInSession, log } from '~/prototype/utils.server';
+import { commitSession } from '~/prototype/session.server';
+import { db } from '~/prototype/db.server';
+import { getListsQuery } from '~/prototype/query.server';
+import { revalidate } from '~/prototype/swr.server';
 
 export const action: ActionFunction = async ({ request }) => {
   try {

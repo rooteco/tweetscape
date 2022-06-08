@@ -4,7 +4,7 @@ import array from 'postgres-array';
 import invariant from 'tiny-invariant';
 import pgPromise from 'pg-promise';
 
-import { log, parse } from '~/utils.server';
+import { log, parse } from '~/prototype/utils.server';
 
 function getDatabaseURL(): string {
   const { DATABASE_URL } = process.env;

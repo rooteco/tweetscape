@@ -3,9 +3,9 @@ import { useEffect, useRef } from 'react';
 import { Outlet } from '@remix-run/react';
 import useMeasure from 'react-use-measure';
 
-import ErrorDisplay from '~/components/error';
-import Header from '~/components/header';
-import { useError } from '~/error';
+import ErrorDisplay from '~/prototype/prototype/components/error';
+import Header from '~/prototype/prototype/components/header';
+import { useError } from '~/prototype/prototype/error';
 
 export function ErrorBoundary({ error }: { error: Error }) {
   useError(error);

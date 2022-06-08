@@ -13,7 +13,7 @@ import { Response as NodeResponse } from '@remix-run/node';
 import invariant from 'tiny-invariant';
 import sharp from 'sharp';
 
-import { log } from '~/utils.server';
+import { log } from '~/prototype/utils.server';
 
 const badImageBase64 =
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';

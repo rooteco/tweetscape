@@ -1,1 +1,1 @@
-export { loader, default } from '~/tweet';
+export { loader, default } from '~/prototype/prototype/tweet';

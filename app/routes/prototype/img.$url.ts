@@ -1,1 +1,1 @@
-export { loader } from '~/img.server';
+export { loader } from '~/prototype/prototype/img.server';

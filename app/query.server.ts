@@ -1,4 +1,4 @@
-import type { ArticleFull, List, TweetFull } from '~/types';
+import type { ArticleFull, List, TweetFull } from '~/prototype/types';
 import {
   ArticlesFilter,
   ArticlesSort,
@@ -7,9 +7,9 @@ import {
   Time,
   TweetsFilter,
   TweetsSort,
-} from '~/query';
-import { log } from '~/utils.server';
-import { swr } from '~/swr.server';
+} from '~/prototype/query';
+import { log } from '~/prototype/utils.server';
+import { swr } from '~/prototype/swr.server';
 
 const TWEETS_TIMES: Record<Time, string> = {
   [Time.Day]: `tweets.created_at > current_date - 1`,

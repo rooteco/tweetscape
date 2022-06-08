@@ -5,7 +5,7 @@ import type { LoaderFunction } from '@remix-run/node';
 import { bundleMDX } from 'mdx-bundler';
 import { json } from '@remix-run/node';
 
-import { log } from '~/utils.server';
+import { log } from '~/prototype/utils.server';
 
 type Meta = { date: string; author: string };
 export type LoaderData = { frontmatter: Meta; code: string }[];

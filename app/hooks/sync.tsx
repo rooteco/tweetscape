@@ -2,12 +2,12 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { useFetcher, useFetchers, useResolvedPath } from '@remix-run/react';
 import cn from 'classnames';
 
-import type { APIError } from '~/twitter.server';
-import BoltIcon from '~/icons/bolt';
-import { ErrorContext } from '~/error';
-import ErrorIcon from '~/icons/error';
-import SyncIcon from '~/icons/sync';
-import { TimeAgo } from '~/components/timeago';
+import type { APIError } from '~/prototype/twitter.server';
+import BoltIcon from '~/prototype/icons/bolt';
+import { ErrorContext } from '~/prototype/error';
+import ErrorIcon from '~/prototype/icons/error';
+import SyncIcon from '~/prototype/icons/sync';
+import { TimeAgo } from '~/prototype/components/timeago';
 
 export default function useSync(action?: string, obj = '', shouldSync = true) {
   const { error } = useContext(ErrorContext);

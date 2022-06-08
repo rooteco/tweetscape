@@ -6,10 +6,10 @@ import {
   DEFAULT_TWEETS_LIMIT,
   TweetsFilter,
   TweetsSort,
-} from '~/query';
-import { log, parse, stringify } from '~/utils.server';
-import { pool } from '~/db.server';
-import { redis } from '~/redis.server';
+} from '~/prototype/query';
+import { log, parse, stringify } from '~/prototype/utils.server';
+import { pool } from '~/prototype/db.server';
+import { redis } from '~/prototype/redis.server';
 
 const STILL_GOOD_PREFIX = 'swr:stillgood';
 const RESPONSE_PREFIX = 'swr:response';

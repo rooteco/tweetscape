@@ -1,4 +1,4 @@
-import Empty from '~/components/empty';
+import Empty from '~/prototype/components/empty';
 
 export default function ErrorDisplay({ error }: { error: Error }) {
   return (
