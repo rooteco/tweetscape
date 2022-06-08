@@ -38,7 +38,7 @@ import TimeIcon from '~/prototype/icons/time';
 import { handleTwitterApiError } from '~/prototype/twitter.server';
 import { invalidateCacheForQuery } from '~/prototype/swr.server';
 import { syncArticleMetadata } from '~/prototype/sync/articles.server';
-import { action as syncTweets } from '~/prototype/routes/$src.$id/tweets';
+import { action as syncTweets } from '~/routes/prototype/$src.$id/tweets';
 import { useError } from '~/prototype/error';
 import useSync from '~/prototype/hooks/sync';
 import { wrapArticle } from '~/prototype/types';
