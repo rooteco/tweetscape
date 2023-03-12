@@ -9523,14 +9523,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^3.2.4":
-  version: 3.2.4
-  resolution: "node-fetch@npm:3.2.4"
+"node-fetch@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "node-fetch@npm:3.3.1"
   dependencies:
     data-uri-to-buffer: ^4.0.0
     fetch-blob: ^3.1.4
     formdata-polyfill: ^4.0.10
-  checksum: cfc715441302167bd4a9c6d6f3ff8eecb65e5aeeccd55a690497dcce5f95ec017d65c5682414287cad3998a28b1bab4820dcbe51852902eaa5f15f3975562384
+  checksum: 62145fd3ba4770a76110bc31fdc0054ab2f5442b5ce96e9c4b39fc9e94a3d305560eec76e1165d9259eab866e02a8eecf9301062bb5dfc9f08a4d08b69d223dd
   languageName: node
   linkType: hard
 
@@ -12708,7 +12708,7 @@ __metadata:
     json-bigint-patch: ^0.0.8
     mdx-bundler: ^9.0.0
     nanoid: ^3.3.4
-    node-fetch: ^3.2.4
+    node-fetch: ^3.3.1
     octokit: ^1.7.1
     pg: ^8.7.3
     pg-format: ^1.0.4
