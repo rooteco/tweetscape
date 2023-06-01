@@ -4519,6 +4519,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv@npm:^16.1.3":
+  version: 16.1.3
+  resolution: "dotenv@npm:16.1.3"
+  checksum: 8f73bae720161cf365b679de162fe79a05f5b7a21d0d2b8bf9fb0601a2ed30f7e9dc49fa8b752d93206e4b7d427eccea2f383a1622cd5da4a1824f43bf8f780b
+  languageName: node
+  linkType: hard
+
 "duplexer3@npm:^0.1.4":
   version: 0.1.4
   resolution: "duplexer3@npm:0.1.4"
@@ -12688,7 +12695,7 @@ __metadata:
     cross-env: ^7.0.3
     cypress: ^9.6.1
     dequal: ^2.0.2
-    dotenv: ^16.0.0
+    dotenv: ^16.1.3
     dotenv-cli: ^5.1.0
     esbuild: ^0.14.38
     eslint: ^8.15.0
