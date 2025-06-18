@@ -2732,10 +2732,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"assert-options@npm:0.7.0":
-  version: 0.7.0
-  resolution: "assert-options@npm:0.7.0"
-  checksum: 447e3de35a57860b29d7f3907cfdd97cff8a763195bac9cf1f5982011904ec464da239cbc6f5ee2090f1a20be9babc1b7aa1468225bbd15ae5d96ca067dd720f
+"assert-options@npm:0.8.0":
+  version: 0.8.0
+  resolution: "assert-options@npm:0.8.0"
+  checksum: ae1114e16e587015396b1d17c0b045801b3c72d442574cf3478f264961b6f72ada9d78326cf8ca1bf35df26f8fa4e36376e9488b8e5e171e3cbe18db40ddc09a
   languageName: node
   linkType: hard
 
@@ -10236,7 +10236,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg-pool@npm:^3.4.1, pg-pool@npm:^3.5.1":
+"pg-pool@npm:^3.5.1":
   version: 3.5.1
   resolution: "pg-pool@npm:3.5.1"
   peerDependencies:
@@ -10245,15 +10245,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg-promise@npm:^10.11.1":
-  version: 10.11.1
-  resolution: "pg-promise@npm:10.11.1"
+"pg-pool@npm:^3.5.2":
+  version: 3.10.1
+  resolution: "pg-pool@npm:3.10.1"
+  peerDependencies:
+    pg: ">=8.0"
+  checksum: 98135a7384be40886bba7100b9ce1a74671ff3877390f68e6db6d50ea56a7f524f7e44e01c02d61efeda97d9dc22d6115d0c66aa7f3cf5b8e892424862d0111a
+  languageName: node
+  linkType: hard
+
+"pg-promise@npm:^10.15.4":
+  version: 10.15.4
+  resolution: "pg-promise@npm:10.15.4"
   dependencies:
-    assert-options: 0.7.0
-    pg: 8.7.1
+    assert-options: 0.8.0
+    pg: 8.8.0
     pg-minify: 1.6.2
     spex: 3.2.0
-  checksum: 17e59742af51646db9581e825689ef4766993182833775bdedbe32bd4b4bcf7b63a1fd67a6d0be2ef231f6111df798a204d7b702d14cd7731e06c54ae6e8546a
+  checksum: 4450c21d2fdfcbbccbe885276b85452d7355cbb4c86619c7e2f6b8e9e23743d7fa32ebdd3c41ac2f5f24c094866fe7edab7c096604f81ce88f650747014a41b6
   languageName: node
   linkType: hard
 
@@ -10277,23 +10286,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg@npm:8.7.1":
-  version: 8.7.1
-  resolution: "pg@npm:8.7.1"
+"pg@npm:8.8.0":
+  version: 8.8.0
+  resolution: "pg@npm:8.8.0"
   dependencies:
     buffer-writer: 2.0.0
     packet-reader: 1.0.0
     pg-connection-string: ^2.5.0
-    pg-pool: ^3.4.1
+    pg-pool: ^3.5.2
     pg-protocol: ^1.5.0
     pg-types: ^2.1.0
     pgpass: 1.x
   peerDependencies:
-    pg-native: ">=2.0.0"
+    pg-native: ">=3.0.1"
   peerDependenciesMeta:
     pg-native:
       optional: true
-  checksum: 3a17d9a73df9c9f5f99400751144f9d5e8dbe1948ca44f5b5eecb2166ad78cab36d070c2a97438cd3a5d1d083e70af1d3e0aad4554a45fe74b77d98ed4487242
+  checksum: fa30a85814dd7238b582c3bc6c0b9e2b0ae38dd0a6bb485ef480e64bb5ce589de6cb873ce4d3cd10c37a3e0a1e1281ba75dc7d80b1a68bae91999cd5b70d398b
   languageName: node
   linkType: hard
 
@@ -12712,7 +12721,7 @@ __metadata:
     octokit: ^1.7.1
     pg: ^8.7.3
     pg-format: ^1.0.4
-    pg-promise: ^10.11.1
+    pg-promise: ^10.15.4
     postcss: ^8.4.13
     postgres-array: ^3.0.1
     prettier: ^2.6.2
